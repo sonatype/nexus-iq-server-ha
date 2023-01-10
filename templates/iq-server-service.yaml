@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-iq-server-service
+spec:
+  type: {{ .Values.iq_server.serviceType }}
+  selector:
+    name: {{ .Release.Name }}-iq-server
+  ports:
+    {{- range $index, $value := (.Values.iq_server.config.server.applicationConnectors) }}
+    - name: iq-server-app-port-{{- $index }}
+      protocol: TCP
+      port: {{ $value.port }}
+      targetPort: application-{{- $index }}
+    {{- end }}
+    {{- range $index, $value := (.Values.iq_server.config.server.adminConnectors) }}
+    - name: iq-server-adm-port-{{- $index }}
+      protocol: TCP
+      port: {{ $value.port }}
+      targetPort: admin-{{- $index }}
+    {{- end }}

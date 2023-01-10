@@ -1,0 +1,230 @@
+suite: iq-server-service
+templates:
+  - iq-server-config-map.yaml
+tests:
+  - it: renders with defaults
+    set:
+      iq_server:
+        tag: "1.148.0"   # force version tag so tests do not have to be updated every time we update IQ server version
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-iq-server-config-configmap
+        documentIndex: 0
+      - equal:
+          path: data.config
+          value: |
+            clusterDirectory: /sonatype-work/clm-cluster
+            createSampleData: true
+            database:
+              hostname: ${NXIQ_DATABASE_HOSTNAME}
+              name: ${NXIQ_DATABASE_NAME}
+              password: ${NXIQ_DATABASE_PASSWORD}
+              port: ${NXIQ_DATABASE_PORT}
+              type: postgresql
+              username: ${NXIQ_DATABASE_USERNAME}
+            licenseFile: ${NXIQ_LICENSE_FILE}
+            logging:
+              appenders:
+              - logFormat: '%d{''yyyy-MM-dd HH:mm:ss,SSSZ''} %level [%thread] %X{username} %logger
+                  - %msg%n'
+                threshold: ALL
+                type: console
+              - archivedFileCount: 50
+                archivedLogFilenamePattern: /var/log/nexus-iq-server/clm-server-%d.log.gz
+                currentLogFilename: /var/log/nexus-iq-server/clm-server.log
+                logFormat: '%d{''yyyy-MM-dd HH:mm:ss,SSSZ''} %level [%thread] %X{username} %logger
+                  - %msg%n'
+                threshold: ALL
+                type: file
+              level: DEBUG
+              loggers:
+                com.networknt.schema: false
+                com.sonatype.insight.audit:
+                  appenders:
+                  - type: console
+                  - archivedFileCount: 50
+                    archivedLogFilenamePattern: /var/log/nexus-iq-server/audit-%d.log.gz
+                    currentLogFilename: /var/log/nexus-iq-server/audit.log
+                    type: file
+                com.sonatype.insight.policy.violation:
+                  appenders:
+                  - type: console
+                  - archivedFileCount: 50
+                    archivedLogFilenamePattern: /var/log/nexus-iq-server/policy-violation-%d.log.gz
+                    currentLogFilename: /var/log/nexus-iq-server/policy-violation.log
+                    type: file
+                com.sonatype.insight.scan: INFO
+                eu.medsea.mimeutil.MimeUtil2: INFO
+                org.apache.http: INFO
+                org.apache.http.wire: ERROR
+                org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter: INFO
+                org.eclipse.birt.report.engine.layout.pdf.font.FontConfigReader: WARN
+                org.eclipse.jetty: INFO
+                org.postgresql.jdbc.PgConnection: INFO
+                org.quartz: INFO
+                org.zeroturnaround.exec: INFO
+            server:
+              adminConnectors:
+              - port: 8071
+                type: http
+              adminContextPath: /
+              applicationConnectors:
+              - port: 8070
+                type: http
+              applicationContextPath: /
+              requestLog:
+                appenders:
+                - logFormat: '%clientHost %l %user [%date] "%requestURL" %statusCode %bytesSent
+                    %elapsedTime "%header{User-Agent}"'
+                  type: console
+                - archivedFileCount: 50
+                  archivedLogFilenamePattern: /var/log/nexus-iq-server/request-%d.log.gz
+                  currentLogFilename: /var/log/nexus-iq-server/request.log
+                  logFormat: '%clientHost %l %user [%date] "%requestURL" %statusCode %bytesSent
+                    %elapsedTime "%header{User-Agent}"'
+                  type: file
+            sonatypeWork: /sonatype-work/clm-server
+        documentIndex: 0
+
+  - it: renders with overridden values
+    set:
+      iq_server:
+        serviceAccountName: "my-service-account"
+        serviceType: NodePort
+        image: "sonatype/iq-server-new"
+        imagePullPolicy: "Always"
+        tag: "1.142.0"
+        persistence:
+          size: "2Gi"
+          hostPath:
+            path: "/mnt/iq"
+        license: "/iq.lic"
+        replicas: 1
+        initialAdminPassword: "admin!234"
+        readinessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 2
+        livenessProbe:
+          initialDelaySeconds: 300
+          periodSeconds: 60
+          timeoutSeconds: 2
+          failureThreshold: 2
+        database:
+          hostname: "iq_host"
+          port: 54322
+          name: "iq_db"
+          username: "pg"
+          password: "pwd"
+        config:
+          sonatypeWork: "/iq/clm-server"
+          clusterDirectory: "/iq/clm-cluster"
+          licenseFile: "lic.lic"
+          server:
+            applicationContextPath: /app
+            applicationConnectors:
+              - port: 8072
+                type: https
+            adminContextPath: /admin
+            adminConnectors:
+              - port: 8073
+                type: https
+            requestLog:
+              appenders:
+                - type: console
+                  logFormat: "%clientHost %l %user [%date] \"%requestURL\" %statusCode \"%header{User-Agent}\""
+                - type: file
+                  currentLogFilename: "/iq/log/iq-server/request.log"
+                  logFormat: "%clientHost %l %user [%date] \"%requestURL\" %statusCode \"%header{User-Agent}\""
+                  archivedLogFilenamePattern: "/iq/log/iq-server/request-%d.log.gz"
+          logging:
+            level: INFO
+            loggers:
+              "com.networknt.schema": ERROR
+            appenders:
+              - type: console
+                threshold: DEBUG
+                logFormat: "%d{'HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n"
+          createSampleData: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-iq-server-config-configmap
+        documentIndex: 0
+      - equal:
+          path: data.config
+          value: |
+            clusterDirectory: /iq/clm-cluster
+            createSampleData: false
+            database:
+              hostname: ${NXIQ_DATABASE_HOSTNAME}
+              name: ${NXIQ_DATABASE_NAME}
+              password: ${NXIQ_DATABASE_PASSWORD}
+              port: ${NXIQ_DATABASE_PORT}
+              type: postgresql
+              username: ${NXIQ_DATABASE_USERNAME}
+            licenseFile: lic.lic
+            logging:
+              appenders:
+              - logFormat: '%d{''HH:mm:ss,SSSZ''} %level [%thread] %X{username} %logger - %msg%n'
+                threshold: DEBUG
+                type: console
+              level: INFO
+              loggers:
+                com.networknt.schema: ERROR
+                com.sonatype.insight.audit:
+                  appenders:
+                  - type: console
+                  - archivedFileCount: 50
+                    archivedLogFilenamePattern: /var/log/nexus-iq-server/audit-%d.log.gz
+                    currentLogFilename: /var/log/nexus-iq-server/audit.log
+                    type: file
+                com.sonatype.insight.policy.violation:
+                  appenders:
+                  - type: console
+                  - archivedFileCount: 50
+                    archivedLogFilenamePattern: /var/log/nexus-iq-server/policy-violation-%d.log.gz
+                    currentLogFilename: /var/log/nexus-iq-server/policy-violation.log
+                    type: file
+                com.sonatype.insight.scan: INFO
+                eu.medsea.mimeutil.MimeUtil2: INFO
+                org.apache.http: INFO
+                org.apache.http.wire: ERROR
+                org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter: INFO
+                org.eclipse.birt.report.engine.layout.pdf.font.FontConfigReader: WARN
+                org.eclipse.jetty: INFO
+                org.postgresql.jdbc.PgConnection: INFO
+                org.quartz: INFO
+                org.zeroturnaround.exec: INFO
+            server:
+              adminConnectors:
+              - port: 8073
+                type: https
+              adminContextPath: /admin
+              applicationConnectors:
+              - port: 8072
+                type: https
+              applicationContextPath: /app
+              requestLog:
+                appenders:
+                - logFormat: '%clientHost %l %user [%date] "%requestURL" %statusCode "%header{User-Agent}"'
+                  type: console
+                - archivedLogFilenamePattern: /iq/log/iq-server/request-%d.log.gz
+                  currentLogFilename: /iq/log/iq-server/request.log
+                  logFormat: '%clientHost %l %user [%date] "%requestURL" %statusCode "%header{User-Agent}"'
+                  type: file
+            sonatypeWork: /iq/clm-server
+        documentIndex: 0

@@ -1,0 +1,45 @@
+{{- if .Values.fluentd.enabled }}
+{{- if .Values.iq_server.fluentd.forwarder.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-fluentd-sidecar-forwarder-configmap
+data:
+  fluentd: |
+    config:
+{{ regexReplaceAll "\\$\\{(.*)\\}" (tpl (toYaml .Values.fluentd.config.sidecar_forwarder | indent 6) $) "!fluent/s \"#{ENV['${1}']}\"" }}
+{{- end }}
+---
+{{- if .Values.fluentd.forwarder.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-fluentd-daemonset-forwarder-configmap
+data:
+  fluentd.yaml: |
+    config:
+{{ regexReplaceAll "\\$\\{(.*)\\}" (tpl (toYaml .Values.fluentd.config.daemonset_forwarder | indent 6) $) "!fluent/s \"#{ENV['${1}']}\"" }}
+{{- end }}
+---
+{{- if .Values.fluentd.aggregator.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-fluentd-aggregator-configmap
+data:
+  fluentd.yaml: |
+    config:
+{{ regexReplaceAll "\\$\\{(.*)\\}" (tpl (toYaml .Values.fluentd.config.aggregator | indent 6) $) "!fluent/s \"#{ENV['${1}']}\"" }}
+---
+{{- if .Values.cloudwatch.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudwatch
+data:
+  region: {{ .Values.cloudwatch.region }}
+  logGroupName: {{ .Values.cloudwatch.logGroupName }}
+  logStreamName: {{ .Values.cloudwatch.logStreamName }}
+{{- end }}
+{{- end }}
+{{- end }}

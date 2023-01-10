@@ -1,0 +1,136 @@
+{{- if .Values.postgresql.enabled }}
+{{- if and (.Values.postgresql.persistence.persistentVolumeName) (not .Values.postgresql.persistence.existingPersistentVolumeName) (not .Values.postgresql.persistence.existingPersistentVolumeClaimName) }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.postgresql.persistence.persistentVolumeName }}
+  annotations:
+    "helm.sh/resource-policy": {{ .Values.postgresql.persistence.persistentVolumeRetainPolicy }}
+spec:
+  volumeMode: Filesystem
+  storageClassName: {{- if .Values.postgresql.persistence.storageClassName }} {{ .Values.postgresql.persistence.storageClassName }} {{- else }} ""{{- end }}
+  persistentVolumeReclaimPolicy: {{- if eq .Values.postgresql.persistence.persistentVolumeRetainPolicy "delete" }} Delete {{- else }} Retain {{- end }}
+  claimRef:
+    namespace: {{ .Release.Namespace }}
+    name: {{ .Values.postgresql.persistence.persistentVolumeClaimName }}
+  capacity:
+    storage: {{ .Values.postgresql.persistence.size }}
+  accessModes:
+  {{- if .Values.postgresql.persistence.accessModes}}
+    {{- range .Values.postgresql.persistence.accessModes }}
+    - {{ . }}
+    {{- end}}
+  {{- else if and ((.Values.postgresql.persistence).hostPath).path ((.Values.postgresql.persistence).hostPath).type}}
+    - ReadWriteOnce
+  {{- else }}
+    - ReadWriteMany
+  {{- end }}
+  {{- if ((.Values.postgresql.persistence).cephfs).monitors }}
+  cephfs:
+    readOnly: false
+    {{- if .Values.postgresql.persistence.cephfs.path }}
+    path: {{ .Values.postgresql.persistence.cephfs.path }}
+    {{- end }}
+    {{- if .Values.postgresql.persistence.cephfs.secretFile }}
+    secretFile: {{ .Values.postgresql.persistence.cephfs.secretFile }}
+    {{- end }}
+    {{- if .Values.postgresql.persistence.cephfs.secretRef }}
+    secretRef: {{ .Values.postgresql.persistence.cephfs.secretRef }}
+    {{- end}}
+    {{- if .Values.postgresql.persistence.cephfs.user }}
+    user: {{ .Values.postgresql.persistence.cephfs.user }}
+    {{- end}}
+    monitors:
+      {{- range .Values.postgresql.persistence.cephfs.monitors }}
+      - {{ . }}
+      {{- end}}
+  {{- else if and (.Values.postgresql.persistence.csi).driver (.Values.postgresql.persistence.csi).volumeHandle }}
+  csi:
+    readOnly: false
+    driver: {{ .Values.postgresql.persistence.csi.driver }}
+    volumeHandle: {{ .Values.postgresql.persistence.csi.volumeHandle }}
+    fsType: {{ .Values.postgresql.persistence.csi.fsType }}
+    {{- if and (((.Values.postgresql.persistence).csi).controllerExpandSecretRef).namespace (((.Values.postgresql.persistence).csi).controllerExpandSecretRef).name }}
+    controllerExpandSecretRef:
+      namespace: {{ .Values.postgresql.persistence.csi.controllerExpandSecretRef.namespace }}
+      name: {{ .Values.postgresql.persistence.csi.controllerExpandSecretRef.name }}
+    {{- end}}
+    {{- if and (((.Values.postgresql.persistence).csi).controllerPublishSecretRef).namespace (((.Values.postgresql.persistence).csi).controllerPublishSecretRef).name }}
+    controllerPublishSecretRef:
+      namespace: {{ .Values.postgresql.persistence.csi.controllerPublishSecretRef.namespace }}
+      name: {{ .Values.postgresql.persistence.csi.controllerPublishSecretRef.name }}
+    {{- end}}
+    {{- if and (((.Values.postgresql.persistence).csi).nodePublishSecretRef).namespace (((.Values.postgresql.persistence).csi).nodePublishSecretRef).name }}
+    nodePublishSecretRef:
+      namespace: {{ .Values.postgresql.persistence.csi.nodePublishSecretRef.namespace }}
+      name: {{ .Values.postgresql.persistence.csi.nodePublishSecretRef.name }}
+    {{- end}}
+    {{- if and (((.Values.postgresql.persistence).csi).nodeStageSecretRef).namespace (((.Values.postgresql.persistence).csi).nodeStageSecretRef).name }}
+    nodeStageSecretRef:
+      namespace: {{ .Values.postgresql.persistence.csi.nodeStageSecretRef.namespace }}
+      name: {{ .Values.postgresql.persistence.csi.nodeStageSecretRef.name }}
+    {{- end}}
+    {{- if .Values.postgresql.persistence.csi.volumeAttributes }}
+    volumeAttributes:
+{{ toYaml .Values.postgresql.persistence.csi.volumeAttributes | nindent 6 }}
+    {{- end}}
+  {{- else if and ((.Values.postgresql.persistence).nfs).server ((.Values.postgresql.persistence).nfs).path }}
+  nfs:
+    readOnly: false
+    server: {{ .Values.postgresql.persistence.nfs.server }}
+    path: {{ .Values.postgresql.persistence.nfs.path }}
+  {{- else if and ((.Values.postgresql.persistence).hostPath).path ((.Values.postgresql.persistence).hostPath).type }}
+  hostPath:
+    path: {{ .Values.postgresql.persistence.hostPath.path }}
+    type: {{ .Values.postgresql.persistence.hostPath.type }}
+  {{- end}}
+  {{- if ((.Values.postgresql.persistence).nodeAffinity).nodeSelectorTerms }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+{{ toYaml .Values.postgresql.persistence.nodeAffinity.nodeSelectorTerms | nindent 8 }}
+  {{- end }}
+{{- end }}
+---
+{{- if and (.Values.postgresql.persistence.persistentVolumeClaimName) (not .Values.postgresql.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.postgresql.persistence.persistentVolumeClaimName }}
+  annotations:
+    "helm.sh/resource-policy": {{ .Values.postgresql.persistence.persistentVolumeClaimRetainPolicy }}
+spec:
+  volumeMode: Filesystem
+  storageClassName: {{- if .Values.postgresql.persistence.storageClassName }} {{ .Values.postgresql.persistence.storageClassName }} {{- else }} ""{{- end }}
+  accessModes:
+  {{- if .Values.postgresql.persistence.accessModes}}
+    {{- range .Values.postgresql.persistence.accessModes }}
+    - {{ . }}
+    {{- end}}
+  {{- else if and ((.Values.postgresql.persistence).hostPath).path ((.Values.postgresql.persistence).hostPath).type}}
+    - ReadWriteOnce
+  {{- else }}
+    - ReadWriteMany
+  {{- end }}
+  {{- if or (.Values.postgresql.persistence.existingPersistentVolumeName) (.Values.postgresql.persistence.persistentVolumeName) }}
+  volumeName: {{- if .Values.postgresql.persistence.existingPersistentVolumeName }} {{.Values.postgresql.persistence.existingPersistentVolumeName}}{{- else }} {{ .Values.postgresql.persistence.persistentVolumeName }}{{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.persistence.size }}
+  {{- if or (.Values.postgresql.persistence.matchLabels) (.Values.postgresql.persistence.matchExpressions) }}
+  selector:
+    {{- with .Values.postgresql.persistence.matchLabels }}
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- if .Values.postgresql.persistence.matchExpressions }}
+    matchExpressions:
+    {{- range .Values.postgresql.persistence.matchExpressions }}
+      - key: {{ .key }}
+        operator: {{ .operator }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

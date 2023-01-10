@@ -1,0 +1,173 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-iq-server-deployment
+spec:
+  replicas: {{ .Values.iq_server.replicas }}
+  selector:
+    matchLabels:
+      name: {{ .Release.Name }}-iq-server
+  template:
+    metadata:
+      labels:
+        name: {{ .Release.Name }}-iq-server
+    spec:
+      serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
+      volumes:
+        - name: {{ .Release.Name }}-iq-server-pod-volume
+          persistentVolumeClaim:
+            claimName: {{- if .Values.iq_server.persistence.existingPersistentVolumeClaimName }} {{ .Values.iq_server.persistence.existingPersistentVolumeClaimName }}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeClaimName }}{{- end }}
+        {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) }}
+        - name: {{ .Release.Name }}-iq-server-secrets-volume
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Release.Name }}-aws-secret-provider
+              fsType: ext4
+        {{- end }}
+        {{- if or (.Values.iq_server.licenseSecret) (.Values.iq_server.license) }}
+        - name: {{ .Release.Name }}-iq-server-pod-license-volume
+          secret:
+            secretName: {{- if .Values.iq_server.licenseSecret }} {{ .Values.iq_server.licenseSecret }}{{- else}} {{ .Release.Name }}-iq-server-license-secret{{- end}}
+        {{- end }}
+        - name: {{ .Release.Name }}-iq-server-pod-config-volume
+          configMap:
+            name: {{ .Release.Name }}-iq-server-config-configmap
+            items:
+              - key: config
+                path: config.yml
+        {{- if and (.Values.fluentd.enabled) (.Values.iq_server.fluentd.forwarder.enabled) }}
+        - name: {{ .Release.Name }}-iq-server-pod-logs
+          emptyDir: {}
+        - name: {{ .Release.Name }}-fluentd-pod-config-volume
+          configMap:
+            name: {{ .Release.Name }}-fluentd-sidecar-forwarder-configmap
+            items:
+              - key: fluentd
+                path: fluentd.yaml
+        {{- end }}
+      containers:
+        - name: {{ .Release.Name }}-iq-server-container
+          image: {{ .Values.iq_server.image }}:{{ .Values.iq_server.tag }}
+          imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
+          ports:
+            {{- range $index, $value := (.Values.iq_server.config.server.applicationConnectors) }}
+            - containerPort: {{ $value.port }}
+              name: application-{{- $index }}
+            {{- end }}
+            {{- range $index, $value := (.Values.iq_server.config.server.adminConnectors) }}
+            - containerPort: {{ $value.port }}
+              name: admin-{{- $index }}
+            {{- end }}
+          volumeMounts:
+            - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
+              name: {{ .Release.Name }}-iq-server-pod-volume
+            {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) }}
+            - mountPath: "/iq-secrets"
+              name: {{ .Release.Name }}-iq-server-secrets-volume
+              readOnly: true
+            {{- end }}
+            {{- if or (.Values.iq_server.licenseSecret) (.Values.iq_server.license) }}
+            - mountPath: "/license"
+              name: {{ .Release.Name }}-iq-server-pod-license-volume
+              readOnly: true
+            {{- end }}
+            - mountPath: "/etc/nexus-iq-server"
+              name: {{ .Release.Name }}-iq-server-pod-config-volume
+            {{- if and (.Values.fluentd.enabled) (.Values.iq_server.fluentd.forwarder.enabled) }}
+            - mountPath: "/var/log/nexus-iq-server"
+              name: {{ .Release.Name }}-iq-server-pod-logs
+            {{- end }}
+          env:
+            {{- if or (.Values.iq_server.licenseSecret) (.Values.iq_server.license) }}
+            - name: NXIQ_LICENSE_FILE
+              value: "/license/license_lic"
+            {{- else if .Values.secret.license.arn }}
+            - name: NXIQ_LICENSE_FILE
+              value: "/iq-secrets/license_lic"
+            {{- end }}
+            - name: NXIQ_INITIAL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{- if .Values.secret.arn }} "{{ .Release.Name }}-aws-secret"{{- else if .Values.iq_server.initialAdminPasswordSecret }} {{ .Values.iq_server.initialAdminPasswordSecret | quote }}{{- else }} "{{ .Release.Name }}-iq-server-initial-admin-password-secret"{{- end }}
+                  key: "password"
+            - name: NXIQ_DATABASE_HOSTNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{- if .Values.secret.rds.arn }} "{{ .Release.Name }}-aws-rds-secret"{{- else }} "{{ .Release.Name }}-iq-server-database-hostname-secret"{{- end }}
+                  key: "hostname"
+            - name: NXIQ_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{- if .Values.secret.rds.arn }} "{{ .Release.Name }}-aws-rds-secret"{{- else }} "{{.Release.Name }}-iq-server-database-port-secret"{{- end }}
+                  key: "port"
+            - name: NXIQ_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{- if .Values.secret.rds.arn }} "{{ .Release.Name }}-aws-rds-secret"{{- else }} "{{.Release.Name }}-iq-server-database-name-secret"{{- end }}
+                  key: "name"
+            - name: NXIQ_DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{- if .Values.secret.rds.arn }} "{{ .Release.Name }}-aws-rds-secret"{{- else }} "{{ .Release.Name }}-iq-server-database-username-secret"{{- end }}
+                  key: "username"
+            - name: NXIQ_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{- if .Values.secret.rds.arn }} "{{ .Release.Name }}-aws-rds-secret"{{- else if .Values.iq_server.database.passwordSecret }} {{ .Values.iq_server.database.passwordSecret | quote }}{{- else }} "{{ .Release.Name }}-iq-server-database-password-secret"{{- end }}
+                  key: "password"
+            - name: NXIQ_DATABASE_MIGRATION
+              value: "false"
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.iq_server.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.iq_server.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.iq_server.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.iq_server.readinessProbe.failureThreshold }}
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  {{- if .Values.iq_server.config.server.adminConnectors }}
+                    {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/database &&
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/clusterDirectory &&
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/workDirectory
+                    {{- end }}
+                  {{- end }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.iq_server.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.iq_server.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.iq_server.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.iq_server.livenessProbe.failureThreshold }}
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  {{- if .Values.iq_server.config.server.adminConnectors }}
+                    {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/threadDeadlock
+                    {{- end }}
+                  {{- end }}
+        {{- if and (.Values.fluentd.enabled) (.Values.iq_server.fluentd.forwarder.enabled) }}
+        - name: {{ .Release.Name }}-fluentd-container
+          image: {{ .Values.fluentd.image.repository }}:{{ .Values.fluentd.image.tag }}
+          imagePullPolicy: {{ .Values.fluentd.image.pullPolicy }}
+          volumeMounts:
+            - mountPath: "/opt/bitnami/fluentd/conf"
+              name: {{ .Release.Name }}-fluentd-pod-config-volume
+            - mountPath: "/var/log/nexus-iq-server"
+              name: {{ .Release.Name }}-iq-server-pod-logs
+          env:
+            - name: FLUENTD_CONF
+              value: fluentd.yaml
+        {{- end }}
+      initContainers:
+        - name: {{ .Release.Name }}-set-iq-persistence-ownership
+          image: busybox:1.28
+          command: ["sh", "-c", "chown -R 1000:1000 {{ .Values.iq_server.config.clusterDirectory }}"]
+          volumeMounts:
+            - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
+              name: {{ .Release.Name }}-iq-server-pod-volume

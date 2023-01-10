@@ -1,0 +1,338 @@
+suite: fluentd
+templates:
+  - fluentd-config.yaml
+tests:
+  - it: is enabled and renders with defaults
+    asserts:
+      - hasDocuments:
+          count: 2
+      # sidecar-forwarder
+      - isKind:
+          of: ConfigMap
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-fluentd-sidecar-forwarder-configmap
+        documentIndex: 0
+      - equal:
+          path: data.fluentd
+          value: |
+            config:
+              - match:
+                  $tag: fluent.**
+                  $type: "null"
+              - source:
+                  $type: http
+                  port: 9880
+              - match:
+                  $tag: fluent.healthcheck
+                  $type: stdout
+              - source:
+                  $type: tail
+                  parse:
+                    $type: regexp
+                    expression: /^(?<host>[^ ]*) (?<ident>[^ ]*) (?<authuser>[^ ]*) \[(?<logtime>[^\]]*)\]
+                      "(?<method>[^ ]*) (?<path>[^ ]*) (?<protocol>[^"]*)" (?<status>[^ ]*) (?<bytes>[^
+                      ]*) (?<time>[^ ]*) "(?<userAgent>[^"]*)"$/
+                    time_format: '%d/%b/%Y:%H:%M:%S %z'
+                    time_key: logtime
+                    types: status:integer,bytes:integer,time:integer
+                  path: /var/log/nexus-iq-server/request.log
+                  pos_file: /opt/bitnami/fluentd/logs/buffers/request.pos
+                  read_from_head: true
+                  tag: iq_server.request
+              - source:
+                  $type: tail
+                  parse:
+                    $type: json
+                    time_format: '%Y-%m-%dT%H:%M:%S.%L%z'
+                    time_format_fallbacks: '%Y-%m-%dT%H:%M:%S.%LZ'
+                    time_key: timestamp
+                    time_type: mixed
+                  path: /var/log/nexus-iq-server/audit.log
+                  pos_file: /opt/bitnami/fluentd/logs/buffers/audit.pos
+                  read_from_head: true
+                  tag: iq_server.audit
+              - source:
+                  $type: tail
+                  parse:
+                    $type: json
+                    time_format: '%Y-%m-%dT%H:%M:%S.%L%z'
+                    time_format_fallbacks: '%Y-%m-%dT%H:%M:%S.%LZ'
+                    time_key: eventTimestamp
+                    time_type: mixed
+                  path: /var/log/nexus-iq-server/policy-violation.log
+                  pos_file: /opt/bitnami/fluentd/logs/buffers/policy-violation.pos
+                  read_from_head: true
+                  tag: iq_server.policy-violation
+              - source:
+                  $type: tail
+                  parse:
+                    $type: regexp
+                    expression: /^((?<logtime>[^ ]* [^ ]*) (?<level>[^ ]*) \[(?<thread>[^\]]*)\]
+                      (?<username>[^ ]*) (?<logger>[^ ]*) - (?<message>.*))|(?<message>.*)$/
+                    time_format: '%Y-%m-%d %H:%M:%S,%L%z'
+                    time_key: logtime
+                  path: /var/log/nexus-iq-server/clm-server.log
+                  pos_file: /opt/bitnami/fluentd/logs/buffers/clm-server.pos
+                  read_from_head: true
+                  tag: iq_server.clm-server
+              - source:
+                  $type: tail
+                  parse:
+                    $type: none
+                  path: /var/log/nexus-iq-server/stderr.log
+                  pos_file: /opt/bitnami/fluentd/logs/buffers/stderr.pos
+                  read_from_head: true
+                  tag: iq_server.stderr
+              - filter:
+                  $tag: '**'
+                  $type: record_transformer
+                  record:
+                    hostname: !fluent/s "#{ENV['HOSTNAME']}"
+              - match:
+                  $tag: '**'
+                  $type: forward
+                  buffer:
+                    $type: file
+                    flush_interval: 5s
+                    flush_thread_count: 2
+                    path: /opt/bitnami/fluentd/logs/buffers/logs.buffer
+                  server:
+                    host: 'RELEASE-NAME-fluentd-aggregator'
+                    port: 24224
+        documentIndex: 0
+      # aggregator
+      - isKind:
+          of: ConfigMap
+        documentIndex: 1
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-fluentd-aggregator-configmap
+        documentIndex: 1
+      - equal:
+          path: data.[fluentd.yaml]
+          value: |
+            config:
+              - match:
+                  $tag: fluent.**
+                  $type: "null"
+              - source:
+                  $type: http
+                  port: 9880
+              - match:
+                  $tag: fluent.healthcheck
+                  $type: stdout
+              - source:
+                  $type: forward
+                  port: 24224
+              - match:
+                  $tag: iq_server.request
+                  $type: copy
+                  store:
+                  - $type: stdout
+                  - $type: file
+                    append: true
+                    buffer:
+                      $type: file
+                      flush_interval: 5s
+                      flush_mode: interval
+                      flush_thread_count: 2
+                      path: /opt/bitnami/fluentd/logs/buffers/request.buffer
+                    format:
+                      $type: json
+                    inject:
+                      tag_key: fluentd_tag
+                      time_format: '%Y-%m-%dT%H:%M:%S.%NZ'
+                      time_key: time
+                      time_type: string
+                    path: /opt/bitnami/fluentd/logs/nexus-iq-server/request
+                  - $type: 'null'
+                    auto_create_group: true
+                    auto_create_stream: true
+                    log_group_name: !fluent/s "#{ENV['LOG_GROUP_NAME']}"
+                    log_stream_name: !fluent/s "#{ENV['LOG_STREAM_NAME']}"
+                    region: !fluent/s "#{ENV['REGION']}"
+                    remove_log_stream_name_key: true
+              - match:
+                  $tag: iq_server.audit
+                  $type: copy
+                  store:
+                  - $type: stdout
+                  - $type: file
+                    append: true
+                    buffer:
+                      $type: file
+                      flush_interval: 5s
+                      flush_mode: interval
+                      flush_thread_count: 2
+                      path: /opt/bitnami/fluentd/logs/buffers/audit.buffer
+                    format:
+                      $type: json
+                    inject:
+                      tag_key: fluentd_tag
+                      time_format: '%Y-%m-%dT%H:%M:%S.%NZ'
+                      time_key: time
+                      time_type: string
+                    path: /opt/bitnami/fluentd/logs/nexus-iq-server/audit
+                  - $type: 'null'
+                    auto_create_group: true
+                    auto_create_stream: true
+                    log_group_name: !fluent/s "#{ENV['LOG_GROUP_NAME']}"
+                    log_stream_name: !fluent/s "#{ENV['LOG_STREAM_NAME']}"
+                    region: !fluent/s "#{ENV['REGION']}"
+                    remove_log_stream_name_key: true
+              - match:
+                  $tag: iq_server.policy-violation
+                  $type: copy
+                  store:
+                  - $type: stdout
+                  - $type: file
+                    append: true
+                    buffer:
+                      $type: file
+                      flush_interval: 5s
+                      flush_mode: interval
+                      flush_thread_count: 2
+                      path: /opt/bitnami/fluentd/logs/buffers/policy-violation.buffer
+                    format:
+                      $type: json
+                    inject:
+                      tag_key: fluentd_tag
+                      time_format: '%Y-%m-%dT%H:%M:%S.%NZ'
+                      time_key: time
+                      time_type: string
+                    path: /opt/bitnami/fluentd/logs/nexus-iq-server/policy-violation
+                  - $type: 'null'
+                    auto_create_group: true
+                    auto_create_stream: true
+                    log_group_name: !fluent/s "#{ENV['LOG_GROUP_NAME']}"
+                    log_stream_name: !fluent/s "#{ENV['LOG_STREAM_NAME']}"
+                    region: !fluent/s "#{ENV['REGION']}"
+                    remove_log_stream_name_key: true
+              - match:
+                  $tag: iq_server.clm-server
+                  $type: copy
+                  store:
+                  - $type: stdout
+                  - $type: file
+                    append: true
+                    buffer:
+                      $type: file
+                      flush_interval: 5s
+                      flush_mode: interval
+                      flush_thread_count: 2
+                      path: /opt/bitnami/fluentd/logs/buffers/clm-server.buffer
+                    format:
+                      $type: json
+                    inject:
+                      tag_key: fluentd_tag
+                      time_format: '%Y-%m-%dT%H:%M:%S.%NZ'
+                      time_key: time
+                      time_type: string
+                    path: /opt/bitnami/fluentd/logs/nexus-iq-server/clm-server
+                  - $type: 'null'
+                    auto_create_group: true
+                    auto_create_stream: true
+                    log_group_name: !fluent/s "#{ENV['LOG_GROUP_NAME']}"
+                    log_stream_name: !fluent/s "#{ENV['LOG_STREAM_NAME']}"
+                    region: !fluent/s "#{ENV['REGION']}"
+                    remove_log_stream_name_key: true
+              - match:
+                  $tag: iq_server.stderr
+                  $type: copy
+                  store:
+                  - $type: stdout
+                  - $type: file
+                    append: true
+                    buffer:
+                      $type: file
+                      flush_interval: 5s
+                      flush_mode: interval
+                      flush_thread_count: 2
+                      path: /opt/bitnami/fluentd/logs/buffers/stderr.buffer
+                    format:
+                      $type: json
+                    inject:
+                      tag_key: fluentd_tag
+                      time_format: '%Y-%m-%dT%H:%M:%S.%NZ'
+                      time_key: time
+                      time_type: string
+                    path: /opt/bitnami/fluentd/logs/nexus-iq-server/stderr
+                  - $type: 'null'
+                    auto_create_group: true
+                    auto_create_stream: true
+                    log_group_name: !fluent/s "#{ENV['LOG_GROUP_NAME']}"
+                    log_stream_name: !fluent/s "#{ENV['LOG_STREAM_NAME']}"
+                    region: !fluent/s "#{ENV['REGION']}"
+                    remove_log_stream_name_key: true
+        documentIndex: 1
+
+  - it: renders as expected when fluentd, forwarder and aggregator are all enabled
+    set:
+      fluentd:
+        enabled: true
+        forwarder:
+          enabled: true
+        aggregator:
+          enabled: true
+      iq_server:
+        fluentd:
+          forwarder:
+            enabled: true
+    asserts:
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-fluentd-sidecar-forwarder-configmap
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-fluentd-daemonset-forwarder-configmap
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-fluentd-aggregator-configmap
+        documentIndex: 2
+
+  - it: renders as expected when fluentd and forwarder are enabled, but iq fluentd forwarder and aggregator are disabled
+    set:
+      fluentd:
+        enabled: true
+        forwarder:
+          enabled: true
+        aggregator:
+          enabled: false
+      iq_server:
+        fluentd:
+          forwarder:
+            enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-fluentd-daemonset-forwarder-configmap
+        documentIndex: 0
+      - equal:
+          path: data.[fluentd.yaml]
+          value: |
+            config:
+              null
+
+  - it: renders as expected when fluentd is completely disabled
+    set:
+      fluentd:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

@@ -1,0 +1,144 @@
+suite: iq-server-service
+templates:
+  - iq-server-pvc.yaml
+tests:
+  - it: renders with defaults
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PersistentVolumeClaim
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: iq-server-pvc
+        documentIndex: 0
+      - equal:
+          path: metadata.annotations
+          value:
+            "helm.sh/resource-policy": keep
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+            storageClassName: ""
+            volumeMode: Filesystem
+            volumeName: iq-server-pv
+        documentIndex: 0
+
+  - it: renders with overridden values
+    set:
+      iq_server:
+        persistence:
+          persistentVolumeName: "iq-server-pv-1"
+          persistentVolumeClaimName: "iq-server-pvc-1"
+          persistentVolumeClaimRetainPolicy: "delete"
+          size: "2Gi"
+          hostPath:
+            path: "/mnt/iq"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: iq-server-pvc-1
+        documentIndex: 0
+      - equal:
+          path: metadata.annotations
+          value:
+            "helm.sh/resource-policy": delete
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 2Gi
+            storageClassName: ""
+            volumeMode: Filesystem
+            volumeName: iq-server-pv-1
+        documentIndex: 0
+
+  - it: can set access modes
+    set:
+      iq_server:
+        persistence:
+          accessModes:
+            - "access1"
+            - "access2"
+    asserts:
+      - equal:
+          path: spec.accessModes
+          value:
+            - access1
+            - access2
+        documentIndex: 0
+
+  - it: sets matchLabels
+    set:
+      iq_server:
+        persistence:
+          matchLabels:
+            label1: value1
+            label2: value2
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels.label1
+          value: value1
+        documentIndex: 0
+      - equal:
+          path: spec.selector.matchLabels.label2
+          value: value2
+        documentIndex: 0
+  - it: sets matchExpressions
+    set:
+      iq_server:
+        persistence:
+          matchExpressions:
+            - key: key1
+              operator: operator1
+            - key: key2
+              operator: operator2
+    asserts:
+      - equal:
+          path: spec.selector.matchExpressions[0]
+          value:
+            key: key1
+            operator: operator1
+        documentIndex: 0
+      - equal:
+          path: spec.selector.matchExpressions[1]
+          value:
+            key: key2
+            operator: operator2
+        documentIndex: 0
+
+  - it: does create PVC if name is given
+    set:
+      iq_server:
+        persistence:
+          persistentVolumeClaimName: "pvc-name"
+    asserts:
+      - isKind:
+          of: PersistentVolumeClaim
+        documentIndex: 0
+
+  - it: does not create PVC if name is not given
+    set:
+      iq_server:
+        persistence:
+          persistentVolumeClaimName: ""
+    asserts:
+      - hasDocuments:
+          count: 0

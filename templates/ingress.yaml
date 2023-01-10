@@ -1,0 +1,83 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-configmap
+data:
+{{- if .Values.ingress.tls }}
+{{- with (index .Values.ingress.tls 0) }}
+  INGRESS_SECRET_NAME: {{- if .secretName }} {{ .secretName }} {{- else }} ingress-tls-secret-0 {{- end }}
+{{- end }}
+{{- else }}
+  INGRESS_SECRET_NAME: ingress-tls-secret-0
+{{- end }}
+---
+{{- range $index, $value := (.Values.ingress.tls) }}
+{{- if and ($value.certificate) ($value.key) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ingress-tls-secret-{{- $index }}
+type: kubernetes.io/tls
+data:
+  tls.crt: |-
+{{ $value.certificate | b64enc | indent 6 }}
+  tls.key: |-
+{{ $value.key | b64enc | indent 6 }}
+{{- end }}
+{{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-ingress
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range $index, $value := (.Values.ingress.tls) }}
+    - hosts:
+      {{- range $value.hosts }}
+      - {{ . | quote }}
+      {{- end }}
+      secretName: {{- if $value.secretName }}
+                    {{ $value.secretName }} {{- else }} ingress-tls-secret-{{- $index }}
+                  {{- end }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - http:
+        paths:
+          - path: {{- if .Values.ingress.hostApplicationPath}} {{ .Values.ingress.hostApplicationPath }}{{- else }} /{{ include "trimSpaceAndForwardSlashes" .Values.iq_server.config.server.applicationContextPath }}{{- end }}
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Release.Name }}-iq-server-service
+                port:
+                  {{- with index .Values.iq_server.config.server.applicationConnectors 0 }}
+                  number: {{ .port }}
+                  {{- end }}
+      {{- if .Values.ingress.hostApplication }}
+      host: {{ .Values.ingress.hostApplication }}
+      {{- end }}
+    - http:
+        paths:
+          - path: {{- if .Values.ingress.hostAdminPath}} {{ .Values.ingress.hostAdminPath }}{{- else }} /{{ include "trimSpaceAndForwardSlashes" .Values.iq_server.config.server.adminContextPath }}{{- end }}
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Release.Name }}-iq-server-service
+                port:
+                  {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
+                  number: {{ .port }}
+                  {{- end }}
+      {{- if .Values.ingress.hostAdmin }}
+      host: {{ .Values.ingress.hostAdmin }}
+      {{- end }}
+{{- end }}

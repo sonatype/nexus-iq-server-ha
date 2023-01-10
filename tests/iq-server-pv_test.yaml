@@ -1,0 +1,262 @@
+suite: iq-server-service
+templates:
+  - iq-server-pv.yaml
+tests:
+  - it: renders with defaults
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PersistentVolume
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: iq-server-pv
+        documentIndex: 0
+      - equal:
+          path: metadata.annotations
+          value:
+            "helm.sh/resource-policy": keep
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            accessModes:
+              - ReadWriteOnce
+            capacity:
+              storage: 1Gi
+            claimRef:
+              name: iq-server-pvc
+              namespace: NAMESPACE
+            hostPath:
+              path: /mnt/iq-server
+              type: DirectoryOrCreate
+            persistentVolumeReclaimPolicy: Retain
+            storageClassName: ""
+            volumeMode: Filesystem
+        documentIndex: 0
+
+  - it: renders with overridden values
+    set:
+      iq_server:
+        persistence:
+          persistentVolumeName: "iq-server-pv-1"
+          persistentVolumeRetainPolicy: "delete"
+          size: "2Gi"
+          hostPath:
+            path: "/mnt/iq"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: iq-server-pv-1
+        documentIndex: 0
+      - equal:
+          path: metadata.annotations
+          value:
+            "helm.sh/resource-policy": delete
+        documentIndex: 0
+      - equal:
+          path: spec.capacity.storage
+          value: 2Gi
+        documentIndex: 0
+      - equal:
+          path: spec.hostPath.path
+          value: /mnt/iq
+        documentIndex: 0
+
+  - it: does create PV if name is given
+    set:
+      iq_server:
+        persistence:
+          persistentVolumeName: "pv-name"
+    asserts:
+      - isKind:
+          of: PersistentVolume
+        documentIndex: 0
+
+  - it: does not create PV if name is not given
+    set:
+      iq_server:
+        persistence:
+          persistentVolumeName: ""
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: can set access modes
+    set:
+      iq_server:
+        persistence:
+          accessModes:
+            - "access1"
+            - "access2"
+    asserts:
+      - equal:
+          path: spec.accessModes
+          value:
+            - access1
+            - access2
+        documentIndex: 0
+
+  - it: can set cephfs minimal
+    set:
+      iq_server:
+        persistence:
+          cephfs:
+            monitors:
+              - "monitor1"
+              - "monitor2"
+    asserts:
+      - equal:
+          path: spec.cephfs
+          value:
+            readOnly: false
+            monitors:
+              - "monitor1"
+              - "monitor2"
+        documentIndex: 0
+
+  - it: can set csi minimal
+    set:
+      iq_server:
+        persistence:
+          csi:
+            driver: "someDriver"
+            volumeHandle: "someVolumeHandle"
+            fsType: "someFsType"
+    asserts:
+      - equal:
+          path: spec.csi
+          value:
+            readOnly: false
+            driver: "someDriver"
+            volumeHandle: "someVolumeHandle"
+            fsType: "someFsType"
+        documentIndex: 0
+
+  - it: can set csi full
+    set:
+      iq_server:
+        persistence:
+          csi:
+            driver: "someDriver"
+            volumeHandle: "someVolumeHandle"
+            fsType: "someFsType"
+            controllerExpandSecretRef:
+              namespace: "ns1"
+              name: "n1"
+            controllerPublishSecretRef:
+              namespace: "ns2"
+              name: "n2"
+            nodePublishSecretRef:
+              namespace: "ns3"
+              name: "n3"
+            nodeStageSecretRef:
+              namespace: "ns4"
+              name: "n4"
+            volumeAttributes:
+              attributeName1: attributeValue1
+              attributeName2: attributeValue2
+    asserts:
+      - equal:
+          path: spec.csi
+          value:
+            readOnly: false
+            driver: "someDriver"
+            volumeHandle: "someVolumeHandle"
+            fsType: "someFsType"
+            controllerExpandSecretRef:
+              namespace: "ns1"
+              name: "n1"
+            controllerPublishSecretRef:
+              namespace: "ns2"
+              name: "n2"
+            nodePublishSecretRef:
+              namespace: "ns3"
+              name: "n3"
+            nodeStageSecretRef:
+              namespace: "ns4"
+              name: "n4"
+            volumeAttributes:
+              attributeName1: attributeValue1
+              attributeName2: attributeValue2
+        documentIndex: 0
+
+  - it: can set nfs
+    set:
+      iq_server:
+        persistence:
+          nfs:
+            server: "someServer"
+            path: "somePath"
+    asserts:
+      - equal:
+          path: spec.nfs
+          value:
+            readOnly: false
+            server: "someServer"
+            path: "somePath"
+        documentIndex: 0
+
+  - it: can set hostPath
+    set:
+      iq_server:
+        persistence:
+          hostPath:
+            path: "somePath"
+            type: "someType"
+    asserts:
+      - equal:
+          path: spec.hostPath
+          value:
+            path: "somePath"
+            type: "someType"
+        documentIndex: 0
+
+  - it: can set nodeSelectorTerms
+    set:
+      iq_server:
+        persistence:
+          nodeAffinity:
+            nodeSelectorTerms:
+              term1: value1
+              term2: value2
+    asserts:
+      - equal:
+          path: spec.nodeAffinity.required.nodeSelectorTerms
+          value:
+            term1: value1
+            term2: value2
+        documentIndex: 0
+
+  - it: can set cephfs full
+    set:
+      iq_server:
+        persistence:
+          cephfs:
+            monitors:
+              - "monitor1"
+              - "monitor2"
+            path: "somePath"
+            secretFile: "someSecretFile"
+            secretRef: "someSecretRef"
+            user: "someUser"
+    asserts:
+      - equal:
+          path: spec.cephfs
+          value:
+            readOnly: false
+            monitors:
+              - "monitor1"
+              - "monitor2"
+            path: "somePath"
+            secretFile: "someSecretFile"
+            secretRef: "someSecretRef"
+            user: "someUser"
+        documentIndex: 0

@@ -1,0 +1,71 @@
+suite: iq-server-service
+templates:
+  - iq-server-service.yaml
+tests:
+  - it: renders with defaults
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-iq-server-service
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            ports:
+              - name: iq-server-app-port-0
+                port: 8070
+                protocol: TCP
+                targetPort: application-0
+              - name: iq-server-adm-port-0
+                port: 8071
+                protocol: TCP
+                targetPort: admin-0
+            selector:
+              name: RELEASE-NAME-iq-server
+            type: ClusterIP
+        documentIndex: 0
+
+  - it: renders with overridden values
+    set:
+      iq_server:
+        serviceType: NodePort
+        config:
+          server:
+            applicationConnectors:
+              - port: 8072
+                type: https
+            adminConnectors:
+              - port: 8073
+                type: https
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-iq-server-service
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            ports:
+              - name: iq-server-app-port-0
+                port: 8072
+                protocol: TCP
+                targetPort: application-0
+              - name: iq-server-adm-port-0
+                port: 8073
+                protocol: TCP
+                targetPort: admin-0
+            selector:
+              name: RELEASE-NAME-iq-server
+            type: NodePort
+        documentIndex: 0

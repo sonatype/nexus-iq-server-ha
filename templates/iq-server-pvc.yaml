@@ -1,0 +1,41 @@
+{{- if and (.Values.iq_server.persistence.persistentVolumeClaimName) (not .Values.iq_server.persistence.existingPersistentVolumeClaimName) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.iq_server.persistence.persistentVolumeClaimName }}
+  annotations:
+    "helm.sh/resource-policy": {{ .Values.iq_server.persistence.persistentVolumeClaimRetainPolicy }}
+spec:
+  volumeMode: Filesystem
+  storageClassName: {{- if .Values.iq_server.persistence.storageClassName }} {{ .Values.iq_server.persistence.storageClassName }} {{- else }} ""{{- end }}
+  accessModes:
+  {{- if .Values.iq_server.persistence.accessModes}}
+    {{- range .Values.iq_server.persistence.accessModes }}
+    - {{ . }}
+    {{- end}}
+  {{- else if and ((.Values.iq_server.persistence).hostPath).path ((.Values.iq_server.persistence).hostPath).type}}
+    - ReadWriteOnce
+  {{- else }}
+    - ReadWriteMany
+  {{- end }}
+  {{- if or (.Values.iq_server.persistence.existingPersistentVolumeName) (.Values.iq_server.persistence.persistentVolumeName) }}
+  volumeName: {{- if .Values.iq_server.persistence.existingPersistentVolumeName }} {{.Values.iq_server.persistence.existingPersistentVolumeName}}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeName }}{{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.iq_server.persistence.size }}
+  {{- if or (.Values.iq_server.persistence.matchLabels) (.Values.iq_server.persistence.matchExpressions) }}
+  selector:
+    {{- with .Values.iq_server.persistence.matchLabels }}
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- if .Values.iq_server.persistence.matchExpressions }}
+    matchExpressions:
+    {{- range .Values.iq_server.persistence.matchExpressions }}
+      - key: {{ .key }}
+        operator: {{ .operator }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

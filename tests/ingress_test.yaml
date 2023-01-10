@@ -1,0 +1,299 @@
+suite: ingress
+templates:
+  - ingress.yaml
+tests:
+  - it: is disabled by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is disabled when explicitly disabled
+    set:
+      ingress:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders with defaults when ingres is enabled
+    set:
+      ingress:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      # ingress-configmap
+      - isKind:
+          of: ConfigMap
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: ingress-configmap
+        documentIndex: 0
+      - equal:
+          path: data.INGRESS_SECRET_NAME
+          value: ingress-tls-secret-0
+        documentIndex: 0
+      # RELEASE-NAME-ingress
+      - isKind:
+          of: Ingress
+        documentIndex: 1
+      - equal:
+          path: apiVersion
+          value: networking.k8s.io/v1
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-ingress
+        documentIndex: 1
+      - equal:
+          path: metadata.annotations
+          value: null
+        documentIndex: 1
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+        documentIndex: 1
+      # tls
+      - equal:
+          path: spec.tls
+          value: null
+        documentIndex: 1
+      # host 1
+      - equal:
+          path: spec.rules[0].host
+          value: null
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: RELEASE-NAME-iq-server-service
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8070
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+        documentIndex: 1
+      # host 2
+      - equal:
+          path: spec.rules[1].host
+          value: null
+        documentIndex: 1
+      - equal:
+          path: spec.rules[1].http.paths[0].backend.service.name
+          value: RELEASE-NAME-iq-server-service
+        documentIndex: 1
+      - equal:
+          path: spec.rules[1].http.paths[0].backend.service.port.number
+          value: 8071
+        documentIndex: 1
+      - equal:
+          path: spec.rules[1].http.paths[0].path
+          value: /
+        documentIndex: 1
+      - equal:
+          path: spec.rules[1].http.paths[0].pathType
+          value: Prefix
+        documentIndex: 1
+
+  - it: renders with overridden values
+    set:
+      iq_server:
+        config:
+          server:
+            applicationContextPath: /app
+            applicationConnectors:
+              - type: http
+                port: 8072
+            adminContextPath: /admin
+            adminConnectors:
+              - type: http
+                port: 8073
+      ingress:
+        enabled: true
+        tls:
+          - secretName: "ingress-tls-secret"
+            hosts: [ "iq.hostname" ]
+            key: "key"
+            certificate: "certificate"
+        annotations: "some annotations"
+    asserts:
+      - hasDocuments:
+          count: 3
+      # ingress-configmap
+      - isKind:
+          of: ConfigMap
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: ingress-configmap
+        documentIndex: 0
+      - equal:
+          path: data.INGRESS_SECRET_NAME
+          value: ingress-tls-secret
+        documentIndex: 0
+      # ingress-tls-secret-0
+      - isKind:
+          of: Secret
+        documentIndex: 1
+      - equal:
+          path: apiVersion
+          value: v1
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: ingress-tls-secret-0
+        documentIndex: 1
+      - equal:
+          path: type
+          value: kubernetes.io/tls
+        documentIndex: 1
+      # RELEASE-NAME-ingress
+      - isKind:
+          of: Ingress
+        documentIndex: 2
+      - equal:
+          path: apiVersion
+          value: networking.k8s.io/v1
+        documentIndex: 2
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-ingress
+        documentIndex: 2
+      - equal:
+          path: metadata.annotations
+          value: "some annotations"
+        documentIndex: 2
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+        documentIndex: 2
+      # tls
+      - equal:
+          path: spec.tls[0].hosts[0]
+          value: iq.hostname
+        documentIndex: 2
+      - equal:
+          path: spec.tls[0].secretName
+          value: ingress-tls-secret
+        documentIndex: 2
+      # host 1
+      - equal:
+          path: spec.rules[0].host
+          value: null
+        documentIndex: 2
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: RELEASE-NAME-iq-server-service
+        documentIndex: 2
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8072
+        documentIndex: 2
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /app
+        documentIndex: 2
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+        documentIndex: 2
+      # host 2
+      - equal:
+          path: spec.rules[1].host
+          value: null
+        documentIndex: 2
+      - equal:
+          path: spec.rules[1].http.paths[0].backend.service.name
+          value: RELEASE-NAME-iq-server-service
+        documentIndex: 2
+      - equal:
+          path: spec.rules[1].http.paths[0].backend.service.port.number
+          value: 8073
+        documentIndex: 2
+      - equal:
+          path: spec.rules[1].http.paths[0].path
+          value: /admin
+        documentIndex: 2
+      - equal:
+          path: spec.rules[1].http.paths[0].pathType
+          value: Prefix
+        documentIndex: 2
+
+  - it: renders with tls config when provided
+    set:
+      ingress:
+        enabled: true
+        tls:
+          - secretName: "ingress-tls-secret"
+            hosts: [ "iq.hostname" ]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: ingress-configmap
+        documentIndex: 0
+      - equal:
+          path: data.INGRESS_SECRET_NAME
+          value: ingress-tls-secret
+        documentIndex: 0
+      - equal:
+          path: spec.tls
+          value:
+            - secretName: "ingress-tls-secret"
+              hosts:
+                - iq.hostname
+        documentIndex: 1
+  - it: takes hostApplicationPath and hostAdminPath over IQ Server config
+    set:
+      iq_server:
+        config:
+          server:
+            applicationContextPath: /app
+            applicationConnectors:
+              - type: http
+                port: 8072
+            adminContextPath: /admin
+            adminConnectors:
+              - type: http
+                port: 8073
+      ingress:
+        enabled: true
+        hostApplicationPath: /app/*
+        hostAdminPath: /admin/*
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /app/*
+        documentIndex: 1
+      - equal:
+          path: spec.rules[1].http.paths[0].path
+          value: /admin/*
+        documentIndex: 1
+  - it: sets pathType
+    set:
+      ingress:
+        enabled: true
+        pathType: ImplementationSpecific
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: ImplementationSpecific
+        documentIndex: 1
+      - equal:
+          path: spec.rules[1].http.paths[0].pathType
+          value: ImplementationSpecific
+        documentIndex: 1

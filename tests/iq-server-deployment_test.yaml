@@ -1,0 +1,541 @@
+suite: iq-server-service
+templates:
+  - iq-server-deployment.yaml
+tests:
+  - it: renders with defaults
+    set:
+      iq_server:
+        tag: "1.148.0"   # force version tag so tests do not have to be updated every time we update IQ server version
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: apps/v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-iq-server-deployment
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            replicas: 2
+            selector:
+              matchLabels:
+                name: RELEASE-NAME-iq-server
+            template:
+              metadata:
+                labels:
+                  name: RELEASE-NAME-iq-server
+              spec:
+                serviceAccountName: default
+                containers:
+                  - env:
+                      - name: NXIQ_INITIAL_ADMIN_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            key: password
+                            name: RELEASE-NAME-iq-server-initial-admin-password-secret
+                      - name: NXIQ_DATABASE_HOSTNAME
+                        valueFrom:
+                          secretKeyRef:
+                            key: hostname
+                            name: RELEASE-NAME-iq-server-database-hostname-secret
+                      - name: NXIQ_DATABASE_PORT
+                        valueFrom:
+                          secretKeyRef:
+                            key: port
+                            name: RELEASE-NAME-iq-server-database-port-secret
+                      - name: NXIQ_DATABASE_NAME
+                        valueFrom:
+                          secretKeyRef:
+                            key: name
+                            name: RELEASE-NAME-iq-server-database-name-secret
+                      - name: NXIQ_DATABASE_USERNAME
+                        valueFrom:
+                          secretKeyRef:
+                            key: username
+                            name: RELEASE-NAME-iq-server-database-username-secret
+                      - name: NXIQ_DATABASE_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            key: password
+                            name: RELEASE-NAME-iq-server-database-password-secret
+                      - name: NXIQ_DATABASE_MIGRATION
+                        value: "false"
+                    image: sonatype/nexus-iq-server:1.148.0
+                    imagePullPolicy: IfNotPresent
+                    livenessProbe:
+                      exec:
+                        command:
+                          - /bin/sh
+                          - -c
+                          - |
+                            curl -If http://localhost:8071/healthcheck/threadDeadlock
+                      failureThreshold: 3
+                      initialDelaySeconds: 180
+                      periodSeconds: 20
+                      timeoutSeconds: 3
+                    name: RELEASE-NAME-iq-server-container
+                    ports:
+                      - containerPort: 8070
+                        name: application-0
+                      - containerPort: 8071
+                        name: admin-0
+                    readinessProbe:
+                      exec:
+                        command:
+                          - /bin/sh
+                          - -c
+                          - |
+                            curl -If http://localhost:8071/healthcheck/database &&
+                            curl -If http://localhost:8071/healthcheck/clusterDirectory &&
+                            curl -If http://localhost:8071/healthcheck/workDirectory
+                      failureThreshold: 4
+                      initialDelaySeconds: 45
+                      periodSeconds: 15
+                      timeoutSeconds: 5
+                    volumeMounts:
+                      - mountPath: /sonatype-work/clm-cluster
+                        name: RELEASE-NAME-iq-server-pod-volume
+                      - mountPath: /etc/nexus-iq-server
+                        name: RELEASE-NAME-iq-server-pod-config-volume
+                      - mountPath: /var/log/nexus-iq-server
+                        name: RELEASE-NAME-iq-server-pod-logs
+                  - env:
+                      - name: FLUENTD_CONF
+                        value: fluentd.yaml
+                    image: bitnami/fluentd:1.15.3-debian-11-r1
+                    imagePullPolicy: IfNotPresent
+                    name: RELEASE-NAME-fluentd-container
+                    volumeMounts:
+                      - mountPath: /opt/bitnami/fluentd/conf
+                        name: RELEASE-NAME-fluentd-pod-config-volume
+                      - mountPath: /var/log/nexus-iq-server
+                        name: RELEASE-NAME-iq-server-pod-logs
+                initContainers:
+                  - command:
+                      - sh
+                      - -c
+                      - chown -R 1000:1000 /sonatype-work/clm-cluster
+                    image: busybox:1.28
+                    name: RELEASE-NAME-set-iq-persistence-ownership
+                    volumeMounts:
+                      - mountPath: /sonatype-work/clm-cluster
+                        name: RELEASE-NAME-iq-server-pod-volume
+                volumes:
+                  - name: RELEASE-NAME-iq-server-pod-volume
+                    persistentVolumeClaim:
+                      claimName: iq-server-pvc
+                  - configMap:
+                      items:
+                        - key: config
+                          path: config.yml
+                      name: RELEASE-NAME-iq-server-config-configmap
+                    name: RELEASE-NAME-iq-server-pod-config-volume
+                  - emptyDir: { }
+                    name: RELEASE-NAME-iq-server-pod-logs
+                  - configMap:
+                      items:
+                        - key: fluentd
+                          path: fluentd.yaml
+                      name: RELEASE-NAME-fluentd-sidecar-forwarder-configmap
+                    name: RELEASE-NAME-fluentd-pod-config-volume
+        documentIndex: 0
+
+  - it: renders with overridden values
+    set:
+      iq_server:
+        serviceAccountName: "my-service-account"
+        image: "sonatype/iq-server-new"
+        imagePullPolicy: "Always"
+        tag: "1.142.0"
+        persistence:
+          size: "2Gi"
+          hostPath:
+            path: "/mnt/iq"
+        license: "/iq.lic"
+        replicas: 1
+        initialAdminPassword: "admin!234"
+        readinessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 2
+        livenessProbe:
+          initialDelaySeconds: 300
+          periodSeconds: 60
+          timeoutSeconds: 2
+          failureThreshold: 2
+        database:
+          hostname: "iq_host"
+          port: 54322
+          name: "iq_db"
+          username: "pg"
+          password: "pwd"
+        config:
+          sonatypeWork: "/iq/clm-server"
+          clusterDirectory: "/iq/clm-cluster"
+          licenseFile: "lic.lic"
+          server:
+            applicationContextPath: /app
+            applicationConnectors:
+              - port: 8072
+                type: https
+            adminContextPath: /admin
+            adminConnectors:
+              - port: 8073
+                type: https
+            requestLog:
+              appenders:
+                - type: console
+                  logFormat: "%clientHost %l %user [%date] \"%requestURL\" %statusCode \"%header{User-Agent}\""
+                - type: file
+                  currentLogFilename: "/iq/log/iq-server/request.log"
+                  logFormat: "%clientHost %l %user [%date] \"%requestURL\" %statusCode \"%header{User-Agent}\""
+                  archivedLogFilenamePattern: "/iq/log/iq-server/request-%d.log.gz"
+          logging:
+            level: INFO
+            loggers:
+              "com.networknt.schema": ERROR
+            appenders:
+              - type: console
+                threshold: DEBUG
+                logFormat: "%d{'HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n"
+          createSampleData: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-iq-server-deployment
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            replicas: 1
+            selector:
+              matchLabels:
+                name: RELEASE-NAME-iq-server
+            template:
+              metadata:
+                labels:
+                  name: RELEASE-NAME-iq-server
+              spec:
+                serviceAccountName: "my-service-account"
+                containers:
+                  - env:
+                      - name: NXIQ_LICENSE_FILE
+                        value: /license/license_lic
+                      - name: NXIQ_INITIAL_ADMIN_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            key: password
+                            name: RELEASE-NAME-iq-server-initial-admin-password-secret
+                      - name: NXIQ_DATABASE_HOSTNAME
+                        valueFrom:
+                          secretKeyRef:
+                            key: hostname
+                            name: RELEASE-NAME-iq-server-database-hostname-secret
+                      - name: NXIQ_DATABASE_PORT
+                        valueFrom:
+                          secretKeyRef:
+                            key: port
+                            name: RELEASE-NAME-iq-server-database-port-secret
+                      - name: NXIQ_DATABASE_NAME
+                        valueFrom:
+                          secretKeyRef:
+                            key: name
+                            name: RELEASE-NAME-iq-server-database-name-secret
+                      - name: NXIQ_DATABASE_USERNAME
+                        valueFrom:
+                          secretKeyRef:
+                            key: username
+                            name: RELEASE-NAME-iq-server-database-username-secret
+                      - name: NXIQ_DATABASE_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            key: password
+                            name: RELEASE-NAME-iq-server-database-password-secret
+                      - name: NXIQ_DATABASE_MIGRATION
+                        value: "false"
+                    image: sonatype/iq-server-new:1.142.0
+                    imagePullPolicy: Always
+                    livenessProbe:
+                      exec:
+                        command:
+                          - /bin/sh
+                          - -c
+                          - |
+                            curl -If https://localhost:8073/admin/healthcheck/threadDeadlock
+                      failureThreshold: 2
+                      initialDelaySeconds: 300
+                      periodSeconds: 60
+                      timeoutSeconds: 2
+                    name: RELEASE-NAME-iq-server-container
+                    ports:
+                      - containerPort: 8072
+                        name: application-0
+                      - containerPort: 8073
+                        name: admin-0
+                    readinessProbe:
+                      exec:
+                        command:
+                          - /bin/sh
+                          - -c
+                          - |
+                            curl -If https://localhost:8073/admin/healthcheck/database &&
+                            curl -If https://localhost:8073/admin/healthcheck/clusterDirectory &&
+                            curl -If https://localhost:8073/admin/healthcheck/workDirectory
+                      failureThreshold: 2
+                      initialDelaySeconds: 60
+                      periodSeconds: 30
+                      timeoutSeconds: 3
+                    volumeMounts:
+                      - mountPath: /iq/clm-cluster
+                        name: RELEASE-NAME-iq-server-pod-volume
+                      - mountPath: /license
+                        name: RELEASE-NAME-iq-server-pod-license-volume
+                        readOnly: true
+                      - mountPath: /etc/nexus-iq-server
+                        name: RELEASE-NAME-iq-server-pod-config-volume
+                      - mountPath: /var/log/nexus-iq-server
+                        name: RELEASE-NAME-iq-server-pod-logs
+                  - env:
+                      - name: FLUENTD_CONF
+                        value: fluentd.yaml
+                    image: bitnami/fluentd:1.15.3-debian-11-r1
+                    imagePullPolicy: IfNotPresent
+                    name: RELEASE-NAME-fluentd-container
+                    volumeMounts:
+                      - mountPath: /opt/bitnami/fluentd/conf
+                        name: RELEASE-NAME-fluentd-pod-config-volume
+                      - mountPath: /var/log/nexus-iq-server
+                        name: RELEASE-NAME-iq-server-pod-logs
+                initContainers:
+                  - command:
+                      - sh
+                      - -c
+                      - chown -R 1000:1000 /iq/clm-cluster
+                    image: busybox:1.28
+                    name: RELEASE-NAME-set-iq-persistence-ownership
+                    volumeMounts:
+                      - mountPath: /iq/clm-cluster
+                        name: RELEASE-NAME-iq-server-pod-volume
+                volumes:
+                  - name: RELEASE-NAME-iq-server-pod-volume
+                    persistentVolumeClaim:
+                      claimName: iq-server-pvc
+                  - name: RELEASE-NAME-iq-server-pod-license-volume
+                    secret:
+                      secretName: RELEASE-NAME-iq-server-license-secret
+                  - configMap:
+                      items:
+                        - key: config
+                          path: config.yml
+                      name: RELEASE-NAME-iq-server-config-configmap
+                    name: RELEASE-NAME-iq-server-pod-config-volume
+                  - emptyDir: { }
+                    name: RELEASE-NAME-iq-server-pod-logs
+                  - configMap:
+                      items:
+                        - key: fluentd
+                          path: fluentd.yaml
+                      name: RELEASE-NAME-fluentd-sidecar-forwarder-configmap
+                    name: RELEASE-NAME-fluentd-pod-config-volume
+        documentIndex: 0
+
+  - it: renders iq version tag correctly by default
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: sonatype/nexus-iq-server:\d+\.\d+\.\d+
+        documentIndex: 0
+
+  - it: can set a license secret
+    set:
+      iq_server:
+        licenseSecret: "someLicenseSecret"
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes[1].secret
+          value:
+            secretName: "someLicenseSecret"
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[1].mountPath
+          value: "/license"
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: "/license/license_lic"
+        documentIndex: 0
+
+  - it: can set a database password secret
+    set:
+      iq_server:
+        database:
+          passwordSecret: "someDatabasePasswordSecret"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: "someDatabasePasswordSecret"
+                key: "password"
+        documentIndex: 0
+
+  - it: can set an initial admin password secret
+    set:
+      iq_server:
+        initialAdminPasswordSecret: "someInitialAdminPasswordSecret"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_INITIAL_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: "someInitialAdminPasswordSecret"
+                key: "password"
+        documentIndex: 0
+
+  - it: can set aws secrets
+    set:
+      secret:
+        arn: "arn:aws:abc/xyz"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_INITIAL_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: RELEASE-NAME-aws-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /iq-secrets
+            name: RELEASE-NAME-iq-server-secrets-volume
+            readOnly: true
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                fsType: ext4
+                secretProviderClass: RELEASE-NAME-aws-secret-provider
+            name: RELEASE-NAME-iq-server-secrets-volume
+        documentIndex: 0
+
+  - it: can set aws license secret
+    set:
+      secret:
+        license:
+          arn: "arn:aws:abc/license"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_LICENSE_FILE
+            value: "/iq-secrets/license_lic"
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /iq-secrets
+            name: RELEASE-NAME-iq-server-secrets-volume
+            readOnly: true
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                fsType: ext4
+                secretProviderClass: RELEASE-NAME-aws-secret-provider
+            name: RELEASE-NAME-iq-server-secrets-volume
+        documentIndex: 0
+
+  - it: can set aws rds secrets
+    set:
+      secret:
+        rds:
+          arn: "arn:aws:abc/xyz"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_HOSTNAME
+            valueFrom:
+              secretKeyRef:
+                key: hostname
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_PORT
+            valueFrom:
+              secretKeyRef:
+                key: port
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_NAME
+            valueFrom:
+              secretKeyRef:
+                key: name
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: username
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /iq-secrets
+            name: RELEASE-NAME-iq-server-secrets-volume
+            readOnly: true
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                fsType: ext4
+                secretProviderClass: RELEASE-NAME-aws-secret-provider
+            name: RELEASE-NAME-iq-server-secrets-volume
+        documentIndex: 0

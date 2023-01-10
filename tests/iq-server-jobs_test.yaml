@@ -1,0 +1,234 @@
+suite: iq-server-service
+templates:
+  - iq-server-jobs.yaml
+tests:
+  - it: renders with defaults
+    set:
+      iq_server:
+        tag: "1.148.0"   # force version tag so tests do not have to be updated every time we update IQ server version
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Job
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: batch/v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-migrate-db
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            completions: 1
+            parallelism: 1
+            template:
+              spec:
+                containers:
+                  - command:
+                      - /bin/sh
+                      - -c
+                      - /usr/bin/java -jar `ls ./nexus-iq-server*.jar` migrate-db /etc/nexus-iq-server/config.yml
+                    env:
+                    - name: NXIQ_DATABASE_HOSTNAME
+                      valueFrom:
+                        secretKeyRef:
+                          key: hostname
+                          name: RELEASE-NAME-iq-server-database-hostname-secret
+                    - name: NXIQ_DATABASE_PORT
+                      valueFrom:
+                        secretKeyRef:
+                          key: port
+                          name: RELEASE-NAME-iq-server-database-port-secret
+                    - name: NXIQ_DATABASE_NAME
+                      valueFrom:
+                        secretKeyRef:
+                          key: name
+                          name: RELEASE-NAME-iq-server-database-name-secret
+                    - name: NXIQ_DATABASE_USERNAME
+                      valueFrom:
+                        secretKeyRef:
+                          key: username
+                          name: RELEASE-NAME-iq-server-database-username-secret
+                    - name: NXIQ_DATABASE_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          key: password
+                          name: RELEASE-NAME-iq-server-database-password-secret
+                    image: sonatype/nexus-iq-server:1.148.0
+                    imagePullPolicy: IfNotPresent
+                    name: RELEASE-NAME-iq-server-container
+                    securityContext:
+                      runAsGroup: 1000
+                      runAsUser: 1000
+                    volumeMounts:
+                      - mountPath: /etc/nexus-iq-server
+                        name: RELEASE-NAME-iq-server-pod-config-volume
+                restartPolicy: OnFailure
+                serviceAccountName: default
+                volumes:
+                  - configMap:
+                      items:
+                        - key: config
+                          path: config.yml
+                      name: RELEASE-NAME-iq-server-config-configmap
+                    name: RELEASE-NAME-iq-server-pod-config-volume
+        documentIndex: 0
+
+  - it: renders with overridden values
+    set:
+      iq_server:
+        serviceAccountName: "my-service-account"
+        image: "sonatype/iq-server-new"
+        imagePullPolicy: "Always"
+        tag: "1.142.0"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Job
+        documentIndex: 0
+      - equal:
+          path: apiVersion
+          value: batch/v1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-migrate-db
+        documentIndex: 0
+      - equal:
+          path: spec
+          value:
+            completions: 1
+            parallelism: 1
+            template:
+              spec:
+                containers:
+                  - command:
+                    - /bin/sh
+                    - -c
+                    - /usr/bin/java -jar `ls ./nexus-iq-server*.jar` migrate-db /etc/nexus-iq-server/config.yml
+                    env:
+                    - name: NXIQ_DATABASE_HOSTNAME
+                      valueFrom:
+                        secretKeyRef:
+                          key: hostname
+                          name: RELEASE-NAME-iq-server-database-hostname-secret
+                    - name: NXIQ_DATABASE_PORT
+                      valueFrom:
+                        secretKeyRef:
+                          key: port
+                          name: RELEASE-NAME-iq-server-database-port-secret
+                    - name: NXIQ_DATABASE_NAME
+                      valueFrom:
+                        secretKeyRef:
+                          key: name
+                          name: RELEASE-NAME-iq-server-database-name-secret
+                    - name: NXIQ_DATABASE_USERNAME
+                      valueFrom:
+                        secretKeyRef:
+                          key: username
+                          name: RELEASE-NAME-iq-server-database-username-secret
+                    - name: NXIQ_DATABASE_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          key: password
+                          name: RELEASE-NAME-iq-server-database-password-secret
+                    image: sonatype/iq-server-new:1.142.0
+                    imagePullPolicy: Always
+                    name: RELEASE-NAME-iq-server-container
+                    securityContext:
+                      runAsGroup: 1000
+                      runAsUser: 1000
+                    volumeMounts:
+                    - mountPath: /etc/nexus-iq-server
+                      name: RELEASE-NAME-iq-server-pod-config-volume
+                restartPolicy: OnFailure
+                serviceAccountName: my-service-account
+                volumes:
+                - configMap:
+                    items:
+                    - key: config
+                      path: config.yml
+                    name: RELEASE-NAME-iq-server-config-configmap
+                  name: RELEASE-NAME-iq-server-pod-config-volume
+        documentIndex: 0
+
+  - it: renders iq version tag correctly by default
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: sonatype/nexus-iq-server:\d+\.\d+\.\d+
+        documentIndex: 0
+
+  - it: can set aws rds secrets
+    set:
+      secret:
+        rds:
+          arn: "arn:aws:abc/xyz"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_HOSTNAME
+            valueFrom:
+              secretKeyRef:
+                key: hostname
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_PORT
+            valueFrom:
+              secretKeyRef:
+                key: port
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_NAME
+            valueFrom:
+              secretKeyRef:
+                key: name
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: username
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NXIQ_DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: RELEASE-NAME-aws-rds-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /iq-secrets
+            name: RELEASE-NAME-iq-server-secrets-volume
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                fsType: ext4
+                secretProviderClass: RELEASE-NAME-aws-secret-provider
+            name: RELEASE-NAME-iq-server-secrets-volume
+        documentIndex: 0
