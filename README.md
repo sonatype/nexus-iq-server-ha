@@ -14,6 +14,12 @@ accepting any PR.
 
 ## Testing
 
+Before running tests make sure to update the on-disk helm chart dependencies via
+
+```
+helm dependency update chart
+```
+
 ### Running Lint
 
 Helm's lint command will highlight formatting problems in the chart that need to be corrected.
