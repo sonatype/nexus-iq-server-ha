@@ -25,6 +25,7 @@ tests:
           value:
             completions: 1
             parallelism: 1
+            ttlSecondsAfterFinished: 0
             template:
               spec:
                 containers:
@@ -104,6 +105,7 @@ tests:
           value:
             completions: 1
             parallelism: 1
+            ttlSecondsAfterFinished: 0
             template:
               spec:
                 containers:
