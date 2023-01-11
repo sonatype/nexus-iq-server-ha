@@ -18,8 +18,6 @@ This repository is intended to store a helm chart to create a cluster of Nexus I
 - A Kubernetes cluster to run the helm chart on
 - A shared file system to share files between all Nexus IQ Server pods in the cluster
 - A load balancer to distribute requests between the Nexus IQ Server pods
-- Optionally, install [`aws-vault`](https://github.com/99designs/aws-vault) [installed and configured](https://github.com/99designs/aws-vault/blob/master/USAGE.md#config)
-  if you plan to use AWS Vault authentication, in which case prefix the aws/kubectl/helm commands below with `aws-vault exec <aws-profile> -- <command>`.
 
 ## Nice to have
 - A [storage class](https://kubernetes.io/docs/concepts/storage/storage-classes/) for dynamic provisioning
@@ -29,22 +27,16 @@ This repository is intended to store a helm chart to create a cluster of Nexus I
 1. Start your Kubernetes cluster if needed
 2. Open a console/terminal in the helm chart directory
 3. Switch to the correct context to use your cluster if needed (e.g. `kubectl config use-context my-context`)
-   1. To lookup the clusters, run `aws eks --region <aws_region> list-clusters`
-   2. Import the context for the cluster into kube config: `aws eks --region <aws_region> update-kubeconfig --name <cluster_name>`
-4. Install the [CSI driver](https://aws.amazon.com/blogs/security/how-to-use-aws-secrets-configuration-provider-with-kubernetes-secrets-store-csi-driver/) to enable AWS Secrets Manager access:
-   1. `helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts`
-   2. `helm upgrade --install --namespace kube-system csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --set grpcSupportedProviders="aws" --set syncSecret.enabled=true`
-   3. `kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml`
-5. Install the helm chart dependencies via
+4. Install the helm chart dependencies via
    `helm dependency update .`
-6. Install the helm chart via
+5. Install the helm chart via
    `helm install --namespace <namespace> <name> <overrides> .`.
 where
    1. `<name>` can be any name for the helm chart
    2. `<namespace>` can be any namespace for the helm chart (can be created if desired by adding the flag
    `--create-namespace` or prior via `kubectl create namespace my-namespace`)
    3. `<overrides>` is a set of overrides for values in the helm chart (see below)
-7. Expose the ingress if needed, which uses port `80` for http and port `443` for https by default
+6. Expose the ingress if needed, which uses port `80` for http and port `443` for https by default
 
 ## Overrides
 
@@ -293,6 +285,12 @@ balancer
 resources to communicate with each other
 - [Amazon EFS CSI driver](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html) pre-installed and configured in
 the cluster
+- [Kubernetes Secrets Store CSI Driver](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html)
+pre-installed and configured in the cluster to enable AWS Secrets Manager access i.e. via
+   1. `helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts`
+   2. `helm repo update`
+   3. `helm upgrade --install --namespace kube-system csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --set grpcSupportedProviders="aws" --set syncSecret.enabled=true`
+   4. `kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml`
 
 ### Nice to have
 - [EFS Storage Class](https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/master/examples/kubernetes/dynamic_provisioning/specs/storageclass.yaml)
@@ -300,6 +298,16 @@ pre-installed and configured in the cluster for [dynamic provisioning](https://k
 - [AWS Load Balancer Controller add-on](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
 pre-installed and configured in the cluster to automatically provision an ALB based on an ingress
 - [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) configuration for fluentd to send aggregated logs to
+- [`aws-vault`](https://github.com/99designs/aws-vault) [pre-installed and configured](https://github.com/99designs/aws-vault/blob/master/USAGE.md#config)
+  to ease authentication, in which case prefix the aws/kubectl/helm commands below with `aws-vault exec <aws-profile> -- <command>`.
+
+### EKS
+
+An existing EKS cluster is required to run the helm chart on.
+
+To lookup existing clusters, run `aws eks --region <aws_region> list-clusters`.
+
+To import the context for a cluster into your kubeconfig file, run `aws eks --region <aws_region> update-kubeconfig --name <cluster_name>`.
 
 ### EFS
 
