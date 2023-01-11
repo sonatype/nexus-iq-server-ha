@@ -109,7 +109,7 @@ tests:
                   - env:
                       - name: FLUENTD_CONF
                         value: fluentd.yaml
-                    image: bitnami/fluentd:1.15.3-debian-11-r1
+                    image: bitnami/fluentd:1.15.3-debian-11-r20
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-fluentd-container
                     volumeMounts:
@@ -308,7 +308,7 @@ tests:
                   - env:
                       - name: FLUENTD_CONF
                         value: fluentd.yaml
-                    image: bitnami/fluentd:1.15.3-debian-11-r1
+                    image: bitnami/fluentd:1.15.3-debian-11-r20
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-fluentd-container
                     volumeMounts:

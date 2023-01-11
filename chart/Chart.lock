@@ -1,15 +1,15 @@
 dependencies:
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
-  version: 12.1.0
+  version: 12.1.8
 - name: ingress-nginx
   repository: https://kubernetes.github.io/ingress-nginx
-  version: 4.3.0
+  version: 4.4.2
 - name: fluentd
   repository: https://charts.bitnami.com/bitnami
-  version: 5.5.7
+  version: 5.5.12
 - name: elasticsearch
   repository: https://charts.bitnami.com/bitnami
-  version: 19.5.0
-digest: sha256:d78c2263adcc449508cb47d94627d4d994a20c89cb10d4fbb2d28e861033d1bd
-generated: "2022-11-09T11:17:55.5871724Z"
+  version: 19.5.6
+digest: sha256:a42356cb9a2b0cee94f82515dc482dba65b12cc36e3afa1cffccc7db19087e15
+generated: "2023-01-11T12:18:55.8781298Z"
