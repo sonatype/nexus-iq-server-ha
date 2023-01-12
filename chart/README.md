@@ -58,7 +58,7 @@ or via an existing secret
 
 or via an AWS secret ARN
    ```
-   --set secret.license.arn==<aws secret arn containing lifecycle license>
+   --set secret.license.arn=<aws secret arn containing lifecycle license>
    ```
 
 ### Database (required)
@@ -233,7 +233,7 @@ or via an existing secret
    ```
 or via an AWS secret ARN
    ```
-   --set secret.arn==<aws secret arn containing initial admin password in lifecycle_admin_password property>
+   --set secret.arn=<aws secret arn containing initial admin password in lifecycle_admin_password property>
    ```
 
 A `config.yml` file is required to run. This is generated using the `iq_server.config` value. Care should be taken if
