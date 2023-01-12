@@ -56,7 +56,7 @@ or via an existing secret
    --set iq_server.licenseSecret=<license secret>
    ```
 
-or via an AWS secret arn
+or via an AWS secret ARN
    ```
    --set secret.license.arn==<aws secret arn containing lifecycle license>
    ```
@@ -79,9 +79,9 @@ or via an existing secret
    --set iq_server.database.passwordSecret=<database password secret>
    ```
 
-or all of the database configuration parameters can be specified via AWS Secrets Manager arn
+or all of the database configuration parameters can be specified via an AWS secret ARN
    ```
-   --set secret.rds.arn=<aws secret arn containing host, port, name (database name,) username, and password properties>
+   --set secret.rds.arn=<aws secret arn containing host, port, name (database name), username, and password properties>
    ```
 
 ### Shared File System (required)
@@ -231,7 +231,7 @@ or via an existing secret
    ```
    --set iq_server.initialAdminPasswordSecret=<initial admin password secret>
    ```
-or via an existing secret
+or via an AWS secret ARN
    ```
    --set secret.arn==<aws secret arn containing initial admin password in lifecycle_admin_password property>
    ```
@@ -307,7 +307,8 @@ An existing EKS cluster is required to run the helm chart on.
 
 To lookup existing clusters, run `aws eks --region <aws_region> list-clusters`.
 
-To import the context for a cluster into your kubeconfig file, run `aws eks --region <aws_region> update-kubeconfig --name <cluster_name>`.
+To import the context for a cluster into your kubeconfig file, run
+`aws eks --region <aws_region> update-kubeconfig --name <cluster_name>`.
 
 ### EFS
 
@@ -431,15 +432,15 @@ Some example commands are shown below.
    .
    ```
 
-#### External Database, Dynamic EFS, and Dynamic ALB
+#### External Database, Dynamic EFS, Dynamic ALB, and Secrets
    ```
    helm install mycluster
-   --set-file iq_server.license="license.lic"
-   --set iq_server.database.hostname=myhost
-   --set iq_server.database.port=5432
-   --set iq_server.database.name=iq
-   --set iq_server.database.username=postgres
-   --set iq_server.database.password=admin123
+   --set iq_server.serviceAccountName="nxlc-default-d95tfx8l-service"
+   --set serviceAccount.create=true
+   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::552194422382:role/nxlc-default-d95tfx8l-role"
+   --set secret.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/nxlc-W999SV"
+   --set secret.license.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/nxlc_license-xpSvX5"
+   --set secret.rds.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/rds-FlwTg2"
    --set iq_server.config.server.applicationContextPath="/app"
    --set iq_server.config.server.adminContextPath="/admin"
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
@@ -487,7 +488,10 @@ An example command is shown below.
    ```
 
 ## Upgrading
-In order to upgrade Nexus IQ Server and ensure a successful data migration, the following steps are recommended:
+
+To upgrade Nexus IQ Server and ensure a successful data migration, the following steps are recommended:
+
 1. **Scale your pods down to zero.** This will delete the existing pods.
 2. **Backup the database.** See the [IQ server backup guidelines](https://links.sonatype.com/products/nxiq/doc/backup) for more details.
-3. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
+3. **Update the helm chart.** Typically, this will also update the Nexus IQ Server version.
+4. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
