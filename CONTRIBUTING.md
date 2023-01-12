@@ -15,10 +15,10 @@
 
 Looking to dive in? FANTASTIC! Reach out to one of our experts and we can help get you started in the right direction.
 
-* Hit us up on our Slack channel #iq-albion.
+* Hit us up on our Slack channel #iq.
 * Please fill out an issue (Jira CLM project) for your PR so that we have traceability as to what you are trying to fix,
   versus how you fixed it.
-* Add the `@sonatype/iq-albion` group as a reviewer on any PR.
+* Add the `@sonatype/iq` group as a reviewer on any PR.
 
 ### For Non-Sonatypers
 
