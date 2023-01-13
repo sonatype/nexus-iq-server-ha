@@ -16,11 +16,14 @@ helm plugin install https://github.com/quintush/helm-unittest
 
 set -e
 
+#update the dependencies for the chart
+helm dependency update chart
+
 # lint yaml of chart
 helm lint chart
 
 # unit test
 (cd ./chart; helm unittest -3 -t junit -o test-output.xml .)
 
-# package the charts into tgz archives
+# package the chart into tgz archives
 helm package chart --destination docs
