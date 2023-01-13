@@ -24,7 +24,7 @@ APP_VERSION="$3"
 OUTPUT_FILE=$(mktemp)
 
 cat "$DIR/Chart.yaml" \
-  | sed -Ee "s/version: .+/version: $CHART_VERSION/;t done" -e b -e :done -e "n;b done" \
+  | sed -E "0,/version: .+/{s//version: $CHART_VERSION/}" \
   | sed -E "s/appVersion: .+/appVersion: $APP_VERSION/" \
   > "$OUTPUT_FILE"
 
