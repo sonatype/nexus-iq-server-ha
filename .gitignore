@@ -1,0 +1,10 @@
+.vs/**
+.idea/**
+chart/charts
+**/test-output.xml
+.DS_Store
+.project/**
+.settings/**
+*.iml
+*.eml
+.vscode/
