@@ -192,7 +192,6 @@ ingress:
     #  certificate:
     #  key:
     #  hosts:
-
 # Ingress controller for Kubernetes using nginx as a reverse-proxy and load balancer
 ingress-nginx:
   enabled: false
@@ -215,9 +214,7 @@ ingress-nginx:
 serviceAccount:
   create: false
   labels:
-    app.kubernetes.io/name: "aws-efs-csi-driver"
   annotations:
-    eks.amazonaws.com/role-arn: "someRoleArn"
   automountServiceAccountToken: false
 
 # AWS configuration
