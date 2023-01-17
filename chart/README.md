@@ -499,9 +499,9 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 ## Chart Configuration Options
 | Parameter                                                          | Description                                                                                   | Default                                        |
 |--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|------------------------------------------------|
-| iq_server.license                                                  | Path to your Nexus IQ Server product license file                                             | nil                                            |
-| iq_server.licenseSecret                                            | License secret                                                                                | nil                                            |
-| secret.license.arn                                                 | AWS secret arn containing lifecycle license                                                   | nil                                            |
+| ```iq_server.license```                                            | Path to your Nexus IQ Server product license file                                             | nil                                            |
+| ``iq_server.licenseSecret``                                        | License secret                                                                                | nil                                            |
+| `secret.license.arn`                                               | AWS secret arn containing lifecycle license                                                   | nil                                            |
 | iq_server.database.hostname                                        | Database hostname                                                                             | nil                                            |
 | iq_server.database.port                                            | Database port                                                                                 | nil                                            |
 | iq_server.database.name                                            | Database name                                                                                 | nil                                            |
