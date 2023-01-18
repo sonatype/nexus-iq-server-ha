@@ -570,7 +570,7 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `serviceAccount.annotations`                              | Service account annotations                                                             | `nil`                               |
 | `serviceAccount.autoMountServiceAccountToken`             | Auto mount service account token                                                        | `false`                             |
 | `secret.arn`                                              | AWS secret arn containing initial admin password in a lifecycle_admin_password key      | `nil`                               |
-| `secret.license.arn`                                      | AWS secret arn containing lifecycle license                                             | `nil`                               |
+| `secret.license.arn`                                      | AWS secret arn containing the binary content of your Nexus IQ Server license            | `nil`                               |
 | `secret.rds.arn`                                          | AWS secret arn containing host, port, name (database name), username, and password keys | `nil`                               |
 | `cloudwatch.enabled`                                      | Enable CloudWatch logging                                                               | `false`                             |
 | `cloudwatch.region`                                       | CloudWatch region                                                                       | `nil`                               |
