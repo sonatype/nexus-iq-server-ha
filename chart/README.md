@@ -236,6 +236,12 @@ or via an AWS secret ARN
    --set secret.arn=<aws secret arn containing initial admin password in lifecycle_admin_password property>
    ```
 
+If planning to use ssh for git operations, enable the following flag to generate a private/public key pair.
+You can retrieve the public key from the pod at <clusterDirectory>/.ssh/id_rsa.pub.
+   ```
+   --set iq_server.useGitSsh=<true/false>
+   ```
+
 A `config.yml` file is required to run. This is generated using the `iq_server.config` value. Care should be taken if
 updating this as many values within it are fine-tuned to allow the helm chart to function.
 
