@@ -497,84 +497,72 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 4. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
 
 ## Chart Configuration Options
-| Parameter                                                 | Description                                                                             | Default                             |
-|-----------------------------------------------------------|-----------------------------------------------------------------------------------------|-------------------------------------|
-| `iq_server.image`                                         | Nexus IQ Server image                                                                   | `sonatype/nexus-iq-server`          |
-| `iq_server.imagePullPolicy`                               | Nexus IQ Server image pull policy                                                       | `IfNotPresent`                      |
-| `iq_server.tag`                                           | Nexus IQ Server image tag                                                               | See `values.yaml`                   |
-| `iq_server.license`                                       | Path to your Nexus IQ Server product license file                                       | `nil`                               |
-| `iq_server.licenseSecret`                                 | License secret                                                                          | `nil`                               |
-| `iq_server.serviceType`                                   | Nexus IQ Server service type                                                            | `ClusterIP`                         |
-| `iq_server.database.hostname`                             | Database hostname                                                                       | `nil`                               |
-| `iq_server.database.port`                                 | Database port                                                                           | `5432`                              |
-| `iq_server.database.name`                                 | Database name                                                                           | `nil`                               |
-| `iq_server.database.username`                             | Database username                                                                       | `postgres`                          |
-| `iq_server.database.password`                             | Database password                                                                       | `nil`                               |
-| `iq_server.database.passwordSecret`                       | Database password secret                                                                | `nil`                               |
-| `iq_server.persistence.existingPersistentVolumeClaimName` | Existing persistent volume claim name                                                   | `nil`                               |
-| `iq_server.persistence.existingPersistentVolumeName`      | Existing persistent volume name                                                         | `nil`                               |
-| `iq_server.persistence.persistentVolumeName`              | Persistent volume name                                                                  | `iq-server-pv`                      |
-| `iq_server.persistence.persistentVolumeClaimName`         | Persistent volume claim name                                                            | `iq-server-pvc`                     |
-| `iq_server.persistence.persistentVolumeRetainPolicy`      | Persistent volume retain policy                                                         | `keep`                              |
-| `iq_server.persistence.persistentVolumeClaimRetainPolicy` | Persistent volume claim retain policy                                                   | `keep`                              |
-| `iq_server.persistence.size`                              | Storage capacity for PV/PVC to provision/request                                        | `1Gi`                               |
-| `iq_server.persistence.storageClassName`                  | Storage class name for the PV/PVC                                                       | `""`                                |
-| `iq_server.persistence.accessModes[0]`                    | Access mode for the PV/PVC                                                              | `ReadWriteOnce`                     |
-| `iq_server.persistence.csi.driver`                        | CSI driver name                                                                         | `efs.csi.aws.com`                   |
-| `iq_server.persistence.csi.fsType`                        | File system type                                                                        | `""`                                |
-| `iq_server.persistence.csi.volumeHandle`                  | Volume handle                                                                           | `nil`                               |
-| `iq_server.persistence.nfs.server`                        | NFS server hostname                                                                     | `nil`                               |
-| `iq_server.persistence.nfs.path`                          | NFS server path                                                                         | `/`                                 |
-| `iq_server.persistence.hostPath.path`                     | Host path                                                                               | `/mnt/iq-server`                    |
-| `iq_server.persistence.hostPath.type`                     | Host path type                                                                          | `DirectoryOrCreate`                 |
-| `iq_server.serviceAccountName`                            | Nexus IQ Server service account name                                                    | `default`                           |
-| `iq_server.serviceType`                                   | Nexus IQ Server service type                                                            | `ClusterIP`                         |
-| `iq_server.replicas`                                      | Number of replicas                                                                      | `2`                                 |
-| `iq_server.initialAdminPassword`                          | Initial admin password                                                                  | `admin123`                          |
-| `iq_server.initialAdminPasswordSecret`                    | Initial admin password secret                                                           | `nil`                               |
-| `iq_server.readinessProbe.initialDelaySeconds`            | Initial delay seconds for readiness probe                                               | `45`                                |
-| `iq_server.readinessProbe.periodSeconds`                  | Period seconds for readiness probe                                                      | `15`                                |
-| `iq_server.readinessProbe.timeoutSeconds`                 | Timeout seconds for readiness probe                                                     | `5`                                 |
-| `iq_server.readinessProbe.failureThreshold`               | Failure threshold for readiness probe                                                   | `4`                                 |
-| `iq_server.livenessProbe.initialDelaySeconds`             | Initial delay seconds for liveness probe                                                | `180`                               |
-| `iq_server.livenessProbe.periodSeconds`                   | Period seconds for liveness probe                                                       | `20`                                |
-| `iq_server.livenessProbe.timeoutSeconds`                  | Timeout seconds for liveness probe                                                      | `3`                                 |
-| `iq_server.livenessProbe.failureThreshold`                | Failure threshold for liveness probe                                                    | `3`                                 |
-| `iq_server.fluentd.forwarder.enabled`                     | Enable Fluentd forwarder                                                                | `true`                              |
-| `iq_server.config.sonatypeWork`                           | Sonatype work directory                                                                 | `/sonatype-work/clm-server`         |
-| `iq_server.config.clusterDirectory`                       | Cluster directory                                                                       | `/sonatype-work/clm-server/cluster` |
-| `iq_server.config.database`                               | Database configuration                                                                  | See `values.yaml`                   |
-| `iq_server.config.licenseFile`                            | License file                                                                            | `nil`                               |
-| `iq_server.config.server.applicationContextPath`          | Nexus IQ Server application context path                                                | `/`                                 |
-| `iq_server.config.server.applicationConnectors.type`      | Nexus IQ Server application connectors type                                             | `http`                              |
-| `iq_server.config.server.applicationConnectors.port`      | Nexus IQ Server application connectors port                                             | `8070`                              |
-| `iq_server.config.server.adminContextPath`                | Nexus IQ Server admin context path                                                      | `/`                                 |
-| `iq_server.config.server.adminConnectors.type`            | Nexus IQ Server admin connectors type                                                   | `http`                              |
-| `iq_server.config.server.adminConnectors.port`            | Nexus IQ Server admin connectors port                                                   | `8071`                              |
-| `iq_server.config.server.requestLog`                      | Nexus IQ Server request log                                                             | See `values.yaml`                   |
-| `iq_server.config.logging`                                | Logging configuration                                                                   | See `values.yaml`                   |
-| `iq_server.config.createSampleData`                       | Create sample data                                                                      | `true`                              |
-| `ingress.enabled`                                         | Enable ingress                                                                          | `false`                             |
-| `ingress.className`                                       | Ingress class name                                                                      | `nginx`                             |
-| `ingress.pathType`                                        | Ingress path type                                                                       | `Prefix`                            |
-| `ingress.annotations`                                     | Ingress annotations                                                                     | `nil`                               |
-| `ingress.hostApplication`                                 | Ingress host for application                                                            | `nil`                               |
-| `ingress.hostApplicationPath`                             | Ingress path for application                                                            | `nil`                               |
-| `ingress.hostAdmin`                                       | Ingress host for admin                                                                  | `nil`                               |
-| `ingress.hostAdminPath`                                   | Ingress path for admin                                                                  | `nil`                               |
-| `ingress.tls`                                             | Ingress TLS configuration                                                               | `nil`                               |
-| `ingress-nginx.enable`                                    | Enable ingress-nginx                                                                    | `false`                             |
-| `ingress-nginx.controller`                                | Ingress controller configuration for Nginx                                              | See `values.yaml`                   |
-| `serviceAccount.create`                                   | Create service account                                                                  | `false`                             |
-| `serviceAccount.labels`                                   | Service account labels                                                                  | `nil`                               |
-| `serviceAccount.annotations`                              | Service account annotations                                                             | `nil`                               |
-| `serviceAccount.autoMountServiceAccountToken`             | Auto mount service account token                                                        | `false`                             |
-| `secret.arn`                                              | AWS secret arn containing initial admin password in a lifecycle_admin_password key      | `nil`                               |
-| `secret.license.arn`                                      | AWS secret arn containing the binary content of your Nexus IQ Server license            | `nil`                               |
-| `secret.rds.arn`                                          | AWS secret arn containing host, port, name (database name), username, and password keys | `nil`                               |
-| `cloudwatch.enabled`                                      | Enable CloudWatch logging                                                               | `false`                             |
-| `cloudwatch.region`                                       | CloudWatch region                                                                       | `nil`                               |
-| `cloudwatch.logGroupName`                                 | CloudWatch log group name                                                               | `nil`                               |
-| `cloudwatch.logStreamName`                                | CloudWatch log stream name                                                              | `nil`                               |
-| `fluentd.enabled`                                         | Enable Fluentd                                                                          | `true`                              |
-| `fluentd.config`                                          | Fluentd configuration                                                                   | See `values.yaml`                   |
+| Parameter                                                 | Description                                                                             | Default                    |
+|-----------------------------------------------------------|-----------------------------------------------------------------------------------------|----------------------------|
+| `iq_server.image`                                         | Nexus IQ Server image                                                                   | `sonatype/nexus-iq-server` |
+| `iq_server.imagePullPolicy`                               | Nexus IQ Server image pull policy                                                       | `IfNotPresent`             |
+| `iq_server.tag`                                           | Nexus IQ Server image tag                                                               | See `values.yaml`          |
+| `iq_server.license`                                       | Path to your Nexus IQ Server product license file                                       | `nil`                      |
+| `iq_server.licenseSecret`                                 | License secret                                                                          | `nil`                      |
+| `iq_server.serviceType`                                   | Nexus IQ Server service type                                                            | `ClusterIP`                |
+| `iq_server.database.hostname`                             | Database hostname                                                                       | `nil`                      |
+| `iq_server.database.port`                                 | Database port                                                                           | `5432`                     |
+| `iq_server.database.name`                                 | Database name                                                                           | `nil`                      |
+| `iq_server.database.username`                             | Database username                                                                       | `postgres`                 |
+| `iq_server.database.password`                             | Database password                                                                       | `nil`                      |
+| `iq_server.database.passwordSecret`                       | Database password secret                                                                | `nil`                      |
+| `iq_server.persistence.existingPersistentVolumeClaimName` | Existing persistent volume claim name                                                   | `nil`                      |
+| `iq_server.persistence.existingPersistentVolumeName`      | Existing persistent volume name                                                         | `nil`                      |
+| `iq_server.persistence.persistentVolumeName`              | Persistent volume name                                                                  | `iq-server-pv`             |
+| `iq_server.persistence.persistentVolumeClaimName`         | Persistent volume claim name                                                            | `iq-server-pvc`            |
+| `iq_server.persistence.persistentVolumeRetainPolicy`      | Persistent volume retain policy                                                         | `keep`                     |
+| `iq_server.persistence.persistentVolumeClaimRetainPolicy` | Persistent volume claim retain policy                                                   | `keep`                     |
+| `iq_server.persistence.size`                              | Storage capacity for PV/PVC to provision/request                                        | `1Gi`                      |
+| `iq_server.persistence.storageClassName`                  | Storage class name for the PV/PVC                                                       | `""`                       |
+| `iq_server.persistence.accessModes[0]`                    | Access mode for the PV/PVC                                                              | `ReadWriteOnce`            |
+| `iq_server.persistence.csi.driver`                        | CSI driver name                                                                         | `efs.csi.aws.com`          |
+| `iq_server.persistence.csi.fsType`                        | File system type                                                                        | `""`                       |
+| `iq_server.persistence.csi.volumeHandle`                  | Volume handle                                                                           | `nil`                      |
+| `iq_server.persistence.nfs.server`                        | NFS server hostname                                                                     | `nil`                      |
+| `iq_server.persistence.nfs.path`                          | NFS server path                                                                         | `/`                        |
+| `iq_server.persistence.hostPath.path`                     | Host path                                                                               | `/mnt/iq-server`           |
+| `iq_server.persistence.hostPath.type`                     | Host path type                                                                          | `DirectoryOrCreate`        |
+| `iq_server.serviceAccountName`                            | Nexus IQ Server service account name                                                    | `default`                  |
+| `iq_server.serviceType`                                   | Nexus IQ Server service type                                                            | `ClusterIP`                |
+| `iq_server.replicas`                                      | Number of replicas                                                                      | `2`                        |
+| `iq_server.initialAdminPassword`                          | Initial admin password                                                                  | `admin123`                 |
+| `iq_server.initialAdminPasswordSecret`                    | Initial admin password secret                                                           | `nil`                      |
+| `iq_server.readinessProbe.initialDelaySeconds`            | Initial delay seconds for readiness probe                                               | `45`                       |
+| `iq_server.readinessProbe.periodSeconds`                  | Period seconds for readiness probe                                                      | `15`                       |
+| `iq_server.readinessProbe.timeoutSeconds`                 | Timeout seconds for readiness probe                                                     | `5`                        |
+| `iq_server.readinessProbe.failureThreshold`               | Failure threshold for readiness probe                                                   | `4`                        |
+| `iq_server.livenessProbe.initialDelaySeconds`             | Initial delay seconds for liveness probe                                                | `180`                      |
+| `iq_server.livenessProbe.periodSeconds`                   | Period seconds for liveness probe                                                       | `20`                       |
+| `iq_server.livenessProbe.timeoutSeconds`                  | Timeout seconds for liveness probe                                                      | `3`                        |
+| `iq_server.livenessProbe.failureThreshold`                | Failure threshold for liveness probe                                                    | `3`                        |
+| `iq_server.fluentd.forwarder.enabled`                     | Enable Fluentd forwarder                                                                | `true`                     |
+| `iq_server.config`                                        | A YAML block which will be used as a configuration block for IQ Server.                 | See `values.yaml`          |
+| `ingress.enabled`                                         | Enable ingress                                                                          | `false`                    |
+| `ingress.className`                                       | Ingress class name                                                                      | `nginx`                    |
+| `ingress.pathType`                                        | Ingress path type                                                                       | `Prefix`                   |
+| `ingress.annotations`                                     | Ingress annotations                                                                     | `nil`                      |
+| `ingress.hostApplication`                                 | Ingress host for application                                                            | `nil`                      |
+| `ingress.hostApplicationPath`                             | Ingress path for application                                                            | `nil`                      |
+| `ingress.hostAdmin`                                       | Ingress host for admin                                                                  | `nil`                      |
+| `ingress.hostAdminPath`                                   | Ingress path for admin                                                                  | `nil`                      |
+| `ingress.tls`                                             | Ingress TLS configuration                                                               | `nil`                      |
+| `ingress-nginx.enable`                                    | Enable ingress-nginx                                                                    | `false`                    |
+| `ingress-nginx.controller`                                | Ingress controller configuration for Nginx                                              | See `values.yaml`          |
+| `serviceAccount.create`                                   | Create service account                                                                  | `false`                    |
+| `serviceAccount.labels`                                   | Service account labels                                                                  | `nil`                      |
+| `serviceAccount.annotations`                              | Service account annotations                                                             | `nil`                      |
+| `serviceAccount.autoMountServiceAccountToken`             | Auto mount service account token                                                        | `false`                    |
+| `secret.arn`                                              | AWS secret arn containing initial admin password in a lifecycle_admin_password key      | `nil`                      |
+| `secret.license.arn`                                      | AWS secret arn containing the binary content of your Nexus IQ Server license            | `nil`                      |
+| `secret.rds.arn`                                          | AWS secret arn containing host, port, name (database name), username, and password keys | `nil`                      |
+| `cloudwatch.enabled`                                      | Enable CloudWatch logging                                                               | `false`                    |
+| `cloudwatch.region`                                       | CloudWatch region                                                                       | `nil`                      |
+| `cloudwatch.logGroupName`                                 | CloudWatch log group name                                                               | `nil`                      |
+| `cloudwatch.logStreamName`                                | CloudWatch log stream name                                                              | `nil`                      |
+| `fluentd.enabled`                                         | Enable Fluentd                                                                          | `true`                     |
+| `fluentd.config`                                          | Fluentd configuration                                                                   | See `values.yaml`          |
