@@ -11,22 +11,22 @@ iq_server:
 
   # Product license
   # One of these can be set to automatically install a product license
-  license: "" # Path to your product license file
+  license: # Path to your product license file
   # The name of an existing Kubernetes secret containing a license_lic key with a value of the base64 encoding of your
   # product license file content
-  licenseSecret: ""
+  licenseSecret:
 
   # Database (PostgreSQL 10.7 or newer or a PostgreSQL-compatible service)
   database:
-    hostname: "postgresql"
+    hostname:
     port: 5432
-    name: "iq-server"
+    name:
     username: "postgres"
     # One of these can be set to hold the database password
     password: "admin123" # Plaintext password
     # The name of an existing Kubernetes secret containing a password key with a value of the base64 encoding of your
     # password
-    passwordSecret: ""
+    passwordSecret:
 
   # Shared file system
   persistence:
@@ -76,7 +76,7 @@ iq_server:
   initialAdminPassword: "admin123" # Plaintext password
   # The name of an existing Kubernetes secret containing a password key with a value of the base64 encoding of your
   # password
-  initialAdminPasswordSecret: ""
+  initialAdminPasswordSecret:
   
   # Configures the readiness probe for each pod
   readinessProbe:
@@ -221,13 +221,13 @@ serviceAccount:
 # Secrets
 secret:
   # ARN storing the initial admin password in a lifecycle_admin_password property
-  arn: ""
+  arn:
   license:
     # ARN storing the binary content of Nexus IQ Server license
-    arn: ""
+    arn:
   rds:
     # ARN storing the host, port, (database) name, username, and password properties with their respective values
-    arn: ""
+    arn:
 # Cloudwatch (requires the fluentd service account or EKS worker nodes to have correct permissions)
 cloudwatch:
   enabled: false
