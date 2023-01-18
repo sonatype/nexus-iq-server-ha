@@ -23,7 +23,7 @@ iq_server:
     name:
     username: "postgres"
     # One of these can be set to hold the database password
-    password: "admin123" # Plaintext password
+    password: # Plaintext password
     # The name of an existing Kubernetes secret containing a password key with a value of the base64 encoding of your
     # password
     passwordSecret:
