@@ -542,7 +542,7 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `iq_server.livenessProbe.failureThreshold`                | Failure threshold for liveness probe                                                    | `3`                        |
 | `iq_server.fluentd.forwarder.enabled`                     | Enable Fluentd forwarder                                                                | `true`                     |
 | `iq_server.config`                                        | A YAML block which will be used as a configuration block for IQ Server.                 | See `values.yaml`          |
-| `iq_server.useGitSsh`                                     | Use SSH for git operations                                                              | `false`                    |
+| `iq_server.useGitSsh`                                     | Use SSH to execute git operations for SCM integrations                                  | `false`                    |
 | `ingress.enabled`                                         | Enable ingress                                                                          | `false`                    |
 | `ingress.className`                                       | Ingress class name                                                                      | `nginx`                    |
 | `ingress.pathType`                                        | Ingress path type                                                                       | `Prefix`                   |
