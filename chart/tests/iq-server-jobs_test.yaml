@@ -267,7 +267,7 @@ tests:
                       - -c
                       - test -f /sonatype-work/clm-cluster/.ssh/id_rsa || (ssh-keyscan github.com
                         gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts
-                        && yes | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa)
+                        && yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa)
                     image: sonatype/nexus-iq-server:1.151.0
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container

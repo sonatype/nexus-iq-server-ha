@@ -97,7 +97,7 @@ spec:
             - >-
               test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa ||
               (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts &&
-              yes | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+              yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
           volumeMounts:
             - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
               name: {{ .Release.Name }}-iq-server-pod-volume
