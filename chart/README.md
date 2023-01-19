@@ -520,7 +520,7 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `iq_server.persistence.size`                              | Storage capacity for PV/PVC to provision/request                                        | `1Gi`                      |
 | `iq_server.persistence.storageClassName`                  | Storage class name for the PV/PVC                                                       | `""`                       |
 | `iq_server.persistence.accessModes[0]`                    | Access mode for the PV/PVC                                                              | `ReadWriteOnce`            |
-| `iq_server.persistence.csi.driver`                        | CSI driver name                                                                         | `efs.csi.aws.com`          |
+| `iq_server.persistence.csi.driver`                        | CSI driver name                                                                         | `nil`                      |
 | `iq_server.persistence.csi.fsType`                        | File system type                                                                        | `nil`                      |
 | `iq_server.persistence.csi.volumeHandle`                  | Volume handle                                                                           | `nil`                      |
 | `iq_server.persistence.nfs.server`                        | NFS server hostname                                                                     | `nil`                      |
