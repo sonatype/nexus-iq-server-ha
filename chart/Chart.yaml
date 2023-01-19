@@ -1,7 +1,7 @@
 apiVersion: v2
 name: nexus-iq-server-ha
-version: 151.0.0
-appVersion: 1.151.0
+version: 152.0.0
+appVersion: 1.152.0
 description: A cluster of Sonatype Nexus IQ Servers to continuously monitor your entire software supply chain
 type: application
 keywords:
@@ -17,12 +17,6 @@ maintainers:
   - email: support@sonatype.com
     name: Sonatype
 dependencies:
-  - name: postgresql
-    version: 12.1.8
-    repository: https://charts.bitnami.com/bitnami
-    condition: postgresql.enabled
-    tags:
-      - development
   - name: ingress-nginx
     version: 4.4.2
     repository: https://kubernetes.github.io/ingress-nginx
@@ -31,9 +25,3 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami
     version: 5.5.12
     condition: fluentd.enabled
-  - name: elasticsearch
-    repository: https://charts.bitnami.com/bitnami
-    version: 19.5.6
-    condition: elasticsearch.enabled
-    tags:
-      - development
