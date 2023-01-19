@@ -56,11 +56,6 @@ or via an existing secret
    --set iq_server.licenseSecret=<license secret>
    ```
 
-or via an AWS secret ARN
-   ```
-   --set secret.license.arn=<aws secret arn containing lifecycle license>
-   ```
-
 ### Database (required)
 
 An existing database can be configured as follows
@@ -77,11 +72,6 @@ the database password can either be passed directly
 or via an existing secret
    ```
    --set iq_server.database.passwordSecret=<database password secret>
-   ```
-
-or all of the database configuration parameters can be specified via an AWS secret ARN
-   ```
-   --set secret.rds.arn=<aws secret arn containing host, port, name (database name), username, and password properties>
    ```
 
 ### Shared File System (required)
@@ -231,10 +221,6 @@ or via an existing secret
    ```
    --set iq_server.initialAdminPasswordSecret=<initial admin password secret>
    ```
-or via an AWS secret ARN
-   ```
-   --set secret.arn=<aws secret arn containing initial admin password in lifecycle_admin_password property>
-   ```
 
 A `config.yml` file is required to run. This is generated using the `iq_server.config` value. Care should be taken if
 updating this as many values within it are fine-tuned to allow the helm chart to function.
@@ -335,6 +321,27 @@ To dynamically provision the PV via an EFS storage class use the following
    ```
    --set iq_server.persistence.persistentVolumeName=""
    --set iq_server.persistence.storageClassName=<EFS storage class name>
+   ```
+
+### AWS Secrets
+
+The [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) can be used to store AWS secrets containing
+
+AWS secrets can be used to pass the following
+
+The product license file
+   ```
+   --set secret.license.arn=<aws secret arn containing product license file binary content>
+   ```
+
+The database settings
+   ```
+   --set secret.rds.arn=<aws secret arn containing database host, port, name, username, and password keys>
+   ```
+
+The initial admin password
+   ```
+   --set secret.license.arn=<aws secret arn containing the initial admin password in an initial_admin_password key>
    ```
 
 ### ALB
