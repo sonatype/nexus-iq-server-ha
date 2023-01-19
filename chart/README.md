@@ -499,11 +499,11 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 ## Chart Configuration Options
 | Parameter                                                 | Description                                                                             | Default                    |
 |-----------------------------------------------------------|-----------------------------------------------------------------------------------------|----------------------------|
-| `iq_server.image`                                         | Nexus IQ Server image                                                                   | `sonatype/nexus-iq-server` |
+| `iq_server.image`                                         | Nexus IQ Server docker image                                                            | `sonatype/nexus-iq-server` |
 | `iq_server.imagePullPolicy`                               | Nexus IQ Server image pull policy                                                       | `IfNotPresent`             |
 | `iq_server.tag`                                           | Nexus IQ Server image tag                                                               | See `values.yaml`          |
 | `iq_server.license`                                       | Path to your Nexus IQ Server product license file                                       | `nil`                      |
-| `iq_server.licenseSecret`                                 | License secret                                                                          | `nil`                      |
+| `iq_server.licenseSecret`                                 | The name of the license secret                                                          | `nil`                      |
 | `iq_server.serviceType`                                   | Nexus IQ Server service type                                                            | `ClusterIP`                |
 | `iq_server.database.hostname`                             | Database hostname                                                                       | `nil`                      |
 | `iq_server.database.port`                                 | Database port                                                                           | `5432`                     |
@@ -521,7 +521,7 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `iq_server.persistence.storageClassName`                  | Storage class name for the PV/PVC                                                       | `""`                       |
 | `iq_server.persistence.accessModes[0]`                    | Access mode for the PV/PVC                                                              | `ReadWriteOnce`            |
 | `iq_server.persistence.csi.driver`                        | CSI driver name                                                                         | `efs.csi.aws.com`          |
-| `iq_server.persistence.csi.fsType`                        | File system type                                                                        | `""`                       |
+| `iq_server.persistence.csi.fsType`                        | File system type                                                                        | `nil`                      |
 | `iq_server.persistence.csi.volumeHandle`                  | Volume handle                                                                           | `nil`                      |
 | `iq_server.persistence.nfs.server`                        | NFS server hostname                                                                     | `nil`                      |
 | `iq_server.persistence.nfs.path`                          | NFS server path                                                                         | `/`                        |
@@ -548,8 +548,8 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `ingress.annotations`                                     | Ingress annotations                                                                     | `nil`                      |
 | `ingress.hostApplication`                                 | Ingress host for application                                                            | `nil`                      |
 | `ingress.hostApplicationPath`                             | Ingress path for application                                                            | `nil`                      |
-| `ingress.hostAdmin`                                       | Ingress host for admin                                                                  | `nil`                      |
-| `ingress.hostAdminPath`                                   | Ingress path for admin                                                                  | `nil`                      |
+| `ingress.hostAdmin`                                       | Ingress host for admin application                                                      | `nil`                      |
+| `ingress.hostAdminPath`                                   | Ingress path for admin application                                                      | `nil`                      |
 | `ingress.tls`                                             | Ingress TLS configuration                                                               | `nil`                      |
 | `ingress-nginx.enable`                                    | Enable ingress-nginx                                                                    | `false`                    |
 | `ingress-nginx.controller`                                | Ingress controller configuration for Nginx                                              | See `values.yaml`          |
@@ -557,7 +557,7 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `serviceAccount.labels`                                   | Service account labels                                                                  | `nil`                      |
 | `serviceAccount.annotations`                              | Service account annotations                                                             | `nil`                      |
 | `serviceAccount.autoMountServiceAccountToken`             | Auto mount service account token                                                        | `false`                    |
-| `secret.arn`                                              | AWS secret arn containing initial admin password in a lifecycle_admin_password key      | `nil`                      |
+| `secret.arn`                                              | AWS secret arn containing initial admin password in a initial_admin_password key        | `nil`                      |
 | `secret.license.arn`                                      | AWS secret arn containing the binary content of your Nexus IQ Server license            | `nil`                      |
 | `secret.rds.arn`                                          | AWS secret arn containing host, port, name (database name), username, and password keys | `nil`                      |
 | `cloudwatch.enabled`                                      | Enable CloudWatch logging                                                               | `false`                    |
