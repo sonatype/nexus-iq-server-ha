@@ -99,9 +99,15 @@ tests:
                       initialDelaySeconds: 45
                       periodSeconds: 15
                       timeoutSeconds: 5
+                    resources:
+                      requests:
+                      limits:
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
+                      - mountPath: "/opt/sonatype/nexus-iq-server/.ssh"
+                        name: RELEASE-NAME-iq-server-pod-volume
+                        subPath: .ssh
                       - mountPath: /etc/nexus-iq-server
                         name: RELEASE-NAME-iq-server-pod-config-volume
                       - mountPath: /var/log/nexus-iq-server
@@ -150,6 +156,13 @@ tests:
   - it: renders with overridden values
     set:
       iq_server:
+        resources:
+          requests:
+            cpu: 8
+            memory: "8Gi"
+          limits:
+            cpu: 10
+            memory: "10Gi"
         serviceAccountName: "my-service-account"
         image: "sonatype/iq-server-new"
         imagePullPolicy: "Always"
@@ -295,9 +308,19 @@ tests:
                       initialDelaySeconds: 60
                       periodSeconds: 30
                       timeoutSeconds: 3
+                    resources:
+                      requests:
+                        cpu: 8
+                        memory: "8Gi"
+                      limits:
+                        cpu: 10
+                        memory: "10Gi"
                     volumeMounts:
                       - mountPath: /iq/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
+                      - mountPath: "/opt/sonatype/nexus-iq-server/.ssh"
+                        name: RELEASE-NAME-iq-server-pod-volume
+                        subPath: .ssh
                       - mountPath: /license
                         name: RELEASE-NAME-iq-server-pod-license-volume
                         readOnly: true
@@ -367,7 +390,7 @@ tests:
             secretName: "someLicenseSecret"
         documentIndex: 0
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[1].mountPath
+          path: spec.template.spec.containers[0].volumeMounts[2].mountPath
           value: "/license"
         documentIndex: 0
       - equal:

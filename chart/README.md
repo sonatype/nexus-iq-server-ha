@@ -56,11 +56,6 @@ or via an existing secret
    --set iq_server.licenseSecret=<license secret>
    ```
 
-or via an AWS secret ARN
-   ```
-   --set secret.license.arn=<aws secret arn containing lifecycle license>
-   ```
-
 ### Database (required)
 
 An existing database can be configured as follows
@@ -77,11 +72,6 @@ the database password can either be passed directly
 or via an existing secret
    ```
    --set iq_server.database.passwordSecret=<database password secret>
-   ```
-
-or all of the database configuration parameters can be specified via an AWS secret ARN
-   ```
-   --set secret.rds.arn=<aws secret arn containing host, port, name (database name), username, and password properties>
    ```
 
 ### Shared File System (required)
@@ -128,8 +118,8 @@ chosen above a type with a higher number.
 
 1. **csi**
    ```
-   --set iq_server.persistence.csi.driver=<csi driver name, default "efs.csi.aws.com">
-   --set iq_server.persistence.csi.fsType=<filesystem type, default "">
+   --set iq_server.persistence.csi.driver=<csi driver name>
+   --set iq_server.persistence.csi.fsType=<filesystem type>
    --set iq_server.persistence.csi.volumeHandle=<volume handle>
    --set iq_server.persistence.csi.volumeAttributes=<volume attributes>
    ```
@@ -231,9 +221,11 @@ or via an existing secret
    ```
    --set iq_server.initialAdminPasswordSecret=<initial admin password secret>
    ```
-or via an AWS secret ARN
+
+If planning to use ssh for git operations, enable the following flag to generate a private/public key pair.
+You can retrieve the public key from the pod at <clusterDirectory>/.ssh/id_rsa.pub.
    ```
-   --set secret.arn=<aws secret arn containing initial admin password in lifecycle_admin_password property>
+   --set iq_server.useGitSsh=<true/false>
    ```
 
 A `config.yml` file is required to run. This is generated using the `iq_server.config` value. Care should be taken if
@@ -285,12 +277,6 @@ balancer
 resources to communicate with each other
 - [Amazon EFS CSI driver](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html) pre-installed and configured in
 the cluster
-- [Kubernetes Secrets Store CSI Driver](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html)
-pre-installed and configured in the cluster to enable AWS Secrets Manager access i.e. via
-   1. `helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts`
-   2. `helm repo update`
-   3. `helm upgrade --install --namespace kube-system csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --set grpcSupportedProviders="aws" --set syncSecret.enabled=true`
-   4. `kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml`
 
 ### Nice to have
 - [EFS Storage Class](https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/master/examples/kubernetes/dynamic_provisioning/specs/storageclass.yaml)
@@ -300,6 +286,12 @@ pre-installed and configured in the cluster to automatically provision an ALB ba
 - [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) configuration for fluentd to send aggregated logs to
 - [`aws-vault`](https://github.com/99designs/aws-vault) [pre-installed and configured](https://github.com/99designs/aws-vault/blob/master/USAGE.md#config)
   to ease authentication, in which case prefix the aws/kubectl/helm commands below with `aws-vault exec <aws-profile> -- <command>`.
+- [Kubernetes Secrets Store CSI Driver](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html)
+pre-installed and configured in the cluster to enable AWS Secrets Manager access i.e. via
+   1. `helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts`
+   2. `helm repo update`
+   3. `helm upgrade --install --namespace kube-system csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --set grpcSupportedProviders="aws" --set syncSecret.enabled=true`
+   4. `kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml`
 
 ### EKS
 
@@ -314,7 +306,15 @@ To import the context for a cluster into your kubeconfig file, run
 
 An existing EFS drive with mount targets can be used for the PV.
 
-The PV can be provisioned statically or dynamically. In either case, the access modes should be set as follows
+The PV can be provisioned statically or dynamically.
+
+In either case, a CSI volume should be configured with
+   ```
+   --set iq_server.persistence.csi.driver="efs.csi.aws.com"
+   --set iq_server.persistence.csi.fsType=""
+   ```
+
+and the access modes should be set as follows
    ```
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    ```
@@ -335,6 +335,27 @@ To dynamically provision the PV via an EFS storage class use the following
    ```
    --set iq_server.persistence.persistentVolumeName=""
    --set iq_server.persistence.storageClassName=<EFS storage class name>
+   ```
+
+### AWS Secrets
+
+The [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) can be used to store AWS secrets containing
+
+AWS secrets can be used to pass the following
+
+The product license file
+   ```
+   --set secret.license.arn=<aws secret arn containing product license file binary content>
+   ```
+
+The database settings
+   ```
+   --set secret.rds.arn=<aws secret arn containing database host, port, name, username, and password keys>
+   ```
+
+The initial admin password
+   ```
+   --set secret.license.arn=<aws secret arn containing the initial admin password in an initial_admin_password key>
    ```
 
 ### ALB
@@ -423,6 +444,8 @@ Some example commands are shown below.
    --set iq_server.config.server.applicationContextPath="/app"
    --set iq_server.config.server.adminContextPath="/admin"
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
+   --set iq_server.persistence.csi.driver="efs.csi.aws.com"
+   --set iq_server.persistence.csi.fsType=""
    --set iq_server.persistence.csi.volumeHandle="fs-0ac8d13f38bfc99df:/"
    --set iq_server.serviceType=NodePort
    --set ingress.enabled=true
@@ -446,6 +469,8 @@ Some example commands are shown below.
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    --set iq_server.persistence.persistentVolumeName=""
    --set iq_server.persistence.storageClassName="efs-storage-class-name"
+   --set iq_server.persistence.csi.driver="efs.csi.aws.com"
+   --set iq_server.persistence.csi.fsType=""
    --set iq_server.serviceType=NodePort
    --set ingress.enabled=true
    --set ingress.ingressClassName=alb
