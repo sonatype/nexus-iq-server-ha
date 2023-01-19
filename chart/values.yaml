@@ -220,7 +220,7 @@ serviceAccount:
 # AWS configuration
 # Secrets
 secret:
-  # ARN storing the initial admin password in a lifecycle_admin_password property
+  # ARN storing the initial admin password in an initial_admin_password key
   arn:
   license:
     # ARN storing the binary content of Nexus IQ Server license
