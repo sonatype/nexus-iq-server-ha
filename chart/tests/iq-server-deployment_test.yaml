@@ -99,6 +99,9 @@ tests:
                       initialDelaySeconds: 45
                       periodSeconds: 15
                       timeoutSeconds: 5
+                    resources:
+                      requests:
+                      limits:
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
@@ -150,6 +153,13 @@ tests:
   - it: renders with overridden values
     set:
       iq_server:
+        resources:
+          requests:
+            cpu: 8
+            memory: "8Gi"
+          limits:
+            cpu: 10
+            memory: "10Gi"
         serviceAccountName: "my-service-account"
         image: "sonatype/iq-server-new"
         imagePullPolicy: "Always"
@@ -295,6 +305,13 @@ tests:
                       initialDelaySeconds: 60
                       periodSeconds: 30
                       timeoutSeconds: 3
+                    resources:
+                      requests:
+                        cpu: 8
+                        memory: "8Gi"
+                      limits:
+                        cpu: 10
+                        memory: "10Gi"
                     volumeMounts:
                       - mountPath: /iq/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
