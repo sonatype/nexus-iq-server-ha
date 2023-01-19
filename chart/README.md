@@ -118,8 +118,8 @@ chosen above a type with a higher number.
 
 1. **csi**
    ```
-   --set iq_server.persistence.csi.driver=<csi driver name, default "efs.csi.aws.com">
-   --set iq_server.persistence.csi.fsType=<filesystem type, default "">
+   --set iq_server.persistence.csi.driver=<csi driver name>
+   --set iq_server.persistence.csi.fsType=<filesystem type>
    --set iq_server.persistence.csi.volumeHandle=<volume handle>
    --set iq_server.persistence.csi.volumeAttributes=<volume attributes>
    ```
@@ -300,7 +300,15 @@ To import the context for a cluster into your kubeconfig file, run
 
 An existing EFS drive with mount targets can be used for the PV.
 
-The PV can be provisioned statically or dynamically. In either case, the access modes should be set as follows
+The PV can be provisioned statically or dynamically.
+
+In either case, a CSI volume should be configured with
+   ```
+   --set iq_server.persistence.csi.driver="efs.csi.aws.com"
+   --set iq_server.persistence.csi.fsType=""
+   ```
+
+and the access modes should be set as follows
    ```
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    ```
@@ -430,6 +438,8 @@ Some example commands are shown below.
    --set iq_server.config.server.applicationContextPath="/app"
    --set iq_server.config.server.adminContextPath="/admin"
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
+   --set iq_server.persistence.csi.driver="efs.csi.aws.com"
+   --set iq_server.persistence.csi.fsType=""
    --set iq_server.persistence.csi.volumeHandle="fs-0ac8d13f38bfc99df:/"
    --set iq_server.serviceType=NodePort
    --set ingress.enabled=true
@@ -453,6 +463,8 @@ Some example commands are shown below.
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    --set iq_server.persistence.persistentVolumeName=""
    --set iq_server.persistence.storageClassName="efs-storage-class-name"
+   --set iq_server.persistence.csi.driver="efs.csi.aws.com"
+   --set iq_server.persistence.csi.fsType=""
    --set iq_server.serviceType=NodePort
    --set ingress.enabled=true
    --set ingress.ingressClassName=alb

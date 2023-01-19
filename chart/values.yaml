@@ -73,8 +73,8 @@ iq_server:
     accessModes:
       - ReadWriteOnce
     csi:
-      driver: "efs.csi.aws.com"
-      fsType: ""
+      driver:
+      fsType:
       volumeHandle:
     nfs:
       server:
