@@ -105,6 +105,9 @@ tests:
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
+                      - mountPath: "/opt/sonatype/nexus-iq-server/.ssh"
+                        name: RELEASE-NAME-iq-server-pod-volume
+                        subPath: .ssh
                       - mountPath: /etc/nexus-iq-server
                         name: RELEASE-NAME-iq-server-pod-config-volume
                       - mountPath: /var/log/nexus-iq-server
@@ -315,6 +318,9 @@ tests:
                     volumeMounts:
                       - mountPath: /iq/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
+                      - mountPath: "/opt/sonatype/nexus-iq-server/.ssh"
+                        name: RELEASE-NAME-iq-server-pod-volume
+                        subPath: .ssh
                       - mountPath: /license
                         name: RELEASE-NAME-iq-server-pod-license-volume
                         readOnly: true
@@ -384,7 +390,7 @@ tests:
             secretName: "someLicenseSecret"
         documentIndex: 0
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[1].mountPath
+          path: spec.template.spec.containers[0].volumeMounts[2].mountPath
           value: "/license"
         documentIndex: 0
       - equal:

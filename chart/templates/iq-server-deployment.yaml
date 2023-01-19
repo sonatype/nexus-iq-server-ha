@@ -78,6 +78,9 @@ spec:
           volumeMounts:
             - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
               name: {{ .Release.Name }}-iq-server-pod-volume
+            - mountPath: "/opt/sonatype/nexus-iq-server/.ssh"
+              name: {{ .Release.Name }}-iq-server-pod-volume
+              subPath: .ssh
             {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) }}
             - mountPath: "/iq-secrets"
               name: {{ .Release.Name }}-iq-server-secrets-volume

@@ -70,3 +70,35 @@ spec:
             runAsUser: 1000
             runAsGroup: 1000
       restartPolicy: OnFailure
+---
+{{- if .Values.iq_server.useGitSsh }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-git-ssh
+spec:
+  completions: 1
+  parallelism: 1
+  ttlSecondsAfterFinished: 0
+  template:
+    spec:
+      restartPolicy: OnFailure
+      volumes:
+        - name: {{ .Release.Name }}-iq-server-pod-volume
+          persistentVolumeClaim:
+            claimName: {{- if .Values.iq_server.persistence.existingPersistentVolumeClaimName }} {{ .Values.iq_server.persistence.existingPersistentVolumeClaimName }}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeClaimName }}{{- end }}
+      containers:
+        - name: {{ .Release.Name }}-git-ssh-container
+          image: {{ .Values.iq_server.image }}:{{ .Values.iq_server.tag }}
+          imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - >-
+              test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa ||
+              (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts &&
+              yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+          volumeMounts:
+            - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
+              name: {{ .Release.Name }}-iq-server-pod-volume
+{{- end }}
