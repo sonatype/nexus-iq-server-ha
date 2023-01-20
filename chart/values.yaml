@@ -20,6 +20,9 @@ iq_server:
       cpu: #8
       memory: #8Gi
 
+  # Value for the JAVA_OPTS environment variable to pass custom settings to the JVM
+  javaOpts:
+
   # Product license
   # One of these can be set to automatically install a product license
   license: # Path to your product license file

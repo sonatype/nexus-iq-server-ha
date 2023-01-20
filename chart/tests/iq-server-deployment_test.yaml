@@ -163,6 +163,7 @@ tests:
           limits:
             cpu: 10
             memory: "10Gi"
+        javaOpts: "-Xms8g -Xmx32g"
         serviceAccountName: "my-service-account"
         image: "sonatype/iq-server-new"
         imagePullPolicy: "Always"
@@ -276,6 +277,8 @@ tests:
                             name: RELEASE-NAME-iq-server-database-password-secret
                       - name: NXIQ_DATABASE_MIGRATION
                         value: "false"
+                      - name: JAVA_OPTS
+                        value: "-Xms8g -Xmx32g"
                     image: sonatype/iq-server-new:1.142.0
                     imagePullPolicy: Always
                     livenessProbe:

@@ -283,15 +283,15 @@ the cluster
 pre-installed and configured in the cluster for [dynamic provisioning](https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/)
 - [AWS Load Balancer Controller add-on](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
 pre-installed and configured in the cluster to automatically provision an ALB based on an ingress
-- [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) configuration for fluentd to send aggregated logs to
-- [`aws-vault`](https://github.com/99designs/aws-vault) [pre-installed and configured](https://github.com/99designs/aws-vault/blob/master/USAGE.md#config)
-  to ease authentication, in which case prefix the aws/kubectl/helm commands below with `aws-vault exec <aws-profile> -- <command>`.
 - [Kubernetes Secrets Store CSI Driver](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html)
 pre-installed and configured in the cluster to enable AWS Secrets Manager access i.e. via
    1. `helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts`
    2. `helm repo update`
    3. `helm upgrade --install --namespace kube-system csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --set grpcSupportedProviders="aws" --set syncSecret.enabled=true`
    4. `kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml`
+- [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) configuration for fluentd to send aggregated logs to
+- [`aws-vault`](https://github.com/99designs/aws-vault) [pre-installed and configured](https://github.com/99designs/aws-vault/blob/master/USAGE.md#config)
+  to ease authentication, in which case prefix the aws/kubectl/helm commands below with `aws-vault exec <aws-profile> -- <command>`.
 
 ### EKS
 
@@ -339,9 +339,8 @@ To dynamically provision the PV via an EFS storage class use the following
 
 ### AWS Secrets
 
-The [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) can be used to store AWS secrets containing
-
-AWS secrets can be used to pass the following
+The [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) can be used to store AWS secrets, which can be used
+to pass the following
 
 The product license file
    ```
@@ -527,6 +526,11 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `iq_server.image`                                         | Nexus IQ Server docker image                                                            | `sonatype/nexus-iq-server` |
 | `iq_server.imagePullPolicy`                               | Nexus IQ Server image pull policy                                                       | `IfNotPresent`             |
 | `iq_server.tag`                                           | Nexus IQ Server image tag                                                               | See `values.yaml`          |
+| `iq_server.resources.requests.cpu`                        | Request for CPU resources in CPU units                                                  | `nil`                      |
+| `iq_server.resources.requests.memory`                     | Request for memory resources in bytes                                                   | `nil`                      |
+| `iq_server.resources.limits.cpu`                          | Limit for CPU resources in CPU units                                                    | `nil`                      |
+| `iq_server.resources.limits.memory`                       | Limit for memory resources in bytes                                                     | `nil`                      |
+| `iq_server.javaOpts`                                      | Value for the JAVA_OPTS environment variable to pass custom settings to the JVM         | `nil`                      |
 | `iq_server.license`                                       | Path to your Nexus IQ Server product license file                                       | `nil`                      |
 | `iq_server.licenseSecret`                                 | The name of the license secret                                                          | `nil`                      |
 | `iq_server.serviceType`                                   | Nexus IQ Server service type                                                            | `ClusterIP`                |
