@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-@Library(['private-pipeline-library', 'jenkins-shared', 'int-jenkins-shared']) _
+@Library(['private-pipeline-library', 'jenkins-shared', 'iq-pipeline-library']) _
 
 final jira = [
     versionPrefix: '', project: 'CLM', projectId: '11011',
