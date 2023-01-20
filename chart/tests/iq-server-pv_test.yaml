@@ -26,15 +26,12 @@ tests:
           path: spec
           value:
             accessModes:
-              - ReadWriteOnce
+              - ReadWriteMany
             capacity:
               storage: 1Gi
             claimRef:
               name: iq-server-pvc
               namespace: NAMESPACE
-            hostPath:
-              path: /mnt/iq-server
-              type: DirectoryOrCreate
             persistentVolumeReclaimPolicy: Retain
             storageClassName: ""
             volumeMode: Filesystem
@@ -49,6 +46,7 @@ tests:
           size: "2Gi"
           hostPath:
             path: "/mnt/iq"
+            type: DirectoryOrCreate
     asserts:
       - hasDocuments:
           count: 1
@@ -68,6 +66,10 @@ tests:
       - equal:
           path: spec.hostPath.path
           value: /mnt/iq
+        documentIndex: 0
+      - equal:
+          path: spec.hostPath.type
+          value: DirectoryOrCreate
         documentIndex: 0
 
   - it: does create PV if name is given

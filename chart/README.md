@@ -77,7 +77,7 @@ or via an existing secret
 ### Shared File System (required)
 
 By default, the helm chart will create both a [Persistent Volume (PV)](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistent-volumes)
-using [hostPath](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath) storage and a corresponding
+using the configured storage and a corresponding
 [Persistent Volume Claim (PVC)](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims).
 
 However, there are various configuration options.
@@ -95,10 +95,12 @@ The [capcity](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#ca
 
 The [access mode(s)](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) can be set via
    ```
-   --set iq_server.persistence.accessModes[0]=<access mode, default "ReadWriteOnce">
+   --set iq_server.persistence.accessModes[0]=<access mode, default "ReadWriteMany">
    ```
-Note that this should correspond to the type of PV being used and should either be set to `ReadWriteOnce` for a
-`hostPath` PV or otherwise to `ReadWriteMany` for a `csi` or `nfs` PV.
+Note that this should correspond to the type of PV being used.
+
+However, if you have multiple nodes in your Kubernetes cluster, and a Nexus IQ Server pod is running on 2 or more of
+them, then this must be set to `ReadWriteMany` and you must use a type of PV that supports it.
 
 #### Storage Class Name
 
@@ -127,11 +129,6 @@ chosen above a type with a higher number.
    ```
    --set iq_server.persistence.nfs.server=<nfs server hostname>
    --set iq_server.persistence.nfs.path=<nfs server path, default "/">
-   ```
-3. **hostPath**
-   ```
-   --set iq_server.persistence.hostPath.path=<hostPath path, default "/mnt/iq-server">
-   --set iq_server.persistence.hostPath.type=<hostPath type, default "DirectoryOrCreate">
    ```
 
 #### Existing PV and PVC
@@ -555,8 +552,6 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `iq_server.persistence.csi.volumeHandle`                  | Volume handle                                                                           | `nil`                      |
 | `iq_server.persistence.nfs.server`                        | NFS server hostname                                                                     | `nil`                      |
 | `iq_server.persistence.nfs.path`                          | NFS server path                                                                         | `/`                        |
-| `iq_server.persistence.hostPath.path`                     | Host path                                                                               | `/mnt/iq-server`           |
-| `iq_server.persistence.hostPath.type`                     | Host path type                                                                          | `DirectoryOrCreate`        |
 | `iq_server.serviceAccountName`                            | Nexus IQ Server service account name                                                    | `default`                  |
 | `iq_server.serviceType`                                   | Nexus IQ Server service type                                                            | `ClusterIP`                |
 | `iq_server.replicas`                                      | Number of replicas                                                                      | `2`                        |
