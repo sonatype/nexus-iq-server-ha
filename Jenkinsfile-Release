@@ -70,10 +70,10 @@ dockerizedBuildPipeline(
     }
   },
   onSuccess: {
-    buildNotifications(currentBuild, env, 'main')
+    buildNotifications(currentBuild, env)
   },
   onFailure: {
-    buildNotifications(currentBuild, env, 'main')
+    buildNotifications(currentBuild, env)
   }
 )
 
