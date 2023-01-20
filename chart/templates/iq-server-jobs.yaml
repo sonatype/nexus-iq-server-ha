@@ -27,7 +27,7 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Release.Name }}-iq-server-container
-          image: {{ .Values.iq_server.image }}:{{ .Values.iq_server.tag }}
+          image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
           imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
           volumeMounts:
             - mountPath: "/etc/nexus-iq-server"
@@ -89,7 +89,7 @@ spec:
             claimName: {{- if .Values.iq_server.persistence.existingPersistentVolumeClaimName }} {{ .Values.iq_server.persistence.existingPersistentVolumeClaimName }}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeClaimName }}{{- end }}
       containers:
         - name: {{ .Release.Name }}-git-ssh-container
-          image: {{ .Values.iq_server.image }}:{{ .Values.iq_server.tag }}
+          image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
           imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
           command:
             - /bin/sh

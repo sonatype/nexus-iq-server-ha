@@ -54,7 +54,7 @@ spec:
   rules:
     - http:
         paths:
-          - path: {{- if .Values.ingress.hostApplicationPath}} {{ .Values.ingress.hostApplicationPath }}{{- else }} /{{ include "trimSpaceAndForwardSlashes" .Values.iq_server.config.server.applicationContextPath }}{{- end }}
+          - path: {{- if .Values.ingress.hostApplicationPath}} {{ .Values.ingress.hostApplicationPath }}{{- else }} /{{ include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" .Values.iq_server.config.server.applicationContextPath }}{{- end }}
             pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
@@ -68,7 +68,7 @@ spec:
       {{- end }}
     - http:
         paths:
-          - path: {{- if .Values.ingress.hostAdminPath}} {{ .Values.ingress.hostAdminPath }}{{- else }} /{{ include "trimSpaceAndForwardSlashes" .Values.iq_server.config.server.adminContextPath }}{{- end }}
+          - path: {{- if .Values.ingress.hostAdminPath}} {{ .Values.ingress.hostAdminPath }}{{- else }} /{{ include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" .Values.iq_server.config.server.adminContextPath }}{{- end }}
             pathType: {{ .Values.ingress.pathType }}
             backend:
               service:

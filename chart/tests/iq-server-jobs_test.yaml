@@ -83,9 +83,10 @@ tests:
     set:
       iq_server:
         serviceAccountName: "my-service-account"
-        image: "sonatype/iq-server-new"
+        imageRegistry: "docker-all.repo.sonatype.com"
+        image: "iq/snapshot"
         imagePullPolicy: "Always"
-        tag: "1.142.0"
+        tag: "1.142.0-SNAPSHOT"
     asserts:
       - hasDocuments:
           count: 1
@@ -139,7 +140,7 @@ tests:
                         secretKeyRef:
                           key: password
                           name: RELEASE-NAME-iq-server-database-password-secret
-                    image: sonatype/iq-server-new:1.142.0
+                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: Always
                     name: RELEASE-NAME-iq-server-container
                     securityContext:
@@ -238,6 +239,9 @@ tests:
   - it: can create git ssh job
     set:
       iq_server:
+        imageRegistry: "docker-all.repo.sonatype.com"
+        image: "iq/snapshot"
+        tag: "1.142.0-SNAPSHOT"
         useGitSsh: true
     asserts:
       - hasDocuments:
@@ -268,7 +272,7 @@ tests:
                       - test -f /sonatype-work/clm-cluster/.ssh/id_rsa || (ssh-keyscan github.com
                         gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts
                         && yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa)
-                    image: sonatype/nexus-iq-server:1.152.0
+                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
                     volumeMounts:

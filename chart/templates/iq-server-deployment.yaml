@@ -49,7 +49,7 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Release.Name }}-iq-server-container
-          image: {{ .Values.iq_server.image }}:{{ .Values.iq_server.tag }}
+          image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
           imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
           resources:
             requests:
@@ -153,9 +153,9 @@ spec:
                 - |
                   {{- if .Values.iq_server.config.server.adminConnectors }}
                     {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
-                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/database &&
-                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/clusterDirectory &&
-                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/workDirectory
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/database &&
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/clusterDirectory &&
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/workDirectory
                     {{- end }}
                   {{- end }}
           livenessProbe:
@@ -170,7 +170,7 @@ spec:
                 - |
                   {{- if .Values.iq_server.config.server.adminConnectors }}
                     {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
-                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/threadDeadlock
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/threadDeadlock
                     {{- end }}
                   {{- end }}
         {{- if and (.Values.fluentd.enabled) (.Values.iq_server.fluentd.forwarder.enabled) }}

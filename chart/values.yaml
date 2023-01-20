@@ -5,9 +5,10 @@
 # Nexus IQ Server HA configuration
 iq_server:
   # Sonatype official public image
+  imageRegistry: # If not specified, defaults to Docker public registry
   image: "sonatype/nexus-iq-server"
-  imagePullPolicy: "IfNotPresent"
   tag: "1.152.0"
+  imagePullPolicy: "IfNotPresent"
 
   # We usually recommend not to specify default resources and to leave this as a conscious choice for the user.
   # This also increases the chance that the chart runs on environments with little resources.
