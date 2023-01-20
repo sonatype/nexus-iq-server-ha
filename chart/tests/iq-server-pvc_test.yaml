@@ -26,7 +26,7 @@ tests:
           path: spec
           value:
             accessModes:
-              - ReadWriteOnce
+              - ReadWriteMany
             resources:
               requests:
                 storage: 1Gi
@@ -43,8 +43,8 @@ tests:
           persistentVolumeClaimName: "iq-server-pvc-1"
           persistentVolumeClaimRetainPolicy: "delete"
           size: "2Gi"
-          hostPath:
-            path: "/mnt/iq"
+          accessModes:
+            - ReadWriteOnce
     asserts:
       - hasDocuments:
           count: 1

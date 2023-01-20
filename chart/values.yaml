@@ -63,10 +63,10 @@ iq_server:
     storageClassName: ""
     # Access mode for PV/PVC (should correspond to the volume type)
     accessModes:
-      - ReadWriteOnce
+      - ReadWriteMany
     # Volume type
     # Whichever one has all required parameters set will be used
-    # If this applies to multiple, then one will be selected in the preference order of csi, nfs, hostPath
+    # If this applies to multiple, then one will be selected in the preference order of csi then nfs
     csi:
       driver:
       fsType:
@@ -74,9 +74,6 @@ iq_server:
     nfs:
       server:
       path: "/"
-    hostPath:
-      path: "/mnt/iq-server"
-      type: DirectoryOrCreate
 
   # The service account to use to run the pods/job
   serviceAccountName: "default"
