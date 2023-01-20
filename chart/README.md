@@ -99,7 +99,7 @@ The [access mode(s)](https://kubernetes.io/docs/concepts/storage/persistent-volu
    ```
 Note that this should correspond to the type of PV being used.
 
-However, if you have multiple nodes in your Kubernetes cluster, and a Nexus IQ Server pod is running on 2 or more of
+If you have multiple nodes in your Kubernetes cluster, and a Nexus IQ Server pod is running on 2 or more of
 them, then this must be set to `ReadWriteMany` and you must use a type of PV that supports it.
 
 #### Storage Class Name
