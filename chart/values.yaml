@@ -5,7 +5,7 @@
 # Nexus IQ Server HA configuration
 iq_server:
   # Sonatype official public image
-  imageRegistry: # If not specified, defaults to Docker public registry
+  imageRegistry: # Container image registry, if not specified the Docker public registry will be used
   image: "sonatype/nexus-iq-server"
   tag: "1.152.0"
   imagePullPolicy: "IfNotPresent"

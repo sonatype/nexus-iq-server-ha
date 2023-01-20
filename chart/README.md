@@ -523,6 +523,7 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 ## Chart Configuration Options
 | Parameter                                                 | Description                                                                             | Default                    |
 |-----------------------------------------------------------|-----------------------------------------------------------------------------------------|----------------------------|
+| `iq_server.imageRegistry`                                 | Container image registry, if not specified the Docker public registry will be used      | `nil`                      |
 | `iq_server.image`                                         | Nexus IQ Server docker image                                                            | `sonatype/nexus-iq-server` |
 | `iq_server.imagePullPolicy`                               | Nexus IQ Server image pull policy                                                       | `IfNotPresent`             |
 | `iq_server.tag`                                           | Nexus IQ Server image tag                                                               | See `values.yaml`          |
