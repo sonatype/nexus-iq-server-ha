@@ -19,8 +19,8 @@ This repository is intended to store a helm chart to create a cluster of Nexus I
 ## General Requirements
 - A copy of the helm chart
 - A Nexus IQ Server license that supports the High Availability (HA) feature
-- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) to run commands against a Kubernetes cluster
-- [helm](https://helm.sh/docs/helm/) to install or upgrade the helm chart
+- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) (1.23+) to run commands against a Kubernetes cluster
+- [helm](https://helm.sh/docs/helm/) (3.9.3+) to install or upgrade the helm chart
 - A PostgreSQL (10.7 or newer) database or a PostgreSQL-compatible service
 - A Kubernetes cluster to run the helm chart on
 - A shared file system to share files between all Nexus IQ Server pods in the cluster
