@@ -43,7 +43,7 @@ tests:
           value:       
             - /bin/sh
             - -c
-            - find /log/ -type f -mtime +6 -delete
+            - find /log/ -type f -mtime +49 -delete
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].mountPath
           value: /log

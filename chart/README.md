@@ -241,7 +241,7 @@ fluentd is required to generate aggregated log files which are needed for any su
 
 An aggregator is used to write aggregated log files to the PV.
 
-By default, aggregate log files that have a last modified time older than 7 days are scheduled to be deleted every day
+By default, aggregate log files that have a last modified time older than 50 days are scheduled to be deleted every day
 at 1 am. This can also be customized as follows
    ```
    --set aggregateLogFileRetention.deleteCron=<Cron schedule expression, default "0 1 * * *">
@@ -606,6 +606,6 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `cloudwatch.logGroupName`                                 | CloudWatch log group name                                                               | `nil`                      |
 | `cloudwatch.logStreamName`                                | CloudWatch log stream name                                                              | `nil`                      |
 | `aggregateLogFileRetention.deleteCron`                    | Cron schedule expression for when to delete old aggregate log files if needed           | `0 1 * * *`                |
-| `aggregateLogFileRetention.maxLastModifiedDays`           | Maximum last modified time of an aggregate log file in days (0 disables deletion)       | 7                          |
+| `aggregateLogFileRetention.maxLastModifiedDays`           | Maximum last modified time of an aggregate log file in days (0 disables deletion)       | 50                         |
 | `fluentd.enabled`                                         | Enable Fluentd                                                                          | `true`                     |
 | `fluentd.config`                                          | Fluentd configuration                                                                   | See `values.yaml`          |
