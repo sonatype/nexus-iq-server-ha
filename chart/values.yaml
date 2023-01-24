@@ -247,6 +247,13 @@ cloudwatch:
   logGroupName:
   logStreamName:
 
+# Aggregate log file retention configuration
+aggregateLogFileRetention:
+  # Cron schedule expression for when to delete old aggregate log files if needed
+  deleteCron: "0 1 * * *"
+  # Maximum last modified time of an aggregate log file in days (0 disables deletion)
+  maxLastModifiedDays: 7
+
 # fluentd configuration
 fluentd:
   enabled: true
