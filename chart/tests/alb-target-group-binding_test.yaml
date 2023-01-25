@@ -1,0 +1,56 @@
+suite: alb-target-group-binding
+templates:
+  - alb-target-group-binding.yaml
+tests:
+  - it: is disabled by default
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders an application target group binding if configured
+    set:
+      existingApplicationLoadBalancer:
+        applicationTargetGroupARN: "someAppARN"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: apiVersion
+          value: elbv2.k8s.aws/v1beta1
+      - isKind:
+          of: TargetGroupBinding
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-alb-app-target-group-binding
+      - equal:
+          path: spec.serviceRef.name
+          value: RELEASE-NAME-iq-server-service
+      - equal:
+          path: spec.serviceRef.port
+          value: 8070
+      - equal:
+          path: spec.targetGroupARN
+          value: someAppARN
+  - it: renders an admin target group binding if configured
+    set:
+      existingApplicationLoadBalancer:
+        adminTargetGroupARN: "someAdminARN"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: apiVersion
+          value: elbv2.k8s.aws/v1beta1
+      - isKind:
+          of: TargetGroupBinding
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-alb-admin-target-group-binding
+      - equal:
+          path: spec.serviceRef.name
+          value: RELEASE-NAME-iq-server-service
+      - equal:
+          path: spec.serviceRef.port
+          value: 8071
+      - equal:
+          path: spec.targetGroupARN
+          value: someAdminARN

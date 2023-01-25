@@ -1,0 +1,29 @@
+{{- if .Values.existingApplicationLoadBalancer }}
+{{- if .Values.existingApplicationLoadBalancer.applicationTargetGroupARN }}
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: {{ .Release.Name }}-alb-app-target-group-binding
+spec:
+  serviceRef:
+    name: {{ .Release.Name }}-iq-server-service
+    {{- with index .Values.iq_server.config.server.applicationConnectors 0 }}
+    port: {{ .port }}
+    {{- end }}
+  targetGroupARN: {{ .Values.existingApplicationLoadBalancer.applicationTargetGroupARN }}
+{{- end }}
+---
+{{- if .Values.existingApplicationLoadBalancer.adminTargetGroupARN }}
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: {{ .Release.Name }}-alb-admin-target-group-binding
+spec:
+  serviceRef:
+    name: {{ .Release.Name }}-iq-server-service
+    {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
+    port: {{ .port }}
+    {{- end }}
+  targetGroupARN: {{ .Values.existingApplicationLoadBalancer.adminTargetGroupARN }}
+{{- end }}
+{{- end }}
