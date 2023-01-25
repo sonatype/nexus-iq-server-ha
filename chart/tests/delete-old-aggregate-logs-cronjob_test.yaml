@@ -1,0 +1,97 @@
+suite: delete-old-aggregate-logs-cronjob
+templates:
+  - delete-old-aggregate-logs-cronjob.yaml
+tests:
+  - it: renders with defaults
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: apiVersion
+          value: batch/v1
+      - isKind:
+          of: CronJob
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-delete-old-aggregate-logs-cronjob
+      - equal:
+          path: spec.schedule
+          value: "0 1 * * *"
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Forbid
+      - equal:
+          path: spec.jobTemplate.spec.ttlSecondsAfterFinished
+          value: 0
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.restartPolicy
+          value: OnFailure
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].name
+          value: RELEASE-NAME-iq-server-pod-volume
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].persistentVolumeClaim.claimName
+          value: iq-server-pvc
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].name
+          value: "RELEASE-NAME-delete-old-aggregate-logs"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].image
+          value: busybox:1.28
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command
+          value:       
+            - /bin/sh
+            - -c
+            - find /log/ -type f -mtime +49 -delete
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /log
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].name
+          value: RELEASE-NAME-iq-server-pod-volume
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts[0].subPath
+          value: log
+  - it: renders with overridden values
+    set:
+      aggregateLogFileRetention:
+        deleteCron: "0 2 * * *"
+        maxLastModifiedDays: 1
+    asserts:
+      - equal:
+          path: spec.schedule
+          value: "0 2 * * *"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command
+          value:
+            - /bin/sh
+            - -c
+            - find /log/ -type f -mtime +0 -delete
+  - it: is disabled if maxLastModifiedDays is 0
+    set:
+      aggregateLogFileRetention:
+        maxLastModifiedDays: 0
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: is disabled if aggregateLogFileRetention is unspecified
+    set:
+      aggregateLogFileRetention:
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: is disabled if deleteCron is unspecified
+    set:
+      aggregateLogFileRetention:
+        deleteCron:
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: is disabled if maxLastModifiedDays is unspecified
+    set:
+      aggregateLogFileRetention:
+        maxLastModifiedDays:
+    asserts:
+      - hasDocuments:
+          count: 0

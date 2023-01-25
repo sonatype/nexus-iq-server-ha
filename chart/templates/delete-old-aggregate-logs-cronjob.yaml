@@ -1,0 +1,31 @@
+{{- if and .Values.aggregateLogFileRetention (.Values.aggregateLogFileRetention.deleteCron | quote) .Values.aggregateLogFileRetention.maxLastModifiedDays (gt (int .Values.aggregateLogFileRetention.maxLastModifiedDays) 0) }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-delete-old-aggregate-logs-cronjob
+spec:
+  schedule: {{ .Values.aggregateLogFileRetention.deleteCron | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 0
+      template:
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            - name: {{ .Release.Name }}-iq-server-pod-volume
+              persistentVolumeClaim:
+                claimName: {{- if .Values.iq_server.persistence.existingPersistentVolumeClaimName }} {{ .Values.iq_server.persistence.existingPersistentVolumeClaimName }}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeClaimName }}{{- end }}
+          containers:
+          - name: "{{ .Release.Name }}-delete-old-aggregate-logs"
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - find /log/ -type f -mtime +{{ sub .Values.aggregateLogFileRetention.maxLastModifiedDays 1 }} -delete
+            volumeMounts:
+              - mountPath: /log
+                name: {{ .Release.Name }}-iq-server-pod-volume
+                subPath: log
+{{- end }}
