@@ -253,10 +253,10 @@ secret:
     # ARN storing the host, port, (database) name, username, and password properties with their respective values
     arn:
   sshPrivateKey:
-    # ARN storing the binary content of SSH private key for use with ssh git operations
+    # ARN storing the binary content of your SSH private key file for use with ssh git operations
     arn:
   sshKnownHosts:
-    # ARN storing the binary content of SSH private key for use with ssh git operations
+    # ARN storing the binary content of your known_hosts file for use with ssh git operations
     arn:
 # Cloudwatch (requires the fluentd service account or EKS worker nodes to have correct permissions)
 cloudwatch:
