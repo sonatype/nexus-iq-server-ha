@@ -94,10 +94,22 @@ spec:
           command:
             - /bin/sh
             - -c
-            - >-
+            - |
+              test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts ||
+              {{- if .Values.iq_server.sshKnownHosts }}
+              (echo "{{ .Values.iq_server.sshKnownHosts | indent 14 }}" >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts &&
+              sed -i'' -e 's/^[ \t]*//g' {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
+              {{- else }}
+              (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
+              {{- end }}
               test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa ||
-              (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts &&
-              yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+              {{- if .Values.iq_server.sshPrivateKey }}
+              (echo "{{ .Values.iq_server.sshPrivateKey | indent 14 }}" >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
+              sed -i'' -e 's/^[ \t]*//g' {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
+              chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+              {{- else }}
+              (yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+              {{- end }}
           volumeMounts:
             - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
               name: {{ .Release.Name }}-iq-server-pod-volume
