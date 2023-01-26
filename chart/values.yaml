@@ -264,6 +264,10 @@ cloudwatch:
   region:
   logGroupName:
   logStreamName:
+# Configuration for an existing externally managed application load balancer target groups
+existingApplicationLoadBalancer:
+  applicationTargetGroupARN:
+  adminTargetGroupARN:
 
 # Aggregate log file retention configuration
 aggregateLogFileRetention:
