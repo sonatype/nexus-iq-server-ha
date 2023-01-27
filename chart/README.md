@@ -268,11 +268,12 @@ By default, the
 [latest publicly available Nexus IQ Server docker image](https://hub.docker.com/r/sonatype/nexus-iq-server)
 will be used.
 
-The image, tag, and imagePullPolicy can be overridden using
+The image registry, image, tag, and imagePullPolicy can be overridden using
    ```
-   --set iq_server.image=<image>
-   --set iq_server.tag=<tag>
-   --set iq_server.imagePullPolicy=<imagePullPolicy>
+   --set iq_server.imageRegistry=<image registry, default nil meaning use the Docker public registry>
+   --set iq_server.image=<image, default "sonatype/nexus-iq-server">
+   --set iq_server.tag=<tag, default most recent version of Nexus IQ Server>
+   --set iq_server.imagePullPolicy=<imagePullPolicy, default "IfNotPresent">
    ```
 
 ## Amazon Web Services (AWS)
