@@ -31,6 +31,18 @@ iq_server:
   # product license file content
   licenseSecret:
 
+  # Git SSH configuration for Source Control
+  # One of these can be set to automatically install the SSH private key for Git SSH operations
+  sshPrivateKey: # Path to your SSH private key file
+  # The name of an existing Kubernetes secret containing an id_rsa key with a value of the base64 encoding of
+  # your SSH private key file content
+  sshPrivateKeySecret:
+  # One of these can be set to automatically install the known hosts for Git SSH operations
+  sshKnownHosts: # Path to your known SSH hosts file in the correct format, see: https://manpages.ubuntu.com/manpages/kinetic/en/man8/sshd.8.html#ssh_known_hosts%20file%20format
+  # The name of an existing Kubernetes secret containing a known_hosts key with a value of the base64 encoding of
+  # your known hosts file content
+  sshKnownHostsSecret:
+
   # Database (PostgreSQL 10.7 or newer or a PostgreSQL-compatible service)
   database:
     hostname:
@@ -239,6 +251,12 @@ secret:
     arn:
   rds:
     # ARN storing the host, port, (database) name, username, and password properties with their respective values
+    arn:
+  sshPrivateKey:
+    # ARN storing the binary content of your SSH private key file for use with ssh git operations
+    arn:
+  sshKnownHosts:
+    # ARN storing the binary content of your known_hosts file for use with ssh git operations
     arn:
 # Cloudwatch (requires the fluentd service account or EKS worker nodes to have correct permissions)
 cloudwatch:

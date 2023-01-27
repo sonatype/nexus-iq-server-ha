@@ -17,7 +17,7 @@ spec:
         - name: {{ .Release.Name }}-iq-server-pod-volume
           persistentVolumeClaim:
             claimName: {{- if .Values.iq_server.persistence.existingPersistentVolumeClaimName }} {{ .Values.iq_server.persistence.existingPersistentVolumeClaimName }}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeClaimName }}{{- end }}
-        {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) }}
+        {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) (.Values.secret.sshPrivateKey.arn) (.Values.secret.sshKnownHosts.arn) }}
         - name: {{ .Release.Name }}-iq-server-secrets-volume
           csi:
             driver: secrets-store.csi.k8s.io
@@ -81,7 +81,7 @@ spec:
             - mountPath: "/opt/sonatype/nexus-iq-server/.ssh"
               name: {{ .Release.Name }}-iq-server-pod-volume
               subPath: .ssh
-            {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) }}
+            {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) (.Values.secret.sshPrivateKey.arn) (.Values.secret.sshKnownHosts.arn) }}
             - mountPath: "/iq-secrets"
               name: {{ .Release.Name }}-iq-server-secrets-volume
               readOnly: true
@@ -104,6 +104,20 @@ spec:
             {{- else if .Values.secret.license.arn }}
             - name: NXIQ_LICENSE_FILE
               value: "/iq-secrets/license_lic"
+            {{- end }}
+            {{- if or (.Values.iq_server.sshPrivateKeySecret) (.Values.iq_server.sshPrivateKey) }}
+            - name: NXIQ_SSH_PRIVATE_KEY
+              value: "/opt/sonatype/nexus-iq-server/.ssh/id_rsa"
+            {{- else if .Values.secret.sshPrivateKey.arn }}
+            - name: NXIQ_SSH_PRIVATE_KEY
+              value: "/iq-secrets/id_rsa"
+            {{- end }}
+            {{- if or (.Values.iq_server.sshKnownHostsSecret) (.Values.iq_server.sshKnownHosts) }}
+            - name: NXIQ_SSH_KNOWN_HOSTS
+              value: "/opt/sonatype/nexus-iq-server/.ssh/known_hosts"
+            {{- else if .Values.secret.sshKnownHosts.arn }}
+            - name: NXIQ_SSH_KNOWN_HOSTS
+              value: "/iq-secrets/known_hosts"
             {{- end }}
             - name: NXIQ_INITIAL_ADMIN_PASSWORD
               valueFrom:

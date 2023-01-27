@@ -236,7 +236,7 @@ tests:
             name: RELEASE-NAME-iq-server-secrets-volume
         documentIndex: 0
 
-  - it: can create git ssh job
+  - it: can create git ssh job for generating ssh keys and known hosts files
     set:
       iq_server:
         imageRegistry: "docker-all.repo.sonatype.com"
@@ -269,18 +269,159 @@ tests:
                   - command:
                       - /bin/sh
                       - -c
-                      - test -f /sonatype-work/clm-cluster/.ssh/id_rsa || (ssh-keyscan github.com
-                        gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts
-                        && yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa)
+                      - |
+                        test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
+                        (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts) &&
+                        test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
+                        (yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa)
                     image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
+                    securityContext:
+                      runAsGroup: 1000
+                      runAsUser: 1000
                 restartPolicy: OnFailure
+                serviceAccountName: default
                 volumes:
                   - name: RELEASE-NAME-iq-server-pod-volume
                     persistentVolumeClaim:
                       claimName: iq-server-pvc
+        documentIndex: 1
+
+  - it: can create git ssh job with passed in ssh private key and known hosts files
+    set:
+      iq_server:
+        imageRegistry: "docker-all.repo.sonatype.com"
+        image: "iq/snapshot"
+        tag: "1.142.0-SNAPSHOT"
+        useGitSsh: true
+        sshPrivateKey: "/private.key"
+        sshKnownHosts: "/known_hosts"
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: Job
+        documentIndex: 1
+      - equal:
+          path: apiVersion
+          value: batch/v1
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-git-ssh
+        documentIndex: 1
+      - equal:
+          path: spec
+          value:
+            completions: 1
+            parallelism: 1
+            ttlSecondsAfterFinished: 0
+            template:
+              spec:
+                containers:
+                  - command:
+                      - /bin/sh
+                      - -c
+                      - |
+                        test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
+                        (echo "              /known_hosts" >/sonatype-work/clm-cluster/.ssh/known_hosts &&
+                        sed -i'' -e 's/^[ \t]*//g' /sonatype-work/clm-cluster/.ssh/known_hosts) &&
+                        test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
+                        (echo "              /private.key" >/sonatype-work/clm-cluster/.ssh/id_rsa &&
+                        sed -i'' -e 's/^[ \t]*//g' /sonatype-work/clm-cluster/.ssh/id_rsa &&
+                        chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
+                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
+                    imagePullPolicy: IfNotPresent
+                    name: RELEASE-NAME-git-ssh-container
+                    volumeMounts:
+                      - mountPath: /sonatype-work/clm-cluster
+                        name: RELEASE-NAME-iq-server-pod-volume
+                    securityContext:
+                      runAsGroup: 1000
+                      runAsUser: 1000
+                restartPolicy: OnFailure
+                serviceAccountName: default
+                volumes:
+                  - name: RELEASE-NAME-iq-server-pod-volume
+                    persistentVolumeClaim:
+                      claimName: iq-server-pvc
+        documentIndex: 1
+
+  - it: can create git ssh job with passed in aws ssh private key and known hosts files
+    set:
+      iq_server:
+        imageRegistry: "docker-all.repo.sonatype.com"
+        image: "iq/snapshot"
+        tag: "1.142.0-SNAPSHOT"
+        useGitSsh: true
+      secret:
+        sshPrivateKey:
+          arn: "arnPK"
+        sshKnownHosts:
+          arn: "arnKH"
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: Job
+        documentIndex: 1
+      - equal:
+          path: 'apiVersion'
+          value: batch/v1
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-git-ssh
+        documentIndex: 1
+      - equal:
+          path: spec
+          value:
+            completions: 1
+            parallelism: 1
+            ttlSecondsAfterFinished: 0
+            template:
+              spec:
+                containers:
+                  - command:
+                      - /bin/sh
+                      - -c
+                      - |
+                        test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
+                        (cp /iq-secrets/known_hosts /sonatype-work/clm-cluster/.ssh/known_hosts) &&
+                        test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
+                        (cp /iq-secrets/id_rsa /sonatype-work/clm-cluster/.ssh/id_rsa &&
+                        chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
+                    env:
+                    - name: NXIQ_SSH_PRIVATE_KEY
+                      value: /iq-secrets/id_rsa
+                    - name: NXIQ_SSH_KNOWN_HOSTS
+                      value: /iq-secrets/known_hosts
+                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
+                    imagePullPolicy: IfNotPresent
+                    name: RELEASE-NAME-git-ssh-container
+                    securityContext:
+                      runAsGroup: 1000
+                      runAsUser: 1000
+                    volumeMounts:
+                    - mountPath: /sonatype-work/clm-cluster
+                      name: RELEASE-NAME-iq-server-pod-volume
+                    - mountPath: /iq-secrets
+                      name: RELEASE-NAME-iq-server-secrets-volume
+                restartPolicy: OnFailure
+                serviceAccountName: default
+                volumes:
+                - name: RELEASE-NAME-iq-server-pod-volume
+                  persistentVolumeClaim:
+                    claimName: iq-server-pvc
+                - name: RELEASE-NAME-iq-server-secrets-volume
+                  csi:
+                    driver: secrets-store.csi.k8s.io
+                    readOnly: true
+                    volumeAttributes:
+                      fsType: ext4
+                      secretProviderClass: RELEASE-NAME-aws-secret-provider
         documentIndex: 1

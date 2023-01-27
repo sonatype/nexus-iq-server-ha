@@ -82,23 +82,71 @@ spec:
   ttlSecondsAfterFinished: 0
   template:
     spec:
-      restartPolicy: OnFailure
+      serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
       volumes:
         - name: {{ .Release.Name }}-iq-server-pod-volume
           persistentVolumeClaim:
             claimName: {{- if .Values.iq_server.persistence.existingPersistentVolumeClaimName }} {{ .Values.iq_server.persistence.existingPersistentVolumeClaimName }}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeClaimName }}{{- end }}
+      {{- if or (.Values.secret.sshKnownHosts.arn) (.Values.secret.sshPrivateKey.arn) }}
+        - name: {{ .Release.Name }}-iq-server-secrets-volume
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Release.Name }}-aws-secret-provider
+              fsType: ext4
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-git-ssh-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
           imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
-          command:
-            - /bin/sh
-            - -c
-            - >-
-              test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa ||
-              (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts &&
-              yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
           volumeMounts:
             - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
               name: {{ .Release.Name }}-iq-server-pod-volume
+            {{- if or (.Values.secret.sshKnownHosts.arn) (.Values.secret.sshPrivateKey.arn) }}
+            - mountPath: "/iq-secrets"
+              name: {{ .Release.Name }}-iq-server-secrets-volume
+            {{- end }}
+          {{- if or (.Values.secret.sshKnownHosts.arn) (.Values.secret.sshPrivateKey.arn) }}
+          env:
+          {{- if .Values.secret.sshPrivateKey.arn }}
+          - name: NXIQ_SSH_PRIVATE_KEY
+            value: "/iq-secrets/id_rsa"
+          {{- end }}
+          {{- if .Values.secret.sshKnownHosts.arn }}
+          - name: NXIQ_SSH_KNOWN_HOSTS
+            value: "/iq-secrets/known_hosts"
+          {{- end }}
+          {{- end }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts ||
+              {{- if or (.Values.iq_server.sshKnownHosts) (.Values.secret.sshKnownHosts.arn) }}
+              {{- if .Values.secret.sshKnownHosts.arn }}
+              (cp /iq-secrets/known_hosts {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
+              {{- else }}
+              (echo "{{ .Values.iq_server.sshKnownHosts | indent 14 }}" >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts &&
+              sed -i'' -e 's/^[ \t]*//g' {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
+              {{- end }}
+              {{- else }}
+              (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
+              {{- end }}
+              test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa ||
+              {{- if or (.Values.iq_server.sshPrivateKey) (.Values.secret.sshPrivateKey.arn) }}
+              {{- if .Values.secret.sshPrivateKey.arn }}
+              (cp /iq-secrets/id_rsa {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
+              {{- else }}
+              (echo "{{ .Values.iq_server.sshPrivateKey | indent 14 }}" >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
+              sed -i'' -e 's/^[ \t]*//g' {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
+              {{- end }}
+              chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+              {{- else }}
+              (yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+              {{- end }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+      restartPolicy: OnFailure
 {{- end }}
