@@ -31,6 +31,16 @@ spec:
           secret:
             secretName: {{- if .Values.iq_server.licenseSecret }} {{ .Values.iq_server.licenseSecret }}{{- else}} {{ .Release.Name }}-iq-server-license-secret{{- end}}
         {{- end }}
+        {{- if .Values.iq_server.sshPrivateKeySecret }}
+        - name: {{ .Release.Name }}-iq-server-pod-private-key-volume
+          secret:
+            secretName: {{ .Values.iq_server.sshPrivateKeySecret }}
+        {{- end }}
+        {{- if .Values.iq_server.sshKnownHostsSecret }}
+        - name: {{ .Release.Name }}-iq-server-pod-known-hosts-volume
+          secret:
+            secretName: {{ .Values.iq_server.sshKnownHostsSecret }}
+        {{- end }}
         - name: {{ .Release.Name }}-iq-server-pod-config-volume
           configMap:
             name: {{ .Release.Name }}-iq-server-config-configmap
@@ -89,6 +99,16 @@ spec:
             {{- if or (.Values.iq_server.licenseSecret) (.Values.iq_server.license) }}
             - mountPath: "/license"
               name: {{ .Release.Name }}-iq-server-pod-license-volume
+              readOnly: true
+            {{- end }}
+            {{- if .Values.iq_server.sshPrivateKeySecret }}
+            - mountPath: "{{ .Values.iq_server.config.clusterDirectory }}/.ssh/private-key-volume"
+              name: {{ .Release.Name }}-iq-server-pod-private-key-volume
+              readOnly: true
+            {{- end }}
+            {{- if .Values.iq_server.sshKnownHostsSecret }}
+            - mountPath: "{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known-hosts-volume"
+              name: {{ .Release.Name }}-iq-server-pod-known-hosts-volume
               readOnly: true
             {{- end }}
             - mountPath: "/etc/nexus-iq-server"
