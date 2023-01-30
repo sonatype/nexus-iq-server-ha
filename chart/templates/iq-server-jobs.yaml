@@ -118,25 +118,29 @@ spec:
               name: {{ .Release.Name }}-iq-server-secrets-volume
             {{- end }}
             {{- if .Values.iq_server.sshPrivateKeySecret }}
-            - mountPath: "{{ .Values.iq_server.config.clusterDirectory }}/.ssh/private-key-volume"
+            - mountPath: "/opt/sonatype/nexus-iq-server/.ssh/private-key-volume"
               name: {{ .Release.Name }}-iq-server-pod-private-key-volume
               readOnly: true
             {{- end }}
             {{- if .Values.iq_server.sshKnownHostsSecret }}
-            - mountPath: "{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known-hosts-volume"
+            - mountPath: "/opt/sonatype/nexus-iq-server/.ssh/known-hosts-volume"
               name: {{ .Release.Name }}-iq-server-pod-known-hosts-volume
               readOnly: true
             {{- end }}
-          {{- if or (.Values.secret.sshKnownHosts.arn) (.Values.secret.sshPrivateKey.arn) }}
           env:
           {{- if .Values.secret.sshPrivateKey.arn }}
           - name: NXIQ_SSH_PRIVATE_KEY
             value: "/iq-secrets/id_rsa"
+          {{- else if or (.Values.iq_server.sshPrivateKeySecret) (.Values.iq_server.sshPrivateKey) }}
+          - name: NXIQ_SSH_PRIVATE_KEY
+            value: "/opt/sonatype/nexus-iq-server/.ssh/id_rsa"
           {{- end }}
           {{- if .Values.secret.sshKnownHosts.arn }}
           - name: NXIQ_SSH_KNOWN_HOSTS
             value: "/iq-secrets/known_hosts"
-          {{- end }}
+          {{- else if or (.Values.iq_server.sshKnownHostsSecret) (.Values.iq_server.sshKnownHosts) }}
+          - name: NXIQ_SSH_KNOWN_HOSTS
+            value: "/opt/sonatype/nexus-iq-server/.ssh/known_hosts"
           {{- end }}
           command:
             - /bin/sh
@@ -146,7 +150,7 @@ spec:
               {{- if .Values.secret.sshKnownHosts.arn }}
               (cp /iq-secrets/known_hosts {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
               {{- else if .Values.iq_server.sshKnownHostsSecret }}
-              (cp {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known-hosts-volume/known_hosts >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
+              (cp /opt/sonatype/nexus-iq-server/.ssh/known-hosts-volume/known_hosts {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
               {{- else if .Values.iq_server.sshKnownHosts }}
               (echo "{{ .Values.iq_server.sshKnownHosts | indent 14 }}" >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts &&
               sed -i'' -e 's/^[ \t]*//g' {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
@@ -158,7 +162,7 @@ spec:
               (cp /iq-secrets/id_rsa {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
               chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa) &&
               {{- else if .Values.iq_server.sshPrivateKeySecret }}
-              (cp {{ .Values.iq_server.config.clusterDirectory }}/.ssh/private-key-volume/id_rsa >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
+              (cp /opt/sonatype/nexus-iq-server/.ssh/private-key-volume/id_rsa {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
               chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa) &&
               {{- else if .Values.iq_server.sshPrivateKey }}
               (echo "{{ .Values.iq_server.sshPrivateKey | indent 14 }}" >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
