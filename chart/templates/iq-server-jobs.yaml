@@ -145,18 +145,15 @@ spec:
               test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa ||
               {{- if .Values.secret.sshPrivateKey.arn }}
               (cp /iq-secrets/id_rsa {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
-              chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa) &&
               {{- else if .Values.iq_server.sshPrivateKeySecret }}
               (cp /opt/sonatype/nexus-iq-server/.ssh/private-key-volume/id_rsa {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
-              chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa) &&
               {{- else if .Values.iq_server.sshPrivateKey }}
               (echo "{{ .Values.iq_server.sshPrivateKey | indent 14 }}" >{{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
               sed -i'' -e 's/^[ \t]*//g' {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
-              chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa) &&
               {{- else }}
-              (yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa) &&
+              (yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
               {{- end }}
-              echo "complete"
+              chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

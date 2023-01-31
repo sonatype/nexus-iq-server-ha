@@ -273,8 +273,8 @@ tests:
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
-                        (yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa) &&
-                        echo "complete"
+                        (yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa &&
+                        chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
                     image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
@@ -334,8 +334,7 @@ tests:
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
                         (echo "              /private.key" >/sonatype-work/clm-cluster/.ssh/id_rsa &&
                         sed -i'' -e 's/^[ \t]*//g' /sonatype-work/clm-cluster/.ssh/id_rsa &&
-                        chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa) &&
-                        echo "complete"
+                        chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
                     image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
@@ -396,8 +395,7 @@ tests:
                         (cp /iq-secrets/known_hosts /sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
                         (cp /iq-secrets/id_rsa /sonatype-work/clm-cluster/.ssh/id_rsa &&
-                        chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa) &&
-                        echo "complete"
+                        chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
                     image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
