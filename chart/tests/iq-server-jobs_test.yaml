@@ -273,7 +273,8 @@ tests:
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
-                        (yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa)
+                        (yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa &&
+                        chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
                     image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
@@ -395,11 +396,6 @@ tests:
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
                         (cp /iq-secrets/id_rsa /sonatype-work/clm-cluster/.ssh/id_rsa &&
                         chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
-                    env:
-                    - name: NXIQ_SSH_PRIVATE_KEY
-                      value: /iq-secrets/id_rsa
-                    - name: NXIQ_SSH_KNOWN_HOSTS
-                      value: /iq-secrets/known_hosts
                     image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
