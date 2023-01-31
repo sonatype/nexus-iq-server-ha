@@ -1,0 +1,113 @@
+suite: external-dns
+templates:
+  - external-dns.yaml
+tests:
+  - it: is disabled by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders with defaults when hostDomain is provided
+    set:
+      ingress:
+        hostDomain: "resiliency.sonatype.dev"
+    asserts:
+      - hasDocuments:
+          count: 3
+      - isKind:
+          of: ClusterRole
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: external-dns
+        documentIndex: 0
+      - equal:
+          path: rules
+          value:
+            - apiGroups:
+                - ""
+              resources:
+                - services
+              verbs:
+                - get
+                - watch
+                - list
+            - apiGroups:
+                - ""
+              resources:
+                - pods
+              verbs:
+                - get
+                - watch
+                - list
+            - apiGroups:
+                - extensions
+              resources:
+                - ingresses
+              verbs:
+                - get
+                - watch
+                - list
+            - apiGroups:
+                - ""
+              resources:
+                - nodes
+              verbs:
+                - list
+        documentIndex: 0
+      - isKind:
+          of: ClusterRoleBinding
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: external-dns-viewer
+        documentIndex: 1
+      - equal:
+          path: roleRef
+          value:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: external-dns
+        documentIndex: 1
+      - equal:
+          path: subjects
+          value:
+          - kind: ServiceAccount
+            name: default
+            namespace: NAMESPACE
+        documentIndex: 1
+      - isKind:
+          of: Deployment
+        documentIndex: 2
+      - equal:
+          path: metadata.name
+          value: external-dns
+        documentIndex: 2
+      - equal:
+          path: spec
+          value:
+            selector:
+              matchLabels:
+                app: external-dns
+            strategy:
+              type: Recreate
+            template:
+              metadata:
+                labels:
+                  app: external-dns
+              spec:
+                automountServiceAccountToken: true
+                containers:
+                  - args:
+                      - --source=service
+                      - --source=ingress
+                      - --domain-filter=resiliency.sonatype.dev
+                      - --provider=aws
+                      - --policy=upsert-only
+                      - --aws-zone-type=public
+                      - --registry=txt
+                      - --txt-owner-id=external-dns
+                    image: bitnami/external-dns:0.7.1
+                    name: external-dns
+                serviceAccountName: default
+        documentIndex: 2
