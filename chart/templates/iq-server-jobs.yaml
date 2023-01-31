@@ -127,21 +127,6 @@ spec:
               name: {{ .Release.Name }}-iq-server-pod-known-hosts-volume
               readOnly: true
             {{- end }}
-          env:
-          {{- if .Values.secret.sshPrivateKey.arn }}
-          - name: NXIQ_SSH_PRIVATE_KEY
-            value: "/iq-secrets/id_rsa"
-          {{- else if or (.Values.iq_server.sshPrivateKeySecret) (.Values.iq_server.sshPrivateKey) }}
-          - name: NXIQ_SSH_PRIVATE_KEY
-            value: "/opt/sonatype/nexus-iq-server/.ssh/id_rsa"
-          {{- end }}
-          {{- if .Values.secret.sshKnownHosts.arn }}
-          - name: NXIQ_SSH_KNOWN_HOSTS
-            value: "/iq-secrets/known_hosts"
-          {{- else if or (.Values.iq_server.sshKnownHostsSecret) (.Values.iq_server.sshKnownHosts) }}
-          - name: NXIQ_SSH_KNOWN_HOSTS
-            value: "/opt/sonatype/nexus-iq-server/.ssh/known_hosts"
-          {{- end }}
           command:
             - /bin/sh
             - -c
