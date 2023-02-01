@@ -235,28 +235,39 @@ You can retrieve the public key from the pod at <clusterDirectory>/.ssh/id_rsa.p
 A `config.yml` file is required to run. This is generated using the `iq_server.config` value. Care should be taken if
 updating this as many values within it are fine-tuned to allow the helm chart to function.
 
-### fluentd (required)
+### Logging (required)
 
-fluentd is required to generate aggregated log files which are needed for any support requests.
+Each Nexus IQ Server pod has a container running Nexus IQ Server, which outputs the following log files
+* `clm-server.log`
+* `audit.log`
+* `policy-violation.log`
+* `stderr.log`
+by default to `/var/log/nexus-iq-server`.
 
-An aggregator is used to write aggregated log files to the PV.
+A fluentd sidecar container in the same pod tails these log files and forwards the content to a fluentd daemonset
+aggregator.
+
+For each log file, the aggregator combines its content from each pod into an aggregated log file, which is output with
+the current date to the shared file system PV by default to `/log` such that you end up with
+* `clm-server.<yyyyMMdd>.log`
+* `audit.<yyyyMMdd>.log`
+* `policy-violation.<yyyyMMdd>.log`
+* `stderr.<yyyyMMdd>.log`
+where `<yyyyMMdd>` is the current date.
+
+The aggregate log files may be required for a support request and by default will be included when generating a support
+zip inside a top-level `cluster_log` directory.
 
 By default, aggregate log files that have a last modified time older than 50 days are scheduled to be deleted every day
-at 1 am. This can also be customized as follows
+at 1 am. This can be customized as follows
    ```
    --set aggregateLogFileRetention.deleteCron=<Cron schedule expression, default "0 1 * * *">
    --set aggregateLogFileRetention.maxLastModifiedDays=<max last modified time in days, default 7>
    ```
 Note that setting `aggregateLogFileRetention.maxLastModifiedDays` to 0 disables deletion.
 
-The aggregator receives logs from forwarders.
-
-By default, each forwarder is a sidecar container that runs alongside the Nexus IQ Server container in the same pod.
-This forwards the Nexus IQ Server log file lines, which it has access to through a shared file system, to the
-aggregator.
-
-Note that fluentd has separate settings for its PVC and should normally be configured to use the same PVC as the Nexus
-IQ Server pods as follows
+Note that the fluentd daemonset aggregator has separate settings for its PVC and should normally be configured to use
+the same PVC as the Nexus IQ Server pods as follows
    ```
    --set fluentd.aggregator.extraVolumes[0].name="iq-server-pod-volume"
    --set fluentd.aggregator.extraVolumes[0].persistentVolumeClaim.claimName=<PVC name, default "iq-server-pvc">
@@ -440,7 +451,7 @@ by default e.g.
      basePath: "/"
    ```
 
-### CloudWatch fluentd
+### CloudWatch
 
 The fluentd aggregator can be configured to send aggregated logs to CloudWatch using the
 [fluent-plugin-cloudwatch-logs plugin](https://github.com/fluent-plugins-nursery/fluent-plugin-cloudwatch-logs).
