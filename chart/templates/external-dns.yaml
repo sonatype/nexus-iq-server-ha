@@ -1,8 +1,8 @@
-{{- if .Values.ingress.hostDomain }}
+{{- if .Values.externalDns.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: external-dns
+  name: {{ .Release.Name }}-external-dns
 rules:
 - apiGroups: [""]
   resources: ["services"]
@@ -20,11 +20,11 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: external-dns-viewer
+  name: {{ .Release.Name }}-external-dns-viewer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: external-dns
+  name: {{ .Release.Name }}-external-dns
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.iq_server.serviceAccountName }}
@@ -33,30 +33,25 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: external-dns
+  name: {{ .Release.Name }}-external-dns
 spec:
   selector:
     matchLabels:
-      app: external-dns
+      app: {{ .Release.Name }}-external-dns
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: external-dns
+        app: {{ .Release.Name }}-external-dns
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
       automountServiceAccountToken: true
       containers:
-      - name: external-dns
+      - name: {{ .Release.Name }}-external-dns
         image: bitnami/external-dns:0.7.1
         args:
-        - --source=service
-        - --source=ingress
-        - --domain-filter={{ .Values.ingress.hostDomain }} # will make ExternalDNS see only the hosted zones matching provided domain, omit to process all available hosted zones
-        - --provider=aws
-        - --policy=upsert-only # would prevent ExternalDNS from deleting any records, omit to enable full synchronization
-        - --aws-zone-type=public # only look at public hosted zones (valid values are public, private or no value for both)
-        - --registry=txt
-        - --txt-owner-id=external-dns
+          {{- range .Values.externalDns.args }}
+          - {{ tpl . $ }}
+          {{- end }}
 {{- end }}

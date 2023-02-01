@@ -7,10 +7,10 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: renders with defaults when hostDomain is provided
+  - it: renders with defaults when enabled
     set:
-      ingress:
-        hostDomain: "resiliency.sonatype.dev"
+      externalDns:
+        enabled: true
     asserts:
       - hasDocuments:
           count: 3
@@ -19,7 +19,7 @@ tests:
         documentIndex: 0
       - equal:
           path: metadata.name
-          value: external-dns
+          value: RELEASE-NAME-external-dns
         documentIndex: 0
       - equal:
           path: rules
@@ -60,14 +60,14 @@ tests:
         documentIndex: 1
       - equal:
           path: metadata.name
-          value: external-dns-viewer
+          value: RELEASE-NAME-external-dns-viewer
         documentIndex: 1
       - equal:
           path: roleRef
           value:
             apiGroup: rbac.authorization.k8s.io
             kind: ClusterRole
-            name: external-dns
+            name: RELEASE-NAME-external-dns
         documentIndex: 1
       - equal:
           path: subjects
@@ -81,33 +81,31 @@ tests:
         documentIndex: 2
       - equal:
           path: metadata.name
-          value: external-dns
+          value: RELEASE-NAME-external-dns
         documentIndex: 2
       - equal:
           path: spec
           value:
             selector:
               matchLabels:
-                app: external-dns
+                app: RELEASE-NAME-external-dns
             strategy:
               type: Recreate
             template:
               metadata:
                 labels:
-                  app: external-dns
+                  app: RELEASE-NAME-external-dns
               spec:
                 automountServiceAccountToken: true
                 containers:
                   - args:
-                      - --source=service
-                      - --source=ingress
-                      - --domain-filter=resiliency.sonatype.dev
                       - --provider=aws
                       - --policy=upsert-only
-                      - --aws-zone-type=public
+                      - --source=service
+                      - --source=ingress
                       - --registry=txt
-                      - --txt-owner-id=external-dns
+                      - --txt-owner-id=RELEASE-NAME-external-dns
                     image: bitnami/external-dns:0.7.1
-                    name: external-dns
+                    name: RELEASE-NAME-external-dns
                 serviceAccountName: default
         documentIndex: 2

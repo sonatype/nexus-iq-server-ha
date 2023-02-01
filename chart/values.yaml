@@ -233,6 +233,16 @@ ingress-nginx:
           configMapKeyRef:
             name: ingress-configmap
             key: INGRESS_SECRET_NAME
+# external-dns configuration
+externalDns:
+  enabled: false
+  args:
+    - --provider=aws
+    - --policy=upsert-only
+    - --source=service
+    - --source=ingress
+    - --registry=txt
+    - --txt-owner-id={{ .Release.Name }}-external-dns
 
 # Service account creation/configuration
 serviceAccount:
