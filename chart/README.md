@@ -242,6 +242,7 @@ Each Nexus IQ Server pod has a container running Nexus IQ Server, which outputs 
 * `audit.log`
 * `policy-violation.log`
 * `stderr.log`
+
 by default to `/var/log/nexus-iq-server`.
 
 A fluentd sidecar container in the same pod tails these log files and forwards the content to a fluentd daemonset
@@ -253,6 +254,7 @@ the current date to the shared file system PV by default to `/log` such that you
 * `audit.<yyyyMMdd>.log`
 * `policy-violation.<yyyyMMdd>.log`
 * `stderr.<yyyyMMdd>.log`
+
 where `<yyyyMMdd>` is the current date.
 
 The aggregate log files may be required for a support request and by default will be included when generating a support
