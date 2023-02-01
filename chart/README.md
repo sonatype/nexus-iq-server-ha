@@ -248,8 +248,9 @@ by default to `/var/log/nexus-iq-server`.
 A fluentd sidecar container in the same pod tails these log files and forwards the content to a fluentd daemonset
 aggregator.
 
-For each log file, the aggregator combines its content from each pod into an aggregated log file, which is output with
-the current date to the shared file system PV by default to `/log` such that you end up with
+For each log file, the aggregator combines its content from each pod into an aggregated log file in
+[ndjson format](http://ndjson.org/), which is output with the current date to the shared file system PV by default to
+`/log` such that you end up with
 * `clm-server.<yyyyMMdd>.log`
 * `audit.<yyyyMMdd>.log`
 * `policy-violation.<yyyyMMdd>.log`
