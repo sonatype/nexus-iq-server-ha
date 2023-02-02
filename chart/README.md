@@ -210,6 +210,18 @@ Additionally multiple hosts can be specified as follows
 
 Alternatively some ingress classes may support specifying TLS options through annotations.
 
+### Domain Name System (DNS) Records (optional)
+
+DNS records can be automatically managed using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) based on
+an ingress. This is included in the chart and can be enabled via
+   ```
+   --set externalDns.enabled=true
+   ```
+and configured via
+   ```
+   --set externalDns.args=<array of arguments>
+   ```
+
 ### Nexus IQ Server Configuration (optional)
 
 The number of pods can be specified as follows
@@ -310,6 +322,8 @@ the cluster
 pre-installed and configured in the cluster for [dynamic provisioning](https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/)
 - [AWS Load Balancer Controller add-on](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
 pre-installed and configured in the cluster to automatically provision an ALB based on an ingress
+- [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) pre-installed/enabled and configured in the cluster to
+automatically provision DNS records for [AWS Route 53](https://aws.amazon.com/route53/) based on an ingress.
 - [Kubernetes Secrets Store CSI Driver](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html)
 pre-installed and configured in the cluster to enable AWS Secrets Manager access i.e. via
    1. `helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts`
@@ -419,9 +433,6 @@ To dynamically provision an ALB via the AWS Load Balancer Controller add-on use 
 and ensure that the [appropriate annotations](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/)
 are set e.g.
    ```
-   --set ingress.annotations."external-dns\.alpha\.kubernetes\.io/hostname"="domain"
-   --set ingress.hostApplication="domain"
-   --set ingress.hostAdmin="admin.domain"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/target-type"="ip"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping"
@@ -432,6 +443,13 @@ are set e.g.
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/actions\.response-404"='\{\"type\":\"fixed-response\"\,\"fixedResponseConfig\":\{\"contentType\":\"text/plain\"\,\"statusCode\":\"404\"\,\"messageBody\":\"404_Not_Found\"\}\}'
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/actions\.redirect-domain"='\{\"Type\":\"redirect\"\,\"RedirectConfig\":\{\"Host\":\"domain\"\,\"Path\":\"/#\{path\}\"\,\"Port\":\"443\"\,\"Protocol\":\"HTTPS\"\,\"Query\":\"#\{query\}\"\,\"StatusCode\":\"HTTP_301\"\}\}'
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/load-balancer-attributes"="idle_timeout.timeout_seconds=600"
+   ```
+Note that if the application and admin services are separated by path rather than hostname, then multiple healthchecks
+will need to be configured. This can be achieved by adding the healthcheck annotations at the service level rather than
+the ingress level e.g.
+   ```
+   --set iq_server.applicationServiceAnnotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping"
+   --set iq_server.adminServiceAnnotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/admin/ping"
    ```
 
 ### EFS Storage Class
@@ -601,6 +619,8 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `iq_server.persistence.nfs.path`                            | NFS server path                                                                                      | `/`                        |
 | `iq_server.serviceAccountName`                              | Nexus IQ Server service account name                                                                 | `default`                  |
 | `iq_server.serviceType`                                     | Nexus IQ Server service type                                                                         | `ClusterIP`                |
+| `iq_server.applicationServiceAnnotations`                   | Annotations for the Nexus IQ Server application service                                              | `nil`                      |
+| `iq_server.adminServiceAnnotations`                         | Annotations for the Nexus IQ Server admin service                                                    | `nil`                      |
 | `iq_server.replicas`                                        | Number of replicas                                                                                   | `2`                        |
 | `iq_server.initialAdminPassword`                            | Initial admin password                                                                               | `admin123`                 |
 | `iq_server.initialAdminPasswordSecret`                      | Initial admin password secret                                                                        | `nil`                      |

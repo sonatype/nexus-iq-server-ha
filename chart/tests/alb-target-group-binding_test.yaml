@@ -23,7 +23,7 @@ tests:
           value: RELEASE-NAME-alb-app-target-group-binding
       - equal:
           path: spec.serviceRef.name
-          value: RELEASE-NAME-iq-server-service
+          value: RELEASE-NAME-iq-server-application-service
       - equal:
           path: spec.serviceRef.port
           value: 8070
@@ -47,7 +47,7 @@ tests:
           value: RELEASE-NAME-alb-admin-target-group-binding
       - equal:
           path: spec.serviceRef.name
-          value: RELEASE-NAME-iq-server-service
+          value: RELEASE-NAME-iq-server-admin-service
       - equal:
           path: spec.serviceRef.port
           value: 8071

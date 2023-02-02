@@ -92,6 +92,10 @@ iq_server:
 
   # How the service is exposed
   serviceType: "ClusterIP"
+  # Annotations for the application service
+  applicationServiceAnnotations:
+  # Annotations for the admin service
+  adminServiceAnnotations:
 
   # Number of pods to run
   replicas: 2

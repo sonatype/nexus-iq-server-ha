@@ -6,7 +6,7 @@ metadata:
   name: {{ .Release.Name }}-alb-app-target-group-binding
 spec:
   serviceRef:
-    name: {{ .Release.Name }}-iq-server-service
+    name: {{ .Release.Name }}-iq-server-application-service
     {{- with index .Values.iq_server.config.server.applicationConnectors 0 }}
     port: {{ .port }}
     {{- end }}
@@ -20,7 +20,7 @@ metadata:
   name: {{ .Release.Name }}-alb-admin-target-group-binding
 spec:
   serviceRef:
-    name: {{ .Release.Name }}-iq-server-service
+    name: {{ .Release.Name }}-iq-server-admin-service
     {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
     port: {{ .port }}
     {{- end }}

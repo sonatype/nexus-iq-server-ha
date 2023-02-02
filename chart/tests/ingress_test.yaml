@@ -70,7 +70,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.name
-          value: RELEASE-NAME-iq-server-service
+          value: RELEASE-NAME-iq-server-application-service
         documentIndex: 1
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.port.number
@@ -91,7 +91,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.rules[1].http.paths[0].backend.service.name
-          value: RELEASE-NAME-iq-server-service
+          value: RELEASE-NAME-iq-server-admin-service
         documentIndex: 1
       - equal:
           path: spec.rules[1].http.paths[0].backend.service.port.number
@@ -198,7 +198,7 @@ tests:
         documentIndex: 2
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.name
-          value: RELEASE-NAME-iq-server-service
+          value: RELEASE-NAME-iq-server-application-service
         documentIndex: 2
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.port.number
@@ -219,7 +219,7 @@ tests:
         documentIndex: 2
       - equal:
           path: spec.rules[1].http.paths[0].backend.service.name
-          value: RELEASE-NAME-iq-server-service
+          value: RELEASE-NAME-iq-server-admin-service
         documentIndex: 2
       - equal:
           path: spec.rules[1].http.paths[0].backend.service.port.number

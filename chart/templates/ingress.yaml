@@ -58,7 +58,7 @@ spec:
             pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
-                name: {{ .Release.Name }}-iq-server-service
+                name: {{ .Release.Name }}-iq-server-application-service
                 port:
                   {{- with index .Values.iq_server.config.server.applicationConnectors 0 }}
                   number: {{ .port }}
@@ -72,7 +72,7 @@ spec:
             pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
-                name: {{ .Release.Name }}-iq-server-service
+                name: {{ .Release.Name }}-iq-server-admin-service
                 port:
                   {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
                   number: {{ .port }}

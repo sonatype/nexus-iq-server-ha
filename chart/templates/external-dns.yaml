@@ -5,53 +5,51 @@ metadata:
   name: {{ .Release.Name }}-external-dns
 rules:
 - apiGroups: [""]
-  resources: ["services"]
+  resources: ["services","endpoints","pods","nodes"]
   verbs: ["get","watch","list"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get","watch","list"]
-- apiGroups: ["extensions"]
+- apiGroups: ["extensions","networking.k8s.io"]
   resources: ["ingresses"]
   verbs: ["get","watch","list"]
-- apiGroups: [""]
-  resources: ["nodes"]
-  verbs: ["list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: {{ .Release.Name }}-external-dns-viewer
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-external-dns
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: {{ .Release.Name }}-external-dns
 subjects:
-- kind: ServiceAccount
-  name: {{ .Values.iq_server.serviceAccountName }}
-  namespace: {{ .Release.Namespace }}
+  - kind: ServiceAccount
+    name: {{ .Values.iq_server.serviceAccountName }}
+    namespace: {{ .Release.Namespace }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-external-dns
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-external-dns
 spec:
-  selector:
-    matchLabels:
-      app: {{ .Release.Name }}-external-dns
   strategy:
     type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Release.Name }}-external-dns
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-external-dns
+        app.kubernetes.io/name: {{ .Release.Name }}-external-dns
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
       automountServiceAccountToken: true
       containers:
-      - name: {{ .Release.Name }}-external-dns
-        image: bitnami/external-dns:0.7.1
-        args:
-          {{- range .Values.externalDns.args }}
-          - {{ tpl . $ }}
-          {{- end }}
+        - name: {{ .Release.Name }}-external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.13.1
+          args:
+            {{- range .Values.externalDns.args }}
+            - {{ tpl . $ }}
+            {{- end }}
 {{- end }}
