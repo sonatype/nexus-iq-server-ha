@@ -251,6 +251,7 @@ updating this as many values within it are fine-tuned to allow the helm chart to
 
 Each Nexus IQ Server pod has a container running Nexus IQ Server, which outputs the following log files
 * `clm-server.log`
+* `request.log`
 * `audit.log`
 * `policy-violation.log`
 * `stderr.log`
@@ -264,6 +265,7 @@ For each log file, the aggregator combines its content from each pod into an agg
 [ndjson format](http://ndjson.org/), which is output with the current date to the shared file system PV by default to
 `/log` such that you end up with
 * `clm-server.<yyyyMMdd>.log`
+* `request.<yyyyMMdd>.log`
 * `audit.<yyyyMMdd>.log`
 * `policy-violation.<yyyyMMdd>.log`
 * `stderr.<yyyyMMdd>.log`
