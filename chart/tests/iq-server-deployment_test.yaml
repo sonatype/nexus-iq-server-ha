@@ -199,7 +199,7 @@ tests:
           clusterDirectory: "/iq/clm-cluster"
           licenseFile: "lic.lic"
           server:
-            applicationContextPath: /app
+            applicationContextPath: /
             applicationConnectors:
               - port: 8072
                 type: https

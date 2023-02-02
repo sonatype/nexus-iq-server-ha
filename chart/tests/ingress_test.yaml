@@ -111,7 +111,7 @@ tests:
       iq_server:
         config:
           server:
-            applicationContextPath: /app
+            applicationContextPath: /
             applicationConnectors:
               - type: http
                 port: 8072
@@ -206,7 +206,7 @@ tests:
         documentIndex: 2
       - equal:
           path: spec.rules[0].http.paths[0].path
-          value: /app
+          value: /
         documentIndex: 2
       - equal:
           path: spec.rules[0].http.paths[0].pathType
@@ -262,7 +262,7 @@ tests:
       iq_server:
         config:
           server:
-            applicationContextPath: /app
+            applicationContextPath: /
             applicationConnectors:
               - type: http
                 port: 8072
@@ -272,12 +272,12 @@ tests:
                 port: 8073
       ingress:
         enabled: true
-        hostApplicationPath: /app/*
+        hostApplicationPath: /*
         hostAdminPath: /admin/*
     asserts:
       - equal:
           path: spec.rules[0].http.paths[0].path
-          value: /app/*
+          value: /*
         documentIndex: 1
       - equal:
           path: spec.rules[1].http.paths[0].path
