@@ -132,7 +132,7 @@ tests:
           clusterDirectory: "/iq/clm-cluster"
           licenseFile: "lic.lic"
           server:
-            applicationContextPath: /app
+            applicationContextPath: /
             applicationConnectors:
               - port: 8072
                 type: https
@@ -217,7 +217,7 @@ tests:
               applicationConnectors:
               - port: 8072
                 type: https
-              applicationContextPath: /app
+              applicationContextPath: /
               requestLog:
                 appenders:
                 - logFormat: '%clientHost %l %user [%date] "%requestURL" %statusCode "%header{User-Agent}"'

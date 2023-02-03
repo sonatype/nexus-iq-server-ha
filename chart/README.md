@@ -178,7 +178,7 @@ either different hostnames via e.g.
    ```
 or different paths via e.g.
    ```
-   --set iq_server.config.server.applicationContextPath="/app"
+   --set iq_server.config.server.applicationContextPath="/"
    --set iq_server.config.server.adminContextPath="/admin"
    ```
 
@@ -504,7 +504,6 @@ Some example commands are shown below.
    --set iq_server.database.name=iq
    --set iq_server.database.username=postgres
    --set iq_server.database.password=admin123
-   --set iq_server.config.server.applicationContextPath="/app"
    --set iq_server.config.server.adminContextPath="/admin"
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    --set iq_server.persistence.csi.driver="efs.csi.aws.com"
@@ -514,7 +513,7 @@ Some example commands are shown below.
    --set ingress.enabled=true
    --set ingress.ingressClassName=alb
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
-   --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/app/ping" 
+   --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping" 
    .
    ```
 
@@ -527,7 +526,6 @@ Some example commands are shown below.
    --set secret.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/nxlc-W999SV"
    --set secret.license.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/nxlc_license-xpSvX5"
    --set secret.rds.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/rds-FlwTg2"
-   --set iq_server.config.server.applicationContextPath="/app"
    --set iq_server.config.server.adminContextPath="/admin"
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    --set iq_server.persistence.persistentVolumeName=""
@@ -538,7 +536,7 @@ Some example commands are shown below.
    --set ingress.enabled=true
    --set ingress.ingressClassName=alb
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
-   --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/app/ping" 
+   --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping" 
    .
    ```
 
@@ -564,7 +562,6 @@ An example command is shown below.
    --set iq_server.database.name=iq
    --set iq_server.database.username=postgres
    --set iq_server.database.password=admin123
-   --set iq_server.config.server.applicationContextPath="/app"
    --set iq_server.config.server.adminContextPath="/admin"
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    --set iq_server.persistence.nfs.server=10.109.77.85
