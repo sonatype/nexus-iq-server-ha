@@ -40,8 +40,8 @@ This repository is intended to store a helm chart to create a cluster of Nexus I
    `helm install --namespace <namespace> <name> <overrides> .`.
 where
    1. `<name>` can be any name for the helm chart
-   2. `<namespace>` can be any namespace for the helm chart (can be created if desired by adding the flag
-   `--create-namespace` or prior via `kubectl create namespace my-namespace`)
+   2. `<namespace>` can be an existing namespace for the helm chart (created prior via 
+   `kubectl create namespace <namespace>`, or to create automatically include the flag `--create-namespace`)
    3. `<overrides>` is a set of overrides for values in the helm chart (see below)
 6. Expose the ingress if needed, which uses port `80` for http and port `443` for https by default
 
