@@ -540,6 +540,30 @@ Some example commands are shown below.
    .
    ```
 
+#### Installing from remote repository
+```
+helm repo add sonatype https://sonatype.github.io/helm3-charts/
+
+helm install --namespace staging mycluster --dependency-update \
+--set serviceAccount.create=true \
+--set iq_server.serviceAccountName=nxlc-default-l8qiag0c-service \
+--set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::552183322382:role/nxlc-default-l8qiag0c-role" \
+--set secret.arn="arn:aws:secretsmanager:us-east-2:552183322382:secret:nxlc-cluster/nxlc-default-l8qiag0c/nxlc-hevS2t" \
+--set secret.rds.arn="arn:aws:secretsmanager:us-east-2:552183322382:secret:nxlc-cluster/nxlc-default-l8qiag0c/rds-HY05ll" \
+--set iq_server.persistence.nfs.server=fs-06c4c30a619675682.efs.us-east-2.amazonaws.com \
+--set iq_server.persistence.nfs.path=/ \
+--set iq_server.serviceType=NodePort \
+--set ingress.enabled=true \
+--set ingress.ingressClassName=alb \
+--set ingress.annotations."alb\.ingress\.kubernetes\.io/subnets"="subnet-0de3d5857609a24f9\,subnet-08f2a8a0c3abd4caa\,subnet-0f1c1aff459ba2755" \
+--set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/app/ping" \
+--set iq_server.config.server.applicationContextPath="/app" \
+--set iq_server.config.server.adminContextPath="/admin" \
+--set iq_server.persistence.persistentVolumeName="iq-test-server-pv" \
+--set iq_server.persistence.persistentVolumeClaimName="iq-test-server-pvc" \
+sonatype/nexus-iq-server-ha --version 154.0.0
+```
+
 ## On-Premises
 
 ### Satisfying General Requirements
