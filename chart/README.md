@@ -555,12 +555,11 @@ helm install --namespace staging mycluster --dependency-update \
 --set iq_server.serviceType=NodePort \
 --set ingress.enabled=true \
 --set ingress.ingressClassName=alb \
---set ingress.annotations."alb\.ingress\.kubernetes\.io/subnets"="subnet-0de3d5857609a24f9\,subnet-08f2a8a0c3abd4caa\,subnet-0f1c1aff459ba2755" \
---set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/app/ping" \
---set iq_server.config.server.applicationContextPath="/app" \
 --set iq_server.config.server.adminContextPath="/admin" \
 --set iq_server.persistence.persistentVolumeName="iq-test-server-pv" \
 --set iq_server.persistence.persistentVolumeClaimName="iq-test-server-pvc" \
+--set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
+--set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping"
 sonatype/nexus-iq-server-ha --version 154.0.0
 ```
 
