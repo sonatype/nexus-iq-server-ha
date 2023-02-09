@@ -32,17 +32,18 @@ This repository is intended to store a helm chart to create a cluster of Nexus I
 ## Running
 
 1. Start your Kubernetes cluster if needed
-2. Open a console/terminal in the helm chart directory
+2. Open a console/terminal
 3. Switch to the correct context to use your cluster if needed (e.g. `kubectl config use-context my-context`)
-4. Install the helm chart dependencies via
-   `helm dependency update .`
+4. Add the helm chart repository via
+   `helm repo add sonatype https://sonatype.github.io/helm3-charts/`
 5. Install the helm chart via
-   `helm install --namespace <namespace> <name> <overrides> .`.
+   `helm install --namespace <namespace> <name> --dependency-update <overrides> sonatype/nexus-iq-server-ha --version <version>`.
 where
-   1. `<name>` can be any name for the helm chart
-   2. `<namespace>` can be an existing namespace for the helm chart (created prior via 
-   `kubectl create namespace <namespace>`, or to create automatically include the flag `--create-namespace`)
+   1. `<namespace>` can be an existing namespace for the helm chart (created prior via
+      `kubectl create namespace <namespace>`, or to create automatically include the flag `--create-namespace`)
+   2. `<name>` can be any name for the helm chart
    3. `<overrides>` is a set of overrides for values in the helm chart (see below)
+   4. `<version>` is the version of the helm chart to use (e.g. `154.0.0`)
 6. Expose the ingress if needed, which uses port `80` for http and port `443` for https by default
 
 ## Overrides
@@ -438,7 +439,7 @@ are set e.g.
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/target-type"="ip"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping"
-   --set ingress.annotations."alb\.ingress\.kubernetes\.io/certificate-arn"="arn:aws:acm:us-east-2:119982741446:certificate/8a0a2dbf-6283-48f2-b636-4faacb0665c9"
+   --set ingress.annotations."alb\.ingress\.kubernetes\.io/certificate-arn"="arn:aws:acm:<REGION>:<AWS_ACCOUNT_ID>:certificate/<CERTIFICATE_ID>"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/ssl-policy"="ELBSecurityPolicy-FS-1-2-Res-2020-10"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/listen-ports"='\[\{\"HTTPS\":80\}\,\{\"HTTPS\":443\}\]'
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/actions\.ssl-redirect"='\{\"Type\": \"redirect\"\,\"RedirectConfig\":\{\"Protocol\":\"HTTPS\"\,\"Port\":\"443\"\,\"StatusCode\":\"HTTP_301\"\}\}'
@@ -520,12 +521,12 @@ Some example commands are shown below.
 #### External Database, Dynamic EFS, Dynamic ALB, and Secrets
    ```
    helm install mycluster
-   --set iq_server.serviceAccountName="nxlc-default-d95tfx8l-service"
+   --set iq_server.serviceAccountName=nxlc-service-account-name \
    --set serviceAccount.create=true
-   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::552194422382:role/nxlc-default-d95tfx8l-role"
-   --set secret.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/nxlc-W999SV"
-   --set secret.license.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/nxlc_license-xpSvX5"
-   --set secret.rds.arn="arn:aws:secretsmanager:us-east-2:552194422382:secret:nxlc-cluster/nxlc-default-d95tfx8l/rds-FlwTg2"
+   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::<AWS_ACCOUNT_ID>:role/<ROLE_NAME>" \
+   --set secret.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<SECRET_NAME>" \
+   --set secret.license.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<SECRET_NAME>"
+   --set secret.rds.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<RDS_SECRET_NAME>" \
    --set iq_server.config.server.adminContextPath="/admin"
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    --set iq_server.persistence.persistentVolumeName=""
@@ -546,18 +547,17 @@ helm repo add sonatype https://sonatype.github.io/helm3-charts/
 
 helm install --namespace staging mycluster --dependency-update \
 --set serviceAccount.create=true \
---set iq_server.serviceAccountName=nxlc-default-l8qiag0c-service \
---set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::552183322382:role/nxlc-default-l8qiag0c-role" \
---set secret.arn="arn:aws:secretsmanager:us-east-2:552183322382:secret:nxlc-cluster/nxlc-default-l8qiag0c/nxlc-hevS2t" \
---set secret.rds.arn="arn:aws:secretsmanager:us-east-2:552183322382:secret:nxlc-cluster/nxlc-default-l8qiag0c/rds-HY05ll" \
---set iq_server.persistence.nfs.server=fs-06c4c30a619675682.efs.us-east-2.amazonaws.com \
+--set iq_server.serviceAccountName=nxlc-service-account-name \
+--set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::<AWS_ACCOUNT_ID>:role/<ROLE_NAME>" \
+--set secret.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<SECRET_NAME>" \
+--set secret.rds.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<RDS_SECRET_NAME>" \
+--set app_server.persistence.nfs.server="<NFS_SERVER>" \
 --set iq_server.persistence.nfs.path=/ \
 --set iq_server.serviceType=NodePort \
 --set ingress.enabled=true \
 --set ingress.ingressClassName=alb \
---set iq_server.config.server.adminContextPath="/admin" \
---set iq_server.persistence.persistentVolumeName="iq-test-server-pv" \
---set iq_server.persistence.persistentVolumeClaimName="iq-test-server-pvc" \
+--set iq_server.persistence.persistentVolumeName="<PV_NAME>" \
+--set iq_server.persistence.persistentVolumeClaimName="<PVC_NAME>" \
 --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
 --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping"
 sonatype/nexus-iq-server-ha --version 154.0.0
