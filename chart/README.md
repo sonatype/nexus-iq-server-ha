@@ -498,7 +498,6 @@ Some example commands are shown below.
 
 #### External Database, Static EFS, and Dynamic ALB
    ```
-   helm repo add sonatype https://sonatype.github.io/helm3-charts/
    helm install --namespace staging mycluster --dependency-update
    --set-file iq_server.license="license.lic"
    --set iq_server.database.hostname=myhost
@@ -521,7 +520,6 @@ Some example commands are shown below.
 
 #### External Database, Dynamic EFS, Dynamic ALB, and Secrets
    ```
-   helm repo add sonatype https://sonatype.github.io/helm3-charts/
    helm install --namespace staging mycluster --dependency-update
    --set iq_server.serviceAccountName=<service account name, default "default">
    --set serviceAccount.create=true
@@ -558,7 +556,6 @@ An example command is shown below.
 
 #### External Database, NFS, and ingress-nginx
    ```
-   helm repo add sonatype https://sonatype.github.io/helm3-charts/
    helm install --namespace staging mycluster --dependency-update
    --set-file iq_server.license="license.lic"
    --set iq_server.database.hostname=myhost
