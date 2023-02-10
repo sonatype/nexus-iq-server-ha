@@ -37,7 +37,7 @@ This repository is intended to store a helm chart to create a cluster of Nexus I
 4. Add the helm chart repository via
    `helm repo add sonatype https://sonatype.github.io/helm3-charts/`
 5. Install the helm chart via
-   `helm install --namespace <namespace> <name> --dependency-update <overrides> sonatype/nexus-iq-server-ha --version <version>`.
+   `helm install --namespace <namespace> <name> --dependency-update <overrides> sonatype/nexus-iq-server-ha --version <version>`
 where
    1. `<namespace>` can be an existing namespace for the helm chart (created prior via
       `kubectl create namespace <namespace>`, or to create automatically include the flag `--create-namespace`)
