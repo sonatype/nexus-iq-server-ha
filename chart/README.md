@@ -546,18 +546,19 @@ Some example commands are shown below.
 helm repo add sonatype https://sonatype.github.io/helm3-charts/
 
 helm install --namespace staging mycluster --dependency-update \
---set serviceAccount.create=true \
---set iq_server.serviceAccountName=nxlc-service-account-name \
---set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::<AWS_ACCOUNT_ID>:role/<ROLE_NAME>" \
---set secret.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<SECRET_NAME>" \
---set secret.rds.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<RDS_SECRET_NAME>" \
---set app_server.persistence.nfs.server="<NFS_SERVER>" \
---set iq_server.persistence.nfs.path=/ \
---set iq_server.serviceType=NodePort \
---set ingress.enabled=true \
---set ingress.ingressClassName=alb \
---set iq_server.persistence.persistentVolumeName="<PV_NAME>" \
---set iq_server.persistence.persistentVolumeClaimName="<PVC_NAME>" \
+--set-file iq_server.license="license.lic"
+--set iq_server.database.hostname=myhost
+--set iq_server.database.port=5432
+--set iq_server.database.name=iq
+--set iq_server.database.username=postgres
+--set iq_server.database.password=admin123
+--set iq_server.config.server.adminContextPath="/admin"
+--set iq_server.persistence.accessModes[0]="ReadWriteMany"
+--set iq_server.persistence.csi.driver="efs.csi.aws.com"
+--set iq_server.persistence.csi.fsType=""
+--set iq_server.serviceType=NodePort
+--set ingress.enabled=true
+--set ingress.ingressClassName=alb
 --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
 --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping"
 sonatype/nexus-iq-server-ha --version 154.0.0
