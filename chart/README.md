@@ -43,7 +43,7 @@ where
       `kubectl create namespace <namespace>`, or to create automatically include the flag `--create-namespace`)
    2. `<name>` can be any name for the helm chart
    3. `<overrides>` is a set of overrides for values in the helm chart (see below)
-   4. `<version>` is the version of the helm chart to use (e.g. `154.0.0`)
+   4. `<version>` is the version of the helm chart to use
 6. Expose the ingress if needed, which uses port `80` for http and port `443` for https by default
 
 ## Overrides
@@ -439,7 +439,7 @@ are set e.g.
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/target-type"="ip"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping"
-   --set ingress.annotations."alb\.ingress\.kubernetes\.io/certificate-arn"="arn:aws:acm:<REGION>:<AWS_ACCOUNT_ID>:certificate/<CERTIFICATE_ID>"
+   --set ingress.annotations."alb\.ingress\.kubernetes\.io/certificate-arn"="arn:aws:acm:<region>:<aws_account_id>:certificate/<certificate_id>"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/ssl-policy"="ELBSecurityPolicy-FS-1-2-Res-2020-10"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/listen-ports"='\[\{\"HTTPS\":80\}\,\{\"HTTPS\":443\}\]'
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/actions\.ssl-redirect"='\{\"Type\": \"redirect\"\,\"RedirectConfig\":\{\"Protocol\":\"HTTPS\"\,\"Port\":\"443\"\,\"StatusCode\":\"HTTP_301\"\}\}'
@@ -498,7 +498,8 @@ Some example commands are shown below.
 
 #### External Database, Static EFS, and Dynamic ALB
    ```
-   helm install mycluster
+   helm repo add sonatype https://sonatype.github.io/helm3-charts/
+   helm install --namespace staging mycluster --dependency-update
    --set-file iq_server.license="license.lic"
    --set iq_server.database.hostname=myhost
    --set iq_server.database.port=5432
@@ -515,18 +516,19 @@ Some example commands are shown below.
    --set ingress.ingressClassName=alb
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping" 
-   .
+   sonatype/nexus-iq-server-ha --version <version>
    ```
 
 #### External Database, Dynamic EFS, Dynamic ALB, and Secrets
    ```
-   helm install mycluster
+   helm repo add sonatype https://sonatype.github.io/helm3-charts/
+   helm install --namespace staging mycluster --dependency-update
    --set iq_server.serviceAccountName=<service account name, default "default">
    --set serviceAccount.create=true
-   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::<AWS_ACCOUNT_ID>:role/<ROLE_NAME>" \
-   --set secret.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<SECRET_NAME>" \
-   --set secret.license.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<SECRET_NAME>"
-   --set secret.rds.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<RDS_SECRET_NAME>" \
+   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::<aws_account_id>:role/<role_name>"
+   --set secret.arn="arn:aws:secretsmanager:<region>:<aws_account_id>:secret:<secret_name>"
+   --set secret.license.arn="arn:aws:secretsmanager:<region>:<aws_account_id>:secret:<secret_name>"
+   --set secret.rds.arn="arn:aws:secretsmanager:<region>:<aws_account_id>:secret:<rds_secret_name>"
    --set iq_server.config.server.adminContextPath="/admin"
    --set iq_server.persistence.accessModes[0]="ReadWriteMany"
    --set iq_server.persistence.persistentVolumeName=""
@@ -538,31 +540,8 @@ Some example commands are shown below.
    --set ingress.ingressClassName=alb
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
    --set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping" 
-   .
+   sonatype/nexus-iq-server-ha --version <version>
    ```
-
-#### Installing from remote repository
-```
-helm repo add sonatype https://sonatype.github.io/helm3-charts/
-
-helm install --namespace staging mycluster --dependency-update \
---set-file iq_server.license="license.lic"
---set iq_server.database.hostname=myhost
---set iq_server.database.port=5432
---set iq_server.database.name=iq
---set iq_server.database.username=postgres
---set iq_server.database.password=admin123
---set iq_server.config.server.adminContextPath="/admin"
---set iq_server.persistence.accessModes[0]="ReadWriteMany"
---set iq_server.persistence.csi.driver="efs.csi.aws.com"
---set iq_server.persistence.csi.fsType=""
---set iq_server.serviceType=NodePort
---set ingress.enabled=true
---set ingress.ingressClassName=alb
---set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"="internet-facing"
---set ingress.annotations."alb\.ingress\.kubernetes\.io/healthcheck-path"="/ping"
-sonatype/nexus-iq-server-ha --version 154.0.0
-```
 
 ## On-Premises
 
@@ -579,7 +558,8 @@ An example command is shown below.
 
 #### External Database, NFS, and ingress-nginx
    ```
-   helm install mycluster
+   helm repo add sonatype https://sonatype.github.io/helm3-charts/
+   helm install --namespace staging mycluster --dependency-update
    --set-file iq_server.license="license.lic"
    --set iq_server.database.hostname=myhost
    --set iq_server.database.port=5432
@@ -593,7 +573,7 @@ An example command is shown below.
    --set iq_server.serviceType=NodePort
    --set ingress.enabled=true
    --set ingress-nginx.enabled=true
-   .
+   sonatype/nexus-iq-server-ha --version <version>
    ```
 
 ## Upgrading
