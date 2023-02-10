@@ -521,7 +521,7 @@ Some example commands are shown below.
 #### External Database, Dynamic EFS, Dynamic ALB, and Secrets
    ```
    helm install mycluster
-   --set iq_server.serviceAccountName=nxlc-service-account-name \
+   --set iq_server.serviceAccountName=<service account name, default "default">
    --set serviceAccount.create=true
    --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::<AWS_ACCOUNT_ID>:role/<ROLE_NAME>" \
    --set secret.arn="arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:<SECRET_NAME>" \
