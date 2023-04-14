@@ -47,7 +47,7 @@ helm lint chart
 The existing unit tests are intended to be run using the `helm-unittest` plugin, which can be installed as follows
 
 ```
-helm plugin install https://github.com/quintush/helm-unittest
+helm plugin install https://github.com/quintush/helm-unittest --version v0.2.11
 ```
 
 The test suites are located in the [chart/tests directory](./chart/tests). Each test file name must end in
