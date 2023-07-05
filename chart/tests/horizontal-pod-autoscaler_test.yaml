@@ -224,7 +224,7 @@ tests:
       - equal:
           path: spec.metrics[0].resource.target.averageValue
           value: 300Mi 
-  - it: will not render is hpa enabled and neither cpu or memory triggers are enabled
+  - it: will not render if hpa enabled and neither cpu or memory triggers are enabled
     set:
       hpa: 
         enabled: true
