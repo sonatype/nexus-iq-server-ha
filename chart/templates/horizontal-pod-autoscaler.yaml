@@ -1,5 +1,5 @@
 {{- if and .Values.hpa.enabled (or (.Values.hpa.triggers.cpu.enabled) (.Values.hpa.triggers.memory.enabled)) }}
-apiVersion: autoscaling/v1
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ .Release.Name }}-iq-server-deployment

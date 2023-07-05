@@ -22,7 +22,7 @@ tests:
           count: 1
       - equal:
           path: apiVersion
-          value: autoscaling/v1
+          value: autoscaling/v2
       - isKind:
           of: HorizontalPodAutoscaler
       - equal:
@@ -70,7 +70,7 @@ tests:
           count: 1
       - equal:
           path: apiVersion
-          value: autoscaling/v1
+          value: autoscaling/v2
       - isKind:
           of: HorizontalPodAutoscaler
       - equal:
@@ -132,7 +132,7 @@ tests:
           count: 1
       - equal:
           path: apiVersion
-          value: autoscaling/v1
+          value: autoscaling/v2
       - isKind:
           of: HorizontalPodAutoscaler
       - equal:
@@ -191,7 +191,7 @@ tests:
           count: 1
       - equal:
           path: apiVersion
-          value: autoscaling/v1
+          value: autoscaling/v2
       - isKind:
           of: HorizontalPodAutoscaler
       - equal:
