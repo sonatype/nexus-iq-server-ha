@@ -203,13 +203,15 @@ hpa:
   enabled: false 
   minReplicas: 2
   maxReplicas: 4
-  triggers:
+  resources:
     cpu: 
       enabled: true
-      threshold: 50
+      average: 
+        threshold: 50
     memory: 
       enabled: false
-      threshold: 300Mi 
+      average: 
+          threshold: 60 
 
 # Load balancer
 ingress:

@@ -27,7 +27,7 @@ tests:
           of: HorizontalPodAutoscaler
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-iq-server-deployment
+          value: RELEASE-NAME-horizontal-pod-autoscaler
       - equal:
           path: spec.scaleTargetRef.apiVersion
           value: apps/v1
@@ -58,11 +58,11 @@ tests:
       - equal:
           path: spec.metrics[1]
           value: null
-  - it: renders with defaults when hpa and hpa memory trigger is enabled
+  - it: renders with defaults when hpa and hpa memory resource is enabled
     set:
       hpa: 
         enabled: true
-        triggers: 
+        resources: 
           memory:
             enabled: true 
     asserts:
@@ -75,7 +75,7 @@ tests:
           of: HorizontalPodAutoscaler
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-iq-server-deployment
+          value: RELEASE-NAME-horizontal-pod-autoscaler
       - equal:
           path: spec.scaleTargetRef.apiVersion
           value: apps/v1
@@ -111,22 +111,24 @@ tests:
           value: memory
       - equal:
           path: spec.metrics[1].resource.target.type
-          value: AverageValue
+          value: Utilization
       - equal:
-          path: spec.metrics[1].resource.target.averageValue
-          value: 300Mi 
+          path: spec.metrics[1].resource.target.averageUtilization
+          value: 60 
   - it: renders with overridden values 
     set:
       hpa: 
         minReplicas: 1
         maxReplicas: 20
         enabled: true
-        triggers: 
-          cpu: 
-            threshold: 99
-          memory:
-            threshold: 100Mi 
+        resources: 
+          cpu:
+            average:  
+              threshold: 99
+          memory: 
             enabled: true 
+            average: 
+              threshold: 99
     asserts:
       - hasDocuments:
           count: 1
@@ -137,7 +139,7 @@ tests:
           of: HorizontalPodAutoscaler
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-iq-server-deployment
+          value: RELEASE-NAME-horizontal-pod-autoscaler
       - equal:
           path: spec.scaleTargetRef.apiVersion
           value: apps/v1
@@ -173,16 +175,16 @@ tests:
           value: memory
       - equal:
           path: spec.metrics[1].resource.target.type
-          value: AverageValue
+          value: Utilization
       - equal:
-          path: spec.metrics[1].resource.target.averageValue
-          value: 100Mi 
-  - it: renders with memory trigger enabled and cpu trigger disabled 
+          path: spec.metrics[1].resource.target.averageUtilization
+          value: 99 
+  - it: renders with memory resource enabled and cpu resource disabled 
     set:
       hpa: 
         enabled: true
-        triggers: 
-          cpu: 
+        resources: 
+          cpu:
             enabled: false 
           memory:
             enabled: true 
@@ -196,7 +198,7 @@ tests:
           of: HorizontalPodAutoscaler
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-iq-server-deployment
+          value: RELEASE-NAME-horizontal-pod-autoscaler
       - equal:
           path: spec.scaleTargetRef.apiVersion
           value: apps/v1
@@ -220,15 +222,15 @@ tests:
           value: memory
       - equal:
           path: spec.metrics[0].resource.target.type
-          value: AverageValue
+          value: Utilization
       - equal:
-          path: spec.metrics[0].resource.target.averageValue
-          value: 300Mi 
-  - it: will not render if hpa enabled and neither cpu or memory triggers are enabled
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 60 
+  - it: will not render if hpa enabled and neither cpu or memory resources are enabled
     set:
       hpa: 
         enabled: true
-        triggers: 
+        resources: 
           cpu: 
             enabled: false 
           memory:
