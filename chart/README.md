@@ -541,14 +541,60 @@ Some example commands are shown below.
    sonatype/nexus-iq-server-ha --version <version>
    ```
 
+### HPA (Horizontal Pod Autoscaling)
+
+The HPA in Kubernetes automatically scales workload resources based on demand. It deploys more Pods
+for increased load and scales down if the load decreases. Implemented as a Kubernetes API resource and controller, it
+adjusts the target scale periodically based on observed metrics like CPU and memory utilization.
+HPA is disabled by default. If you want to enable it, you need to set the `hpa.enabled` parameter to `true`, and set
+the `hpa.resources.memory.enabled` parameter to `true` to enable memory-based autoscaling.
+
+   ```
+   --set hpa.enabled=true
+   --set hpa.resources.memory.enabled=true
+   ```
+
+Note that HPA requires metrics-server to be installed in the cluster. If you are using EKS, you can install it by
+running the following
+command: `kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`
+Also, defined resources limits for all the containers in the cluster are required for HPA to be able to properly compute
+metrics.
+
+### Examples
+
+Some example commands are shown below.
+
+   ```
+   helm install --namespace staging mycluster --dependency-update
+    ...
+    --set iq_server.resources.requests.cpu="500m"
+    --set iq_server.resources.limits.cpu="1000m"
+    --set iq_server.resources.requests.memory="700M"
+    --set iq_server.resources.limits.memory="1024M"
+    --set forwarder.resources.requests.cpu="75m"
+    --set forwarder.resources.limits.cpu="200m"
+    --set forwarder.resources.requests.memory="100M"
+    --set forwarder.resources.limits.memory="200M"
+    --set aggregator.resources.requests.cpu="75m"
+    --set aggregator.resources.limits.cpu="200m"
+    --set aggregator.resources.requests.memory="100M"
+    --set aggregator.resources.limits.memory="200M" \
+    ...
+   sonatype/nexus-iq-server-ha --version <version>
+   ```
+
 ## On-Premises
 
 ### Satisfying General Requirements
-* Any PostgreSQL database, we recommend one [setup for HA](https://www.postgresql.org/docs/current/high-availability.html)
-* Any Kubernetes cluster, we recommend a multi-node cluster [setup for HA](https://kubernetes.io/docs/setup/production-environment/)
+
+* Any PostgreSQL database, we recommend
+  one [setup for HA](https://www.postgresql.org/docs/current/high-availability.html)
+* Any Kubernetes cluster, we recommend a multi-node
+  cluster [setup for HA](https://kubernetes.io/docs/setup/production-environment/)
 * Any shared file system, we recommend a [Network File System (NFS)](https://en.wikipedia.org/wiki/Network_File_System)
 * Any [ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/) pre-installed
-and configured in the cluster, we recommend the [ingress-nginx controller](https://github.com/kubernetes/ingress-nginx)
+  and configured in the cluster, we recommend
+  the [ingress-nginx controller](https://github.com/kubernetes/ingress-nginx)
 
 ### Example
 
@@ -671,3 +717,10 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `aggregateLogFileRetention.maxLastModifiedDays`             | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | 50                         |
 | `fluentd.enabled`                                           | Enable Fluentd                                                                                       | `true`                     |
 | `fluentd.config`                                            | Fluentd configuration                                                                                | See `values.yaml`          |
+| `hpa.enabled`                                               | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
+| `hpa.minReplicas`                                           | Minimum number of replicas                                                                           | `2`                        |
+| `hpa.maxReplicas`                                           | Maximum number of replicas                                                                           | `4`                        |
+| `hpa.resource.cpu.enabled`                                  | Enable CPU-based autoscaling                                                                         | `true`                     |
+| `hpa.resource.cpu.average.threshold`                        | Average CPU threshold for autoscaling                                                                | `50`                       |
+| `hpa.resource.memory.enabled`                               | Enable memory-based autoscaling                                                                      | `false`                    |
+| `hpa.resource.memory.average.threshold`                     | Average memory threshold for autoscaling                                                             | `50`                       |
