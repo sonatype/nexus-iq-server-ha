@@ -198,6 +198,21 @@ iq_server:
           archivedFileCount: 50
     createSampleData: true
 
+# Horizontal pod auto-scaler 
+hpa:
+  enabled: false 
+  minReplicas: 2
+  maxReplicas: 4
+  resources:
+    cpu: 
+      enabled: true
+      average: 
+        threshold: 50
+    memory: 
+      enabled: false
+      average: 
+          threshold: 60 
+
 # Load balancer
 ingress:
   enabled: false

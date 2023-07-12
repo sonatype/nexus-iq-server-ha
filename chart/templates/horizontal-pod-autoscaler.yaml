@@ -1,0 +1,30 @@
+{{- if and .Values.hpa.enabled (or (.Values.hpa.resources.cpu.enabled) (.Values.hpa.resources.memory.enabled)) }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-horizontal-pod-autoscaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-iq-server-deployment
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+  {{- if .Values.hpa.resources.cpu.enabled }}
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.hpa.resources.cpu.average.threshold }}
+  {{- end }}
+  {{- if .Values.hpa.resources.memory.enabled }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.hpa.resources.memory.average.threshold }}
+  {{- end }}
+{{- end }}
