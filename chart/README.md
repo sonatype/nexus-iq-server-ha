@@ -567,6 +567,8 @@ Some example commands are shown below.
    ```
    helm install --namespace staging mycluster --dependency-update
     ...
+    --set hpa.enabled=true
+    --set hpa.resources.memory.enabled=tru
     --set iq_server.resources.requests.cpu="500m"
     --set iq_server.resources.limits.cpu="1000m"
     --set iq_server.resources.requests.memory="700M"
