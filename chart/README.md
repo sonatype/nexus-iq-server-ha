@@ -543,9 +543,11 @@ Some example commands are shown below.
 
 ### HPA (Horizontal Pod Autoscaling)
 
-The HPA in Kubernetes automatically scales workload resources based on demand. It deploys more Pods
-for increased load and scales down if the load decreases. Implemented as a Kubernetes API resource and controller, it
-adjusts the target scale periodically based on observed metrics like CPU and memory utilization.
+IQ HA helm chart includes support for Kubernetes Horizontal Pod Autoscaling (HPA). With this enabled you can set the
+cluster to automatically scale up/down based on the resource demand such as CPU and Memory utilization.
+
+Note: When setting auto-scaling parameters please make sure to have sufficient hardware resources available in the
+underlying nodes meet the max pod demands.
 HPA is disabled by default. If you want to enable it, you need to set the `hpa.enabled` parameter to `true`, and set
 the `hpa.resources.memory.enabled` parameter to `true` to enable memory-based autoscaling.
 
