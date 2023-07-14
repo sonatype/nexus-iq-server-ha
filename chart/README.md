@@ -556,7 +556,7 @@ the `hpa.resources.memory.enabled` parameter to `true` to enable memory-based au
    --set hpa.resources.memory.enabled=true
    ```
 
-Note that HPA requires metrics-server to be installed in the cluster. If you are using EKS, you can install it by
+HPA requires metrics-server to be installed in the cluster. You can install it by
 running the following
 command: `kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`
 Also, defined resources limits for all the containers in the cluster are required for HPA to be able to properly compute
