@@ -541,7 +541,7 @@ Some example commands are shown below.
    sonatype/nexus-iq-server-ha --version <version>
    ```
 
-### HPA (Horizontal Pod Autoscaling)
+### Autoscaling
 
 IQ HA helm chart includes support for Kubernetes Horizontal Pod Autoscaling (HPA). With this enabled you can set the
 cluster to automatically scale up/down based on the resource demand such as CPU and Memory utilization.
