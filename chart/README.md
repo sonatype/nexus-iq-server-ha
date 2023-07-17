@@ -552,7 +552,6 @@ HPA is disabled by default. If you want to enable it, you need to set the `hpa.e
 
    ```
    --set hpa.enabled=true
-   --set hpa.resources.memory.enabled=true
    ```
 
 HPA requires metrics-server to be installed in the cluster. You can install it by
