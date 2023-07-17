@@ -548,8 +548,7 @@ cluster to automatically scale up/down based on the resource demand such as CPU 
 
 Note: When setting auto-scaling parameters please make sure to have sufficient hardware resources available in the
 underlying nodes meet the max pod demands.
-HPA is disabled by default. If you want to enable it, you need to set the `hpa.enabled` parameter to `true`, and set
-the `hpa.resources.memory.enabled` parameter to `true` to enable memory-based autoscaling.
+HPA is disabled by default. If you want to enable it, you need to set the `hpa.enabled` parameter to `true`.
 
    ```
    --set hpa.enabled=true
