@@ -544,7 +544,7 @@ Some example commands are shown below.
 ### Autoscaling
 ###### New in version 166.0.0
 IQ HA helm chart includes support for Kubernetes Horizontal Pod Autoscaling (HPA). With this enabled you can set the
-cluster to automatically scale up/down based on the resource demand such as CPU and Memory utilization.
+cluster to automatically scale up/down based on cpu and/or memory utilization.
 
 Note: When setting auto-scaling parameters please make sure to have sufficient hardware resources available in the
 underlying nodes meet the max pod demands.
