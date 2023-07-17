@@ -568,19 +568,8 @@ Some example commands are shown below.
    helm install --namespace staging mycluster --dependency-update
     ...
     --set hpa.enabled=true
-    --set hpa.resources.memory.enabled=true
     --set iq_server.resources.requests.cpu="500m"
     --set iq_server.resources.limits.cpu="1000m"
-    --set iq_server.resources.requests.memory="700M"
-    --set iq_server.resources.limits.memory="1024M"
-    --set forwarder.resources.requests.cpu="75m"
-    --set forwarder.resources.limits.cpu="200m"
-    --set forwarder.resources.requests.memory="100M"
-    --set forwarder.resources.limits.memory="200M"
-    --set aggregator.resources.requests.cpu="75m"
-    --set aggregator.resources.limits.cpu="200m"
-    --set aggregator.resources.requests.memory="100M"
-    --set aggregator.resources.limits.memory="200M" \
     ...
    sonatype/nexus-iq-server-ha --version <version>
    ```
