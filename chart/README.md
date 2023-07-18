@@ -541,6 +541,37 @@ Some example commands are shown below.
    sonatype/nexus-iq-server-ha --version <version>
    ```
 
+### Autoscaling
+###### New in version 166.0.0
+IQ HA helm chart includes support for Kubernetes Horizontal Pod Autoscaling (HPA). With this enabled you can set the
+cluster to automatically scale up/down based on cpu and/or memory utilization.
+
+Note: When setting auto-scaling parameters please make sure to have sufficient hardware resources available in the
+underlying nodes meet the max pod demands.
+HPA is disabled by default. If you want to enable it, you need to set the `hpa.enabled` parameter to `true`.
+
+   ```
+   --set hpa.enabled=true
+   ```
+Defined resources limits for all the containers in the cluster are required for HPA to be able to properly compute
+metrics.
+Please refer to the "Chart Configuration Options" table below for detailed parameters for adjusting HPA configuration
+to match your needs.
+
+### Examples
+
+Some example commands are shown below.
+
+   ```
+   helm install --namespace staging mycluster --dependency-update
+    ...
+    --set hpa.enabled=true
+    --set iq_server.resources.requests.cpu="500m"
+    --set iq_server.resources.limits.cpu="1000m"
+    ...
+   sonatype/nexus-iq-server-ha --version <version>
+   ```
+
 ## On-Premises
 
 ### Satisfying General Requirements
@@ -671,3 +702,10 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `aggregateLogFileRetention.maxLastModifiedDays`             | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | 50                         |
 | `fluentd.enabled`                                           | Enable Fluentd                                                                                       | `true`                     |
 | `fluentd.config`                                            | Fluentd configuration                                                                                | See `values.yaml`          |
+| `hpa.enabled`                                               | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
+| `hpa.minReplicas`                                           | Minimum number of replicas                                                                           | `2`                        |
+| `hpa.maxReplicas`                                           | Maximum number of replicas                                                                           | `4`                        |
+| `hpa.resource.cpu.enabled`                                  | Enable CPU-based autoscaling                                                                         | `true`                     |
+| `hpa.resource.cpu.average.threshold`                        | Average CPU threshold for autoscaling                                                                | `50`                       |
+| `hpa.resource.memory.enabled`                               | Enable memory-based autoscaling                                                                      | `false`                    |
+| `hpa.resource.memory.average.threshold`                     | Average memory threshold for autoscaling                                                             | `50`                       |
