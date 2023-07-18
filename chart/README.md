@@ -553,6 +553,8 @@ HPA is disabled by default. If you want to enable it, you need to set the `hpa.e
    ```
    --set hpa.enabled=true
    ```
+Please refer to the "Chart Configuration Options" table below for detailed parameters for adjusting HPA configuration
+to match your needs.
 
 HPA requires metrics-server to be installed in the cluster. You can install it by
 running the following
