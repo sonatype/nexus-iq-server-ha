@@ -555,11 +555,7 @@ HPA is disabled by default. If you want to enable it, you need to set the `hpa.e
    ```
 Please refer to the "Chart Configuration Options" table below for detailed parameters for adjusting HPA configuration
 to match your needs.
-
-HPA requires metrics-server to be installed in the cluster. You can install it by
-running the following
-command: `kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`
-Also, defined resources limits for all the containers in the cluster are required for HPA to be able to properly compute
+Defined resources limits for all the containers in the cluster are required for HPA to be able to properly compute
 metrics.
 
 ### Examples
