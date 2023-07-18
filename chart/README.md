@@ -577,15 +577,11 @@ Some example commands are shown below.
 ## On-Premises
 
 ### Satisfying General Requirements
-
-* Any PostgreSQL database, we recommend
-  one [setup for HA](https://www.postgresql.org/docs/current/high-availability.html)
-* Any Kubernetes cluster, we recommend a multi-node
-  cluster [setup for HA](https://kubernetes.io/docs/setup/production-environment/)
+* Any PostgreSQL database, we recommend one [setup for HA](https://www.postgresql.org/docs/current/high-availability.html)
+* Any Kubernetes cluster, we recommend a multi-node cluster [setup for HA](https://kubernetes.io/docs/setup/production-environment/)
 * Any shared file system, we recommend a [Network File System (NFS)](https://en.wikipedia.org/wiki/Network_File_System)
 * Any [ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/) pre-installed
-  and configured in the cluster, we recommend
-  the [ingress-nginx controller](https://github.com/kubernetes/ingress-nginx)
+and configured in the cluster, we recommend the [ingress-nginx controller](https://github.com/kubernetes/ingress-nginx)
 
 ### Example
 
