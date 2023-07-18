@@ -5,5 +5,8 @@ dependencies:
 - name: fluentd
   repository: https://charts.bitnami.com/bitnami
   version: 5.5.12
-digest: sha256:3001c4faf25aa8e74482a992d2e85b72bb0b4a6f0d9b6c6cce2c6f7f3874ac51
-generated: "2023-01-17T15:12:14.6881484Z"
+- name: metrics-server
+  repository: https://kubernetes-sigs.github.io/metrics-server
+  version: 3.10.0
+digest: sha256:b4c370c2d62c1f953aaab6cc5912e62b70538c38b940c0b4888721924d26d3cf
+generated: "2023-07-18T13:57:23.727119032+01:00"
