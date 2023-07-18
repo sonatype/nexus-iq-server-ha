@@ -553,10 +553,10 @@ HPA is disabled by default. If you want to enable it, you need to set the `hpa.e
    ```
    --set hpa.enabled=true
    ```
-Please refer to the "Chart Configuration Options" table below for detailed parameters for adjusting HPA configuration
-to match your needs.
 Defined resources limits for all the containers in the cluster are required for HPA to be able to properly compute
 metrics.
+Please refer to the "Chart Configuration Options" table below for detailed parameters for adjusting HPA configuration
+to match your needs.
 
 ### Examples
 
