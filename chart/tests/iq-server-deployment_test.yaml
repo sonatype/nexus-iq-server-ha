@@ -118,6 +118,9 @@ tests:
                     image: bitnami/fluentd:1.15.3-debian-11-r20
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-fluentd-container
+                    resources:
+                      requests:
+                      limits:
                     volumeMounts:
                       - mountPath: /opt/bitnami/fluentd/conf
                         name: RELEASE-NAME-fluentd-pod-config-volume
@@ -224,6 +227,14 @@ tests:
                 threshold: DEBUG
                 logFormat: "%d{'HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n"
           createSampleData: false
+      fluentd:
+        resources:
+          requests:
+            cpu: 2
+            memory: "500M"
+          limits:
+            cpu: 4
+            memory: "1Gi"
     asserts:
       - hasDocuments:
           count: 1
@@ -344,6 +355,13 @@ tests:
                     image: bitnami/fluentd:1.15.3-debian-11-r20
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-fluentd-container
+                    resources:
+                      requests:
+                        cpu: 2
+                        memory: "500M"
+                      limits:
+                        cpu: 4
+                        memory: "1Gi"
                     volumeMounts:
                       - mountPath: /opt/bitnami/fluentd/conf
                         name: RELEASE-NAME-fluentd-pod-config-volume
