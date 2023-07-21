@@ -541,13 +541,20 @@ Some example commands are shown below.
    sonatype/nexus-iq-server-ha --version <version>
    ```
 
-### Autoscaling
-###### New in version 166.0.0
-IQ HA helm chart includes support for Kubernetes Horizontal Pod Autoscaling (HPA). With this enabled you can set the
+### Autoscaling (@since 166.0.0)
+
+Nexus IQ Server HA helm chart includes support for Kubernetes Horizontal Pod Autoscaling (HPA). With this enabled you can set the
 cluster to automatically scale up/down based on cpu and/or memory utilization.
 
-Note: When setting auto-scaling parameters please make sure to have sufficient hardware resources available in the
-underlying nodes meet the max pod demands.
+#### Pre-requisites for autoscaling
+Horizontal Pod Autoscaler depends on [metrics-server](https://github.com/kubernetes-sigs/metrics-server) being 
+installed and available in the cluster. Please refer to the metrics-server [requirements](https://github.com/kubernetes-sigs/metrics-server/#requirements) 
+and [installation](https://github.com/kubernetes-sigs/metrics-server/#installation) instructions for setting it up    
+
+#### Configuring IQ server autoscaling
+(Note: When setting auto-scaling parameters please make sure to have sufficient hardware resources available in the
+underlying nodes meet the max pod demands.)
+
 HPA is disabled by default. If you want to enable it, you need to set the `hpa.enabled` parameter to `true`.
 
    ```
@@ -558,7 +565,7 @@ metrics.
 Please refer to the "Chart Configuration Options" table below for detailed parameters for adjusting HPA configuration
 to match your needs.
 
-### Examples
+#### Autoscaling examples
 
 Some example commands are shown below.
 
