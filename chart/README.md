@@ -560,8 +560,10 @@ HPA is disabled by default. If you want to enable it, you need to set the `hpa.e
    ```
    --set hpa.enabled=true
    ```
-Defined resources limits for all the containers in the cluster are required for HPA to be able to properly compute
-metrics.
+Defined resources requests for all the containers in the IQ Server pod are required for HPA to be able to compute
+metrics. As a result, if you are scaling based on CPU usage you need to specify CPU requests for the IQ server and fluentd
+sidecar. 
+
 Please refer to the "Chart Configuration Options" table below for detailed parameters for adjusting HPA configuration
 to match your needs.
 
@@ -574,7 +576,9 @@ Some example commands are shown below.
     ...
     --set hpa.enabled=true
     --set iq_server.resources.requests.cpu="500m"
-    --set iq_server.resources.limits.cpu="1000m"
+    --set iq_server.resources.limits.cpu="1000m"    
+    --set fluentd.resources.requests.cpu="200m"
+    --set fluentd.resources.limits.cpu="500m"
     ...
    sonatype/nexus-iq-server-ha --version <version>
    ```
@@ -708,6 +712,10 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `aggregateLogFileRetention.deleteCron`                      | Cron schedule expression for when to delete old aggregate log files if needed                        | `0 1 * * *`                |
 | `aggregateLogFileRetention.maxLastModifiedDays`             | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | 50                         |
 | `fluentd.enabled`                                           | Enable Fluentd                                                                                       | `true`                     |
+| `fluentd.resources.requests.cpu`                            | Fluentd sidecar cpu request                                                                          | `nil`                      |
+| `fluentd.resources.limits.cpu`                              | Fluentd sidecar cpu limit                                                                            | `nil`                      |
+| `fluentd.resources.requests.memory`                         | Fluentd sidecar memory request                                                                       | `nil`                      |
+| `fluentd.resources.limits.memory`                           | Fluentd sidecar memory limit                                                                         | `nil`                      |
 | `fluentd.config`                                            | Fluentd configuration                                                                                | See `values.yaml`          |
 | `hpa.enabled`                                               | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
 | `hpa.minReplicas`                                           | Minimum number of replicas                                                                           | `2`                        |

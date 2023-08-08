@@ -308,6 +308,13 @@ aggregateLogFileRetention:
 # fluentd configuration
 fluentd:
   enabled: true
+  resources:
+    requests:
+      cpu: #150m
+      memory: #200M
+    limits:
+      cpu: #300m
+      memory: #400M
   config:
     # Configuration for sidecar forwarder
     # Note that source parsing formats must correspond to the Nexus IQ Server log formats
