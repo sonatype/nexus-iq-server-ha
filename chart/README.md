@@ -12,19 +12,19 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-# Nexus IQ Server High Availability Helm Chart
+# Sonatype IQ Server High Availability Helm Chart
 
-This repository is intended to store a helm chart to create a cluster of Nexus IQ Server nodes.
+This repository is intended to store a helm chart to create a cluster of Sonatype IQ Server nodes.
 
 ## General Requirements
 - A copy of the helm chart
-- A Nexus IQ Server license that supports the High Availability (HA) feature
+- A Sonatype IQ Server license that supports the High Availability (HA) feature
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) (1.23+) to run commands against a Kubernetes cluster
 - [helm](https://helm.sh/docs/helm/) (3.9.3+) to install or upgrade the helm chart
 - A PostgreSQL (10.7 or newer) database or a PostgreSQL-compatible service
 - A Kubernetes cluster to run the helm chart on
-- A shared file system to share files between all Nexus IQ Server pods in the cluster
-- A load balancer to distribute requests between the Nexus IQ Server pods
+- A shared file system to share files between all Sonatype IQ Server pods in the cluster
+- A load balancer to distribute requests between the Sonatype IQ Server pods
 
 ## Nice to have
 - A [storage class](https://kubernetes.io/docs/concepts/storage/storage-classes/) for dynamic provisioning
@@ -50,14 +50,14 @@ where
 
 ### License (required)
 
-A Nexus IQ Server license that supports the HA feature must be installed either before the cluster starts or as it is
+A Sonatype IQ Server license that supports the HA feature must be installed either before the cluster starts or as it is
 starting to allow multiple pods to start successfully.
 
 The license file can either be passed directly
    ```
    --set-file iq_server.license=<license file>
    ```
-where `<license file>` is the path to your Nexus IQ Server product license file
+where `<license file>` is the path to your Sonatype IQ Server product license file
 
 or via an existing secret
    ```
@@ -107,7 +107,7 @@ The [access mode(s)](https://kubernetes.io/docs/concepts/storage/persistent-volu
    ```
 Note that this should correspond to the type of PV being used.
 
-If you have multiple nodes in your Kubernetes cluster, and a Nexus IQ Server pod is running on 2 or more of
+If you have multiple nodes in your Kubernetes cluster, and a Sonatype IQ Server pod is running on 2 or more of
 them, then this must be set to `ReadWriteMany` and you must use a type of PV that supports it.
 
 #### Storage Class Name
@@ -223,7 +223,7 @@ and configured via
    --set externalDns.args=<array of arguments>
    ```
 
-### Nexus IQ Server Configuration (optional)
+### Sonatype IQ Server Configuration (optional)
 
 The number of pods can be specified as follows
    ```
@@ -250,7 +250,7 @@ updating this as many values within it are fine-tuned to allow the helm chart to
 
 ### Logging (required)
 
-Each Nexus IQ Server pod has a container running Nexus IQ Server, which outputs the following log files
+Each Sonatype IQ Server pod has a container running Sonatype IQ Server, which outputs the following log files
 * `clm-server.log`
 * `request.log`
 * `audit.log`
@@ -285,7 +285,7 @@ at 1 am. This can be customized as follows
 Note that setting `aggregateLogFileRetention.maxLastModifiedDays` to 0 disables deletion.
 
 Note that the fluentd daemonset aggregator has separate settings for its PVC and should normally be configured to use
-the same PVC as the Nexus IQ Server pods as follows
+the same PVC as the Sonatype IQ Server pods as follows
    ```
    --set fluentd.aggregator.extraVolumes[0].name="iq-server-pod-volume"
    --set fluentd.aggregator.extraVolumes[0].persistentVolumeClaim.claimName=<PVC name, default "iq-server-pvc">
@@ -294,14 +294,14 @@ the same PVC as the Nexus IQ Server pods as follows
 ### Image (optional)
 
 By default, the
-[latest publicly available Nexus IQ Server docker image](https://hub.docker.com/r/sonatype/nexus-iq-server)
+[latest publicly available Sonatype IQ Server docker image](https://hub.docker.com/r/sonatype/nexus-iq-server)
 will be used.
 
 The image registry, image, tag, and imagePullPolicy can be overridden using
    ```
    --set iq_server.imageRegistry=<image registry, default nil meaning use the Docker public registry>
    --set iq_server.image=<image, default "sonatype/nexus-iq-server">
-   --set iq_server.tag=<tag, default most recent version of Nexus IQ Server>
+   --set iq_server.tag=<tag, default most recent version of Sonatype IQ Server>
    --set iq_server.imagePullPolicy=<imagePullPolicy, default "IfNotPresent">
    ```
 
@@ -403,7 +403,7 @@ The initial admin password
 
 ### ALB
 
-For an ALB load balancer to work you will need to change the Nexus IQ Server [service type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)
+For an ALB load balancer to work you will need to change the Sonatype IQ Server [service type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)
 from its default of `ClusterIP` to `NodePort` via the following
    ```
    --set iq_server.serviceType=NodePort
@@ -422,7 +422,7 @@ For the admin endpoints
    --set existingApplicationLoadBalancer.adminTargetGroupARN=<admin target group arn>
    ```
 Each command will create a target group binding, which will automatically synchronize targets to the given target group
-pointing to the application/admin Nexus IQ Server service endpoints.
+pointing to the application/admin Sonatype IQ Server service endpoints.
 
 Note that with static provisioning, you do not need to enable an ingress.
 
@@ -458,7 +458,7 @@ the ingress level e.g.
 ### EFS Storage Class
 
 If you want to use dynamic provisioning, then an EFS storage class should be pre-installed and configured in the cluster
-with the correct settings to allow read/write access to the Nexus IQ Server pod users, which have UID 1000 and GID 1000
+with the correct settings to allow read/write access to the Sonatype IQ Server pod users, which have UID 1000 and GID 1000
 by default e.g.
    ```
    kind: StorageClass
@@ -543,7 +543,7 @@ Some example commands are shown below.
 
 ### Autoscaling (@since 166.0.0)
 
-Nexus IQ Server HA helm chart includes support for Kubernetes Horizontal Pod Autoscaling (HPA). With this enabled you can set the
+Sonatype IQ Server HA helm chart includes support for Kubernetes Horizontal Pod Autoscaling (HPA). With this enabled you can set the
 cluster to automatically scale up/down based on cpu and/or memory utilization.
 
 #### Pre-requisites for autoscaling
@@ -617,28 +617,28 @@ An example command is shown below.
 
 ## Upgrading
 
-To upgrade Nexus IQ Server and ensure a successful data migration, the following steps are recommended:
+To upgrade Sonatype IQ Server and ensure a successful data migration, the following steps are recommended:
 
 1. **Scale your pods down to zero.** This will delete the existing pods.
 2. **Backup the database.** See the [IQ server backup guidelines](https://links.sonatype.com/products/nxiq/doc/backup) for more details.
-3. **Update the helm chart.** Typically, this will also update the Nexus IQ Server version.
+3. **Update the helm chart.** Typically, this will also update the Sonatype IQ Server version.
 4. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
 
 ## Chart Configuration Options
 | Parameter                                                   | Description                                                                                          | Default                    |
 |-------------------------------------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
 | `iq_server.imageRegistry`                                   | Container image registry, if not specified the Docker public registry will be used                   | `nil`                      |
-| `iq_server.image`                                           | Nexus IQ Server docker image                                                                         | `sonatype/nexus-iq-server` |
-| `iq_server.imagePullPolicy`                                 | Nexus IQ Server image pull policy                                                                    | `IfNotPresent`             |
-| `iq_server.tag`                                             | Nexus IQ Server image tag                                                                            | See `values.yaml`          |
+| `iq_server.image`                                           | Sonatype IQ Server docker image                                                                         | `sonatype/nexus-iq-server` |
+| `iq_server.imagePullPolicy`                                 | Sonatype IQ Server image pull policy                                                                    | `IfNotPresent`             |
+| `iq_server.tag`                                             | Sonatype IQ Server image tag                                                                            | See `values.yaml`          |
 | `iq_server.resources.requests.cpu`                          | Request for CPU resources in CPU units                                                               | `nil`                      |
 | `iq_server.resources.requests.memory`                       | Request for memory resources in bytes                                                                | `nil`                      |
 | `iq_server.resources.limits.cpu`                            | Limit for CPU resources in CPU units                                                                 | `nil`                      |
 | `iq_server.resources.limits.memory`                         | Limit for memory resources in bytes                                                                  | `nil`                      |
 | `iq_server.javaOpts`                                        | Value for the JAVA_OPTS environment variable to pass custom settings to the JVM                      | `nil`                      |
-| `iq_server.license`                                         | Path to your Nexus IQ Server product license file                                                    | `nil`                      |
+| `iq_server.license`                                         | Path to your Sonatype IQ Server product license file                                                    | `nil`                      |
 | `iq_server.licenseSecret`                                   | The name of the license secret                                                                       | `nil`                      |
-| `iq_server.serviceType`                                     | Nexus IQ Server service type                                                                         | `ClusterIP`                |
+| `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                         | `ClusterIP`                |
 | `iq_server.database.hostname`                               | Database hostname                                                                                    | `nil`                      |
 | `iq_server.database.port`                                   | Database port                                                                                        | `5432`                     |
 | `iq_server.database.name`                                   | Database name                                                                                        | `nil`                      |
@@ -659,10 +659,10 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `iq_server.persistence.csi.volumeHandle`                    | Volume handle                                                                                        | `nil`                      |
 | `iq_server.persistence.nfs.server`                          | NFS server hostname                                                                                  | `nil`                      |
 | `iq_server.persistence.nfs.path`                            | NFS server path                                                                                      | `/`                        |
-| `iq_server.serviceAccountName`                              | Nexus IQ Server service account name                                                                 | `default`                  |
-| `iq_server.serviceType`                                     | Nexus IQ Server service type                                                                         | `ClusterIP`                |
-| `iq_server.applicationServiceAnnotations`                   | Annotations for the Nexus IQ Server application service                                              | `nil`                      |
-| `iq_server.adminServiceAnnotations`                         | Annotations for the Nexus IQ Server admin service                                                    | `nil`                      |
+| `iq_server.serviceAccountName`                              | Sonatype IQ Server service account name                                                                 | `default`                  |
+| `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                         | `ClusterIP`                |
+| `iq_server.applicationServiceAnnotations`                   | Annotations for the Sonatype IQ Server application service                                              | `nil`                      |
+| `iq_server.adminServiceAnnotations`                         | Annotations for the Sonatype IQ Server admin service                                                    | `nil`                      |
 | `iq_server.replicas`                                        | Number of replicas                                                                                   | `2`                        |
 | `iq_server.initialAdminPassword`                            | Initial admin password                                                                               | `admin123`                 |
 | `iq_server.initialAdminPasswordSecret`                      | Initial admin password secret                                                                        | `nil`                      |
@@ -699,7 +699,7 @@ To upgrade Nexus IQ Server and ensure a successful data migration, the following
 | `serviceAccount.annotations`                                | Service account annotations                                                                          | `nil`                      |
 | `serviceAccount.autoMountServiceAccountToken`               | Auto mount service account token                                                                     | `false`                    |
 | `secret.arn`                                                | AWS secret arn containing initial admin password in a initial_admin_password key                     | `nil`                      |
-| `secret.license.arn`                                        | AWS secret arn containing the binary content of your Nexus IQ Server license                         | `nil`                      |
+| `secret.license.arn`                                        | AWS secret arn containing the binary content of your Sonatype IQ Server license                         | `nil`                      |
 | `secret.rds.arn`                                            | AWS secret arn containing host, port, name (database name), username, and password keys              | `nil`                      |
 | `secret.sshPrivateKey.arn`                                  | AWS secret arn containing the binary content of your SSH private key for use with ssh git operations | `nil`                      |
 | `secret.sshKnownHosts.arn`                                  | AWS secret arn containing the binary content of your SSH known hosts for use with ssh git operations | `nil`                      |
