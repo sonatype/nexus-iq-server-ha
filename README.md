@@ -12,7 +12,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-# Nexus IQ Server High Availability Helm Chart
+# Sonatype IQ Server High Availability Helm Chart
 
 ## Location
 
