@@ -218,7 +218,15 @@ spec:
       initContainers:
         - name: {{ .Release.Name }}-set-iq-persistence-ownership
           image: busybox:1.28
-          command: ["sh", "-c", "chown -R 1000:1000 {{ .Values.iq_server.config.clusterDirectory }}"]
+          command:
+            - "sh"
+            - "-c"
+            - >
+              {{- if .Values.customInitCommand -}}
+              {{- .Values.customInitCommand -}}
+              {{- else -}}
+              chown -R 1000:1000 {{ .Values.iq_server.config.clusterDirectory }}
+              {{- end }}
           volumeMounts:
             - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
               name: {{ .Release.Name }}-iq-server-pod-volume
