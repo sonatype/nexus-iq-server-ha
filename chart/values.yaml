@@ -197,6 +197,7 @@ iq_server:
           archivedLogFilenamePattern: "/var/log/nexus-iq-server/clm-server-%d.log.gz"
           archivedFileCount: 50
     createSampleData: true
+  pvOwnershipOverride: # Specify a custom 'chown' command to modify ownership of directories.
 
 # Horizontal pod auto-scaler 
 hpa:
@@ -631,7 +632,3 @@ fluentd:
     initScripts:
       # Plugin which can be configured to send logs to CloudWatch
       plugins.sh: "fluent-gem install fluent-plugin-cloudwatch-logs"
-
-# Command to execute in initContainer
-customInitCommand: ""
-
