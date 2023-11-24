@@ -628,17 +628,17 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | Parameter                                                   | Description                                                                                          | Default                    |
 |-------------------------------------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
 | `iq_server.imageRegistry`                                   | Container image registry, if not specified the Docker public registry will be used                   | `nil`                      |
-| `iq_server.image`                                           | Sonatype IQ Server docker image                                                                         | `sonatype/nexus-iq-server` |
-| `iq_server.imagePullPolicy`                                 | Sonatype IQ Server image pull policy                                                                    | `IfNotPresent`             |
-| `iq_server.tag`                                             | Sonatype IQ Server image tag                                                                            | See `values.yaml`          |
+| `iq_server.image`                                           | Sonatype IQ Server docker image                                                                      | `sonatype/nexus-iq-server` |
+| `iq_server.imagePullPolicy`                                 | Sonatype IQ Server image pull policy                                                                 | `IfNotPresent`             |
+| `iq_server.tag`                                             | Sonatype IQ Server image tag                                                                         | See `values.yaml`          |
 | `iq_server.resources.requests.cpu`                          | Request for CPU resources in CPU units                                                               | `nil`                      |
 | `iq_server.resources.requests.memory`                       | Request for memory resources in bytes                                                                | `nil`                      |
 | `iq_server.resources.limits.cpu`                            | Limit for CPU resources in CPU units                                                                 | `nil`                      |
 | `iq_server.resources.limits.memory`                         | Limit for memory resources in bytes                                                                  | `nil`                      |
 | `iq_server.javaOpts`                                        | Value for the JAVA_OPTS environment variable to pass custom settings to the JVM                      | `nil`                      |
-| `iq_server.license`                                         | Path to your Sonatype IQ Server product license file                                                    | `nil`                      |
+| `iq_server.license`                                         | Path to your Sonatype IQ Server product license file                                                 | `nil`                      |
 | `iq_server.licenseSecret`                                   | The name of the license secret                                                                       | `nil`                      |
-| `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                         | `ClusterIP`                |
+| `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
 | `iq_server.database.hostname`                               | Database hostname                                                                                    | `nil`                      |
 | `iq_server.database.port`                                   | Database port                                                                                        | `5432`                     |
 | `iq_server.database.name`                                   | Database name                                                                                        | `nil`                      |
@@ -659,10 +659,10 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `iq_server.persistence.csi.volumeHandle`                    | Volume handle                                                                                        | `nil`                      |
 | `iq_server.persistence.nfs.server`                          | NFS server hostname                                                                                  | `nil`                      |
 | `iq_server.persistence.nfs.path`                            | NFS server path                                                                                      | `/`                        |
-| `iq_server.serviceAccountName`                              | Sonatype IQ Server service account name                                                                 | `default`                  |
-| `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                         | `ClusterIP`                |
-| `iq_server.applicationServiceAnnotations`                   | Annotations for the Sonatype IQ Server application service                                              | `nil`                      |
-| `iq_server.adminServiceAnnotations`                         | Annotations for the Sonatype IQ Server admin service                                                    | `nil`                      |
+| `iq_server.serviceAccountName`                              | Sonatype IQ Server service account name                                                              | `default`                  |
+| `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
+| `iq_server.applicationServiceAnnotations`                   | Annotations for the Sonatype IQ Server application service                                           | `nil`                      |
+| `iq_server.adminServiceAnnotations`                         | Annotations for the Sonatype IQ Server admin service                                                 | `nil`                      |
 | `iq_server.replicas`                                        | Number of replicas                                                                                   | `2`                        |
 | `iq_server.initialAdminPassword`                            | Initial admin password                                                                               | `admin123`                 |
 | `iq_server.initialAdminPasswordSecret`                      | Initial admin password secret                                                                        | `nil`                      |
@@ -681,6 +681,7 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `iq_server.sshPrivateKeySecret`                             | SSH private key stored in k8s secret to be used for ssh git operations                               | `nil`                      |
 | `iq_server.sshKnownHosts`                                   | SSH known hosts file to store on the nodes for ssh git operations                                    | `nil`                      |
 | `iq_server.sshKnownHostsSecret`                             | SSH known hosts stored in k8s secret to be used for ssh git operations                               | `nil`                      |
+| `iq_server.pvOwnershipOverride`                             | Custom 'chown' command in the initContainer to modify directory ownership.                           | `nil`                      |
 | `ingress.enabled`                                           | Enable ingress                                                                                       | `false`                    |
 | `ingress.className`                                         | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                          | Ingress path type                                                                                    | `Prefix`                   |
@@ -699,7 +700,7 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `serviceAccount.annotations`                                | Service account annotations                                                                          | `nil`                      |
 | `serviceAccount.autoMountServiceAccountToken`               | Auto mount service account token                                                                     | `false`                    |
 | `secret.arn`                                                | AWS secret arn containing initial admin password in a initial_admin_password key                     | `nil`                      |
-| `secret.license.arn`                                        | AWS secret arn containing the binary content of your Sonatype IQ Server license                         | `nil`                      |
+| `secret.license.arn`                                        | AWS secret arn containing the binary content of your Sonatype IQ Server license                      | `nil`                      |
 | `secret.rds.arn`                                            | AWS secret arn containing host, port, name (database name), username, and password keys              | `nil`                      |
 | `secret.sshPrivateKey.arn`                                  | AWS secret arn containing the binary content of your SSH private key for use with ssh git operations | `nil`                      |
 | `secret.sshKnownHosts.arn`                                  | AWS secret arn containing the binary content of your SSH known hosts for use with ssh git operations | `nil`                      |
