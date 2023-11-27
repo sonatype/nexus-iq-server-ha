@@ -197,7 +197,8 @@ iq_server:
           archivedLogFilenamePattern: "/var/log/nexus-iq-server/clm-server-%d.log.gz"
           archivedFileCount: 50
     createSampleData: true
-  pvOwnershipOverride: # Specify a custom 'chown' command to modify ownership of directories.
+  # Specify a custom 'chown' command to modify ownership of directories.
+  pvOwnershipOverride:
 
 # Horizontal pod auto-scaler 
 hpa:

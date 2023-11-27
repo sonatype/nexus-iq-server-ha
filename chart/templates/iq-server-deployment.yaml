@@ -221,10 +221,9 @@ spec:
           command:
             - "sh"
             - "-c"
-            - >
-              {{- if .Values.customInitCommand -}}
-              {{- .Values.customInitCommand -}}
-              {{- else -}}
+            - {{- if .Values.iq_server.pvOwnershipOverride }}
+              {{ .Values.iq_server.pvOwnershipOverride }}
+              {{- else }}
               chown -R 1000:1000 {{ .Values.iq_server.config.clusterDirectory }}
               {{- end }}
           volumeMounts:
