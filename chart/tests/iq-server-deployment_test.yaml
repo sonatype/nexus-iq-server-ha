@@ -128,9 +128,10 @@ tests:
                         name: RELEASE-NAME-iq-server-pod-logs
                 initContainers:
                   - command:
-                      - sh
+                      - /bin/sh
                       - -c
-                      - chown -R 1000:1000 /sonatype-work/clm-cluster
+                      - |
+                        chown -R 1000:1000 /sonatype-work/clm-cluster
                     image: busybox:1.28
                     name: RELEASE-NAME-set-iq-persistence-ownership
                     volumeMounts:
@@ -227,6 +228,7 @@ tests:
                 threshold: DEBUG
                 logFormat: "%d{'HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n"
           createSampleData: false
+        pvOwnershipOverride: "chown -R 2000:2000 /different/path"
       fluentd:
         resources:
           requests:
@@ -369,9 +371,10 @@ tests:
                         name: RELEASE-NAME-iq-server-pod-logs
                 initContainers:
                   - command:
-                      - sh
+                      - /bin/sh
                       - -c
-                      - chown -R 1000:1000 /iq/clm-cluster
+                      - |
+                        chown -R 2000:2000 /different/path
                     image: busybox:1.28
                     name: RELEASE-NAME-set-iq-persistence-ownership
                     volumeMounts:
