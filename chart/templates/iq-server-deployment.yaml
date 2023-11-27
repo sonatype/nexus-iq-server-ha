@@ -219,12 +219,13 @@ spec:
         - name: {{ .Release.Name }}-set-iq-persistence-ownership
           image: busybox:1.28
           command:
-            - "sh"
-            - "-c"
-            - {{- if .Values.iq_server.pvOwnershipOverride }}
-              {{ .Values.iq_server.pvOwnershipOverride }}
+            - /bin/sh
+            - -c
+            - |
+              {{- if .Values.iq_server.pvOwnershipOverride }}
+                {{ .Values.iq_server.pvOwnershipOverride }}
               {{- else }}
-              chown -R 1000:1000 {{ .Values.iq_server.config.clusterDirectory }}
+                chown -R 1000:1000 {{ .Values.iq_server.config.clusterDirectory }}
               {{- end }}
           volumeMounts:
             - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
