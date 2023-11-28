@@ -681,7 +681,6 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `iq_server.sshPrivateKeySecret`                             | SSH private key stored in k8s secret to be used for ssh git operations                               | `nil`                      |
 | `iq_server.sshKnownHosts`                                   | SSH known hosts file to store on the nodes for ssh git operations                                    | `nil`                      |
 | `iq_server.sshKnownHostsSecret`                             | SSH known hosts stored in k8s secret to be used for ssh git operations                               | `nil`                      |
-| `iq_server.pvOwnershipOverride`                             | Custom 'chown' command in the initContainer to modify directory ownership.                           | `nil`                      |
 | `ingress.enabled`                                           | Enable ingress                                                                                       | `false`                    |
 | `ingress.className`                                         | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                          | Ingress path type                                                                                    | `Prefix`                   |
