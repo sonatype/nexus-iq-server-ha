@@ -198,7 +198,7 @@ iq_server:
           archivedFileCount: 50
     createSampleData: true
   # Specify a custom 'chown' command to modify ownership of directories.
-  pvOwnershipOverride:
+  pvOwnershipOverride:  "chown -R 1000:1000 /sonatype-work/clm-cluster"
 
 # Horizontal pod auto-scaler 
 hpa:

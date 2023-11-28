@@ -221,12 +221,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - |
-              {{- if .Values.iq_server.pvOwnershipOverride }}
-                {{ .Values.iq_server.pvOwnershipOverride }}
-              {{- else }}
-                chown -R 1000:1000 {{ .Values.iq_server.config.clusterDirectory }}
-              {{- end }}
+            - {{ .Values.iq_server.pvOwnershipOverride }}
           volumeMounts:
             - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
               name: {{ .Release.Name }}-iq-server-pod-volume
