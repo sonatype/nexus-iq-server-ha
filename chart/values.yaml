@@ -96,6 +96,8 @@ iq_server:
   applicationServiceAnnotations:
   # Annotations for the admin service
   adminServiceAnnotations:
+  # Annotations for the iq server pods
+  podAnnotations:
 
   # Number of pods to run
   replicas: 2

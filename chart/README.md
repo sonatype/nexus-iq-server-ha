@@ -659,6 +659,7 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `iq_server.persistence.csi.volumeHandle`                    | Volume handle                                                                                        | `nil`                      |
 | `iq_server.persistence.nfs.server`                          | NFS server hostname                                                                                  | `nil`                      |
 | `iq_server.persistence.nfs.path`                            | NFS server path                                                                                      | `/`                        |
+| `iq_server.podAnnotations`                                  | Annotations for the Sonatype IQ Server pods                                                          | `nil`                      |
 | `iq_server.serviceAccountName`                              | Sonatype IQ Server service account name                                                              | `default`                  |
 | `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
 | `iq_server.applicationServiceAnnotations`                   | Annotations for the Sonatype IQ Server application service                                           | `nil`                      |
