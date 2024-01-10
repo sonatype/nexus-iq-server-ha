@@ -176,6 +176,8 @@ tests:
           size: "2Gi"
           hostPath:
             path: "/mnt/iq"
+        podAnnotations:
+          key1: "value1"
         license: "/iq.lic"
         sshPrivateKey: "/private.key"
         sshKnownHosts: "/known_hosts"
@@ -254,6 +256,8 @@ tests:
               metadata:
                 labels:
                   name: RELEASE-NAME-iq-server
+                annotations:
+                  key1: value1
               spec:
                 serviceAccountName: "my-service-account"
                 containers:

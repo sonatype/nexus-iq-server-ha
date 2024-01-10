@@ -11,6 +11,10 @@ spec:
     metadata:
       labels:
         name: {{ .Release.Name }}-iq-server
+    {{- with .Values.iq_server.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
       volumes:
