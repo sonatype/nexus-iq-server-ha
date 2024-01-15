@@ -344,10 +344,10 @@ fluentd:
           read_from_head: true
           parse:
             $type: regexp
-            expression: /^(?<host>[^ ]*) (?<ident>[^ ]*) (?<authuser>[^ ]*) \[(?<logtime>[^\]]*)\] "(?<method>[^ ]*) (?<path>[^ ]*) (?<protocol>[^"]*)" (?<status>[^ ]*) (?<bytes>[^ ]*) (?<time>[^ ]*) "(?<userAgent>[^"]*)"$/
+            expression: /^(?<host>[^ ]*) (?<ident>[^ ]*) (?<authuser>[^ ]*) \[(?<logtime>[^\]]*)\] "(?<method>[^ ]*) (?<path>[^ ]*) (?<protocol>[^"]*)" (?<status>[^ ]*) (?<bytes>[^ ]*) (?<elapsedTime>[^ ]*) "(?<userAgent>[^"]*)"$/
             time_key: logtime
             time_format: "%d/%b/%Y:%H:%M:%S %z"
-            types: "status:integer,bytes:integer,time:integer"
+            types: "status:integer,bytes:integer,elapsedTime:integer"
       # Get the audit log
       - source:
           $type: tail
