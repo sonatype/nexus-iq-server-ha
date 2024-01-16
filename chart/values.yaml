@@ -382,8 +382,9 @@ fluentd:
           tag: iq_server.clm-server
           read_from_head: true
           parse:
-            $type: regexp
-            expression: /^((?<logtime>[^ ]* [^ ]*) (?<level>[^ ]*) \[(?<thread>[^\]]*)\] (?<username>[^ ]*) (?<logger>[^ ]*) - (?<message>.*))|(?<message>.*)$/
+            $type: multiline
+            format_firstline: /\d{4}-\d{1,2}-\d{1,2}/
+            format1: /^((?<logtime>[^ ]* [^ ]*) (?<level>[^ ]*) \[(?<thread>[^\]]*)\] (?<username>[^ ]*) (?<logger>[^ ]*) - (?<message>.*))|(?<message>.*)$/
             time_key: logtime
             time_format: "%Y-%m-%d %H:%M:%S,%L%z"
       # Get the stderr log
