@@ -37,10 +37,10 @@ tests:
                     $type: regexp
                     expression: /^(?<host>[^ ]*) (?<ident>[^ ]*) (?<authuser>[^ ]*) \[(?<logtime>[^\]]*)\]
                       "(?<method>[^ ]*) (?<path>[^ ]*) (?<protocol>[^"]*)" (?<status>[^ ]*) (?<bytes>[^
-                      ]*) (?<time>[^ ]*) "(?<userAgent>[^"]*)"$/
+                      ]*) (?<elapsedTime>[^ ]*) "(?<userAgent>[^"]*)"$/
                     time_format: '%d/%b/%Y:%H:%M:%S %z'
                     time_key: logtime
-                    types: status:integer,bytes:integer,time:integer
+                    types: status:integer,bytes:integer,elapsedTime:integer
                   path: /var/log/nexus-iq-server/request.log
                   pos_file: /opt/bitnami/fluentd/logs/buffers/request.pos
                   read_from_head: true
