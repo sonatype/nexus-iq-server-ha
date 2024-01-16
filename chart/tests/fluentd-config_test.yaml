@@ -72,9 +72,10 @@ tests:
               - source:
                   $type: tail
                   parse:
-                    $type: regexp
-                    expression: /^((?<logtime>[^ ]* [^ ]*) (?<level>[^ ]*) \[(?<thread>[^\]]*)\]
-                      (?<username>[^ ]*) (?<logger>[^ ]*) - (?<message>.*))|(?<message>.*)$/
+                    $type: multiline
+                    format_firstline: /\d{4}-\d{1,2}-\d{1,2}/
+                    format1: /^((?<logtime>[^ ]* [^ ]*) (?<level>[^ ]*) \[(?<thread>[^\]]*)\] (?<username>[^
+                      ]*) (?<logger>[^ ]*) - (?<message>.*))|(?<message>.*)$/
                     time_format: '%Y-%m-%d %H:%M:%S,%L%z'
                     time_key: logtime
                   path: /var/log/nexus-iq-server/clm-server.log
