@@ -725,3 +725,6 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `hpa.resource.cpu.average.threshold`                        | Average CPU threshold for autoscaling                                                                | `50`                       |
 | `hpa.resource.memory.enabled`                               | Enable memory-based autoscaling                                                                      | `false`                    |
 | `hpa.resource.memory.average.threshold`                     | Average memory threshold for autoscaling                                                             | `50`                       |
+| `busybox.imageRegistry`                                     | Container image registry, if not specified the Docker public registry will be used                   | `nil`                      |
+| `busybox.image`                                             | BusyBox docker image                                                                                 | `busybox`                  |
+| `busybox.tag`                                               | BusyBox image tag                                                                                    | See `values.yaml`          |

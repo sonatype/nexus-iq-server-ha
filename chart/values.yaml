@@ -202,6 +202,11 @@ iq_server:
   # Specify a custom 'chown' command to modify ownership of directories.
   pvOwnershipOverride:  "chown -R 1000:1000 /sonatype-work/clm-cluster"
 
+busybox:
+  imageRegistry:
+  image: busybox
+  tag: 1.28
+
 # Horizontal pod auto-scaler 
 hpa:
   enabled: false 
