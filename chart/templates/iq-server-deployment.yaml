@@ -221,7 +221,7 @@ spec:
         {{- end }}
       initContainers:
         - name: {{ .Release.Name }}-set-iq-persistence-ownership
-          image: busybox:1.28
+          image: {{ include "nexus-iq-server-ha.busyboxImage" . }}
           command:
             - /bin/sh
             - -c

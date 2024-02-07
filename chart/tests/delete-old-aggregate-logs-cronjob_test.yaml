@@ -58,6 +58,10 @@ tests:
       aggregateLogFileRetention:
         deleteCron: "0 2 * * *"
         maxLastModifiedDays: 1
+      busybox:
+        imageRegistry: registry.example.com
+        image: busybox2
+        tag: "1.29"
     asserts:
       - equal:
           path: spec.schedule
@@ -68,6 +72,9 @@ tests:
             - /bin/sh
             - -c
             - find /log/ -type f -mtime +0 -delete
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].image
+          value: registry.example.com/busybox2:1.29
   - it: is disabled if maxLastModifiedDays is 0
     set:
       aggregateLogFileRetention:

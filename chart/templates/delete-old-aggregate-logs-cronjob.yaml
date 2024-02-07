@@ -18,7 +18,7 @@ spec:
                 claimName: {{- if .Values.iq_server.persistence.existingPersistentVolumeClaimName }} {{ .Values.iq_server.persistence.existingPersistentVolumeClaimName }}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeClaimName }}{{- end }}
           containers:
           - name: "{{ .Release.Name }}-delete-old-aggregate-logs"
-            image: busybox:1.28
+            image: {{ include "nexus-iq-server-ha.busyboxImage" . }}
             imagePullPolicy: IfNotPresent
             command:
             - /bin/sh

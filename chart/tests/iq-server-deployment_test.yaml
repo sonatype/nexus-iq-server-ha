@@ -230,6 +230,10 @@ tests:
                 logFormat: "%d{'HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n"
           createSampleData: false
         pvOwnershipOverride: "chown -R 2000:2000 /different/path"
+      busybox:
+        imageRegistry: registry.example.com
+        image: busybox2
+        tag: "1.29"
       fluentd:
         resources:
           requests:
@@ -377,7 +381,7 @@ tests:
                       - /bin/sh
                       - -c
                       - chown -R 2000:2000 /different/path
-                    image: busybox:1.28
+                    image: registry.example.com/busybox2:1.29
                     name: RELEASE-NAME-set-iq-persistence-ownership
                     volumeMounts:
                       - mountPath: /iq/clm-cluster
