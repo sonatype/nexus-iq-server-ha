@@ -58,10 +58,11 @@ tests:
       aggregateLogFileRetention:
         deleteCron: "0 2 * * *"
         maxLastModifiedDays: 1
-      busybox:
-        imageRegistry: registry.example.com
-        image: busybox2
-        tag: "1.29"
+      global:
+        busybox:
+          imageRegistry: registry.example.com
+          image: busybox2
+          tag: "1.29"
     asserts:
       - equal:
           path: spec.schedule
