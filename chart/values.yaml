@@ -632,7 +632,7 @@ fluentd:
       privileged: true
     initContainers:
       - name: "{{ .Release.Name }}-set-fluentd-persistence-ownership"
-        image: "{{ tpl (include \"nexus-iq-server-ha.busyboxImage\" .) $}}"
+        image: busybox:1.28
         command: [ "sh", "-c", "chown -R 1000:1000 /opt/bitnami/fluentd/logs/nexus-iq-server" ]
         volumeMounts:
           - mountPath: "/opt/bitnami/fluentd/logs/nexus-iq-server"
