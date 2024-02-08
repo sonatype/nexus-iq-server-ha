@@ -203,7 +203,7 @@ iq_server:
   pvOwnershipOverride:  "chown -R 1000:1000 /sonatype-work/clm-cluster"
 
 busybox:
-  imageRegistry:
+  imageRegistry: # Container image registry, if not specified the Docker public registry will be used
   image: busybox
   tag: 1.28
 
