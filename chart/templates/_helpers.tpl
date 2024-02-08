@@ -7,5 +7,5 @@
 {{- end -}}
 
 {{- define "nexus-iq-server-ha.busyboxImage" -}}
-{{- if (.Values.global.busybox).imageRegistry }}{{ (.Values.global.busybox).imageRegistry }}/{{ (.Values.global.busybox).image }}:{{ (.Values.global.busybox).tag }}{{- else }}{{ (.Values.global.busybox).image }}:{{ (.Values.global.busybox).tag }}{{- end }}
+{{- if ((.Values.global).busybox).imageRegistry }}{{ ((.Values.global).busybox).imageRegistry }}/{{ ((.Values.global).busybox).image }}:{{ ((.Values.global).busybox).tag }}{{- else }}{{ ((.Values.global).busybox).image }}:{{ ((.Values.global).busybox).tag }}{{- end }}
 {{- end -}}
