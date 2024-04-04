@@ -98,16 +98,18 @@ iq_server:
   adminServiceAnnotations:
   # Annotations for the iq server pods
   podAnnotations:
+  # Annoations to apply to the DB migration job
+  migrationJobAnnotations:
 
   # Number of pods to run
   replicas: 2
-  
+
   # One of these can be set to hold the initial admin password
   initialAdminPassword: "admin123" # Plaintext password
   # The name of an existing Kubernetes secret containing a password key with a value of the base64 encoding of your
   # password
   initialAdminPasswordSecret:
-  
+
   # Configures the readiness probe for each pod
   readinessProbe:
     initialDelaySeconds: 45
@@ -208,20 +210,20 @@ global:
     image: busybox
     tag: 1.28
 
-# Horizontal pod auto-scaler 
+# Horizontal pod auto-scaler
 hpa:
-  enabled: false 
+  enabled: false
   minReplicas: 2
   maxReplicas: 4
   resources:
-    cpu: 
+    cpu:
       enabled: true
-      average: 
+      average:
         threshold: 50
-    memory: 
+    memory:
       enabled: false
-      average: 
-          threshold: 60 
+      average:
+          threshold: 60
 
 # Load balancer
 ingress:
