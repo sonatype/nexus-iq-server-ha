@@ -96,10 +96,10 @@ iq_server:
   applicationServiceAnnotations:
   # Annotations for the admin service
   adminServiceAnnotations:
+  # Annotations to apply to the DB migration job
+  migrationJobAnnotations:
   # Annotations for the iq server pods
   podAnnotations:
-  # Annoations to apply to the DB migration job
-  migrationJobAnnotations:
 
   # Number of pods to run
   replicas: 2
