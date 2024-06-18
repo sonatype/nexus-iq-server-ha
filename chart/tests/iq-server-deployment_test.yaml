@@ -136,6 +136,9 @@ tests:
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
+                    resources:
+                      limits: null
+                      requests: null
                 volumes:
                   - name: RELEASE-NAME-iq-server-pod-volume
                     persistentVolumeClaim:
@@ -230,6 +233,13 @@ tests:
                 logFormat: "%d{'HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n"
           createSampleData: false
         pvOwnershipOverride: "chown -R 2000:2000 /different/path"
+        pvOwnershipOverrideResources:
+          requests:
+            cpu: 150m
+            memory: 200m
+          limits:
+            cpu: 300m
+            memory: 400m
       global:
         busybox:
           imageRegistry: registry.example.com
@@ -387,6 +397,13 @@ tests:
                     volumeMounts:
                       - mountPath: /iq/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
+                    resources:
+                      requests:
+                        cpu: 150m
+                        memory: 200m
+                      limits:
+                        cpu: 300m
+                        memory: 400m
                 volumes:
                   - name: RELEASE-NAME-iq-server-pod-volume
                     persistentVolumeClaim:

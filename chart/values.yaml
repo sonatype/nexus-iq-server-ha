@@ -201,6 +201,13 @@ iq_server:
     createSampleData: true
   # Specify a custom 'chown' command to modify ownership of directories.
   pvOwnershipOverride:  "chown -R 1000:1000 /sonatype-work/clm-cluster"
+  pvOwnershipOverrideResources:
+    requests:
+      cpu: #150m
+      memory: #200M
+    limits:
+      cpu: #300m
+      memory: #400M
 
 global:
   busybox: # Container image registry, if not specified the Docker public registry will be used
