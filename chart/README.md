@@ -631,10 +631,10 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `iq_server.image`                                           | Sonatype IQ Server docker image                                                                      | `sonatype/nexus-iq-server` |
 | `iq_server.imagePullPolicy`                                 | Sonatype IQ Server image pull policy                                                                 | `IfNotPresent`             |
 | `iq_server.tag`                                             | Sonatype IQ Server image tag                                                                         | See `values.yaml`          |
-| `iq_server.resources.requests.cpu`                          | Request for CPU resources in CPU units                                                               | `nil`                      |
-| `iq_server.resources.requests.memory`                       | Request for memory resources in bytes                                                                | `nil`                      |
-| `iq_server.resources.limits.cpu`                            | Limit for CPU resources in CPU units                                                                 | `nil`                      |
-| `iq_server.resources.limits.memory`                         | Limit for memory resources in bytes                                                                  | `nil`                      |
+| `iq_server.resources.requests.cpu`                          | Sonatype IQ Server request for CPU resources in CPU units                                            | `nil`                      |
+| `iq_server.resources.requests.memory`                       | Sonatype IQ Server request for memory resources in bytes                                             | `nil`                      |
+| `iq_server.resources.limits.cpu`                            | Sonatype IQ Server limit for CPU resources in CPU units                                              | `nil`                      |
+| `iq_server.resources.limits.memory`                         | Sonatype IQ Server limit for memory resources in bytes                                               | `nil`                      |
 | `iq_server.javaOpts`                                        | Value for the JAVA_OPTS environment variable to pass custom settings to the JVM                      | `nil`                      |
 | `iq_server.license`                                         | Path to your Sonatype IQ Server product license file                                                 | `nil`                      |
 | `iq_server.licenseSecret`                                   | The name of the license secret                                                                       | `nil`                      |
@@ -682,6 +682,11 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `iq_server.sshPrivateKeySecret`                             | SSH private key stored in k8s secret to be used for ssh git operations                               | `nil`                      |
 | `iq_server.sshKnownHosts`                                   | SSH known hosts file to store on the nodes for ssh git operations                                    | `nil`                      |
 | `iq_server.sshKnownHostsSecret`                             | SSH known hosts stored in k8s secret to be used for ssh git operations                               | `nil`                      |
+| `iq_server.pvOwnershipOverride`                             | Specify a custom 'chown' command to modify ownership of directories                                  | See `values.yaml`          |
+| `iq_server.pvOwnershipOverride.resources.requests.cpu`      | Persistence ownership initContainer request for CPU resources in CPU units                           | `nil`                      |
+| `iq_server.pvOwnershipOverride.resources.requests.memory`   | Persistence ownership initContainer request for memory resources in bytes                            | `nil`                      |
+| `iq_server.pvOwnershipOverride.resources.limits.cpu`        | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
+| `iq_server.pvOwnershipOverride.resources.limits.memory`     | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
 | `ingress.enabled`                                           | Enable ingress                                                                                       | `false`                    |
 | `ingress.className`                                         | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                          | Ingress path type                                                                                    | `Prefix`                   |
