@@ -229,3 +229,18 @@ spec:
           volumeMounts:
             - mountPath: {{ .Values.iq_server.config.clusterDirectory }}
               name: {{ .Release.Name }}-iq-server-pod-volume
+          resources:
+            requests:
+              {{- if .Values.iq_server.pvOwnershipOverrideResources.requests.cpu }}
+              cpu: {{ .Values.iq_server.pvOwnershipOverrideResources.requests.cpu }}
+              {{- end }}
+              {{- if .Values.iq_server.pvOwnershipOverrideResources.requests.memory }}
+              memory: {{ .Values.iq_server.pvOwnershipOverrideResources.requests.memory }}
+              {{- end }}
+            limits:
+              {{- if .Values.iq_server.pvOwnershipOverrideResources.limits.cpu }}
+              cpu: {{ .Values.iq_server.pvOwnershipOverrideResources.limits.cpu }}
+              {{- end }}
+              {{- if .Values.iq_server.pvOwnershipOverrideResources.limits.memory }}
+              memory: {{ .Values.iq_server.pvOwnershipOverrideResources.limits.memory }}
+              {{- end }}
