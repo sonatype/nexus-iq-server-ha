@@ -625,111 +625,111 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 4. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
 
 ## Chart Configuration Options
-| Parameter                                                   | Description                                                                                          | Default                    |
-|-------------------------------------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
-| `iq_server.imageRegistry`                                   | Container image registry, if not specified the Docker public registry will be used                   | `nil`                      |
-| `iq_server.image`                                           | Sonatype IQ Server docker image                                                                      | `sonatype/nexus-iq-server` |
-| `iq_server.imagePullPolicy`                                 | Sonatype IQ Server image pull policy                                                                 | `IfNotPresent`             |
-| `iq_server.tag`                                             | Sonatype IQ Server image tag                                                                         | See `values.yaml`          |
-| `iq_server.resources.requests.cpu`                          | Sonatype IQ Server request for CPU resources in CPU units                                            | `nil`                      |
-| `iq_server.resources.requests.memory`                       | Sonatype IQ Server request for memory resources in bytes                                             | `nil`                      |
-| `iq_server.resources.limits.cpu`                            | Sonatype IQ Server limit for CPU resources in CPU units                                              | `nil`                      |
-| `iq_server.resources.limits.memory`                         | Sonatype IQ Server limit for memory resources in bytes                                               | `nil`                      |
-| `iq_server.javaOpts`                                        | Value for the JAVA_OPTS environment variable to pass custom settings to the JVM                      | `nil`                      |
-| `iq_server.license`                                         | Path to your Sonatype IQ Server product license file                                                 | `nil`                      |
-| `iq_server.licenseSecret`                                   | The name of the license secret                                                                       | `nil`                      |
-| `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
-| `iq_server.database.hostname`                               | Database hostname                                                                                    | `nil`                      |
-| `iq_server.database.port`                                   | Database port                                                                                        | `5432`                     |
-| `iq_server.database.name`                                   | Database name                                                                                        | `nil`                      |
-| `iq_server.database.username`                               | Database username                                                                                    | `postgres`                 |
-| `iq_server.database.password`                               | Database password                                                                                    | `nil`                      |
-| `iq_server.database.passwordSecret`                         | Database password secret                                                                             | `nil`                      |
-| `iq_server.persistence.existingPersistentVolumeClaimName`   | Existing persistent volume claim name                                                                | `nil`                      |
-| `iq_server.persistence.existingPersistentVolumeName`        | Existing persistent volume name                                                                      | `nil`                      |
-| `iq_server.persistence.persistentVolumeName`                | Persistent volume name                                                                               | `iq-server-pv`             |
-| `iq_server.persistence.persistentVolumeClaimName`           | Persistent volume claim name                                                                         | `iq-server-pvc`            |
-| `iq_server.persistence.persistentVolumeRetainPolicy`        | Persistent volume retain policy                                                                      | `keep`                     |
-| `iq_server.persistence.persistentVolumeClaimRetainPolicy`   | Persistent volume claim retain policy                                                                | `keep`                     |
-| `iq_server.persistence.size`                                | Storage capacity for PV/PVC to provision/request                                                     | `1Gi`                      |
-| `iq_server.persistence.storageClassName`                    | Storage class name for the PV/PVC                                                                    | `""`                       |
-| `iq_server.persistence.accessModes[0]`                      | Access mode for the PV/PVC                                                                           | `ReadWriteOnce`            |
-| `iq_server.persistence.csi.driver`                          | CSI driver name                                                                                      | `nil`                      |
-| `iq_server.persistence.csi.fsType`                          | File system type                                                                                     | `nil`                      |
-| `iq_server.persistence.csi.volumeHandle`                    | Volume handle                                                                                        | `nil`                      |
-| `iq_server.persistence.nfs.server`                          | NFS server hostname                                                                                  | `nil`                      |
-| `iq_server.persistence.nfs.path`                            | NFS server path                                                                                      | `/`                        |
-| `iq_server.podAnnotations`                                  | Annotations for the Sonatype IQ Server pods                                                          | `nil`                      |
-| `iq_server.serviceAccountName`                              | Sonatype IQ Server service account name                                                              | `default`                  |
-| `iq_server.serviceType`                                     | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
-| `iq_server.applicationServiceAnnotations`                   | Annotations for the Sonatype IQ Server application service                                           | `nil`                      |
-| `iq_server.adminServiceAnnotations`                         | Annotations for the Sonatype IQ Server admin service                                                 | `nil`                      |
-| `iq_server.replicas`                                        | Number of replicas                                                                                   | `2`                        |
-| `iq_server.initialAdminPassword`                            | Initial admin password                                                                               | `admin123`                 |
-| `iq_server.initialAdminPasswordSecret`                      | Initial admin password secret                                                                        | `nil`                      |
-| `iq_server.readinessProbe.initialDelaySeconds`              | Initial delay seconds for readiness probe                                                            | `45`                       |
-| `iq_server.readinessProbe.periodSeconds`                    | Period seconds for readiness probe                                                                   | `15`                       |
-| `iq_server.readinessProbe.timeoutSeconds`                   | Timeout seconds for readiness probe                                                                  | `5`                        |
-| `iq_server.readinessProbe.failureThreshold`                 | Failure threshold for readiness probe                                                                | `4`                        |
-| `iq_server.livenessProbe.initialDelaySeconds`               | Initial delay seconds for liveness probe                                                             | `180`                      |
-| `iq_server.livenessProbe.periodSeconds`                     | Period seconds for liveness probe                                                                    | `20`                       |
-| `iq_server.livenessProbe.timeoutSeconds`                    | Timeout seconds for liveness probe                                                                   | `3`                        |
-| `iq_server.livenessProbe.failureThreshold`                  | Failure threshold for liveness probe                                                                 | `3`                        |
-| `iq_server.fluentd.forwarder.enabled`                       | Enable Fluentd forwarder                                                                             | `true`                     |
-| `iq_server.config`                                          | A YAML block which will be used as a configuration block for IQ Server                               | See `values.yaml`          |
-| `iq_server.useGitSsh`                                       | Use SSH to execute git operations for SCM integrations                                               | `false`                    |
-| `iq_server.sshPrivateKey`                                   | SSH private key file to store on the nodes for ssh git operations                                    | `nil`                      |
-| `iq_server.sshPrivateKeySecret`                             | SSH private key stored in k8s secret to be used for ssh git operations                               | `nil`                      |
-| `iq_server.sshKnownHosts`                                   | SSH known hosts file to store on the nodes for ssh git operations                                    | `nil`                      |
-| `iq_server.sshKnownHostsSecret`                             | SSH known hosts stored in k8s secret to be used for ssh git operations                               | `nil`                      |
-| `iq_server.pvOwnershipOverride`                             | Specify a custom 'chown' command to modify ownership of directories                                  | See `values.yaml`          |
-| `iq_server.pvOwnershipOverride.resources.requests.cpu`      | Persistence ownership initContainer request for CPU resources in CPU units                           | `nil`                      |
-| `iq_server.pvOwnershipOverride.resources.requests.memory`   | Persistence ownership initContainer request for memory resources in bytes                            | `nil`                      |
-| `iq_server.pvOwnershipOverride.resources.limits.cpu`        | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
-| `iq_server.pvOwnershipOverride.resources.limits.memory`     | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
-| `ingress.enabled`                                           | Enable ingress                                                                                       | `false`                    |
-| `ingress.className`                                         | Ingress class name                                                                                   | `nginx`                    |
-| `ingress.pathType`                                          | Ingress path type                                                                                    | `Prefix`                   |
-| `ingress.annotations`                                       | Ingress annotations                                                                                  | `nil`                      |
-| `ingress.hostApplication`                                   | Ingress host for application                                                                         | `nil`                      |
-| `ingress.hostApplicationPath`                               | Ingress path for application                                                                         | `nil`                      |
-| `ingress.hostAdmin`                                         | Ingress host for admin application                                                                   | `nil`                      |
-| `ingress.hostAdminPath`                                     | Ingress path for admin application                                                                   | `nil`                      |
-| `ingress.tls`                                               | Ingress TLS configuration                                                                            | `nil`                      |
-| `ingress-nginx.enable`                                      | Enable ingress-nginx                                                                                 | `false`                    |
-| `ingress-nginx.controller`                                  | Ingress controller configuration for Nginx                                                           | See `values.yaml`          |
-| `externalDns.enabled`                                       | Enable external-dns                                                                                  | `false`                    |
-| `externalDns.args`                                          | Array of arguments to pass to the external-dns container                                             | See `values.yaml`          |
-| `serviceAccount.create`                                     | Create service account                                                                               | `false`                    |
-| `serviceAccount.labels`                                     | Service account labels                                                                               | `nil`                      |
-| `serviceAccount.annotations`                                | Service account annotations                                                                          | `nil`                      |
-| `serviceAccount.autoMountServiceAccountToken`               | Auto mount service account token                                                                     | `false`                    |
-| `secret.arn`                                                | AWS secret arn containing initial admin password in a initial_admin_password key                     | `nil`                      |
-| `secret.license.arn`                                        | AWS secret arn containing the binary content of your Sonatype IQ Server license                      | `nil`                      |
-| `secret.rds.arn`                                            | AWS secret arn containing host, port, name (database name), username, and password keys              | `nil`                      |
-| `secret.sshPrivateKey.arn`                                  | AWS secret arn containing the binary content of your SSH private key for use with ssh git operations | `nil`                      |
-| `secret.sshKnownHosts.arn`                                  | AWS secret arn containing the binary content of your SSH known hosts for use with ssh git operations | `nil`                      |
-| `cloudwatch.enabled`                                        | Enable CloudWatch logging                                                                            | `false`                    |
-| `cloudwatch.region`                                         | CloudWatch region                                                                                    | `nil`                      |
-| `cloudwatch.logGroupName`                                   | CloudWatch log group name                                                                            | `nil`                      |
-| `cloudwatch.logStreamName`                                  | CloudWatch log stream name                                                                           | `nil`                      |
-| `existingApplicationLoadBalancer.applicationTargetGroupARN` | Target group ARN for target synchronization with application endpoints                               | `nil`                      |
-| `existingApplicationLoadBalancer.adminTargetGroupARN`       | Target group ARN for target synchronization with admin endpoints                                     | `nil`                      |
-| `aggregateLogFileRetention.deleteCron`                      | Cron schedule expression for when to delete old aggregate log files if needed                        | `0 1 * * *`                |
-| `aggregateLogFileRetention.maxLastModifiedDays`             | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | 50                         |
-| `fluentd.enabled`                                           | Enable Fluentd                                                                                       | `true`                     |
-| `fluentd.resources.requests.cpu`                            | Fluentd sidecar cpu request                                                                          | `nil`                      |
-| `fluentd.resources.limits.cpu`                              | Fluentd sidecar cpu limit                                                                            | `nil`                      |
-| `fluentd.resources.requests.memory`                         | Fluentd sidecar memory request                                                                       | `nil`                      |
-| `fluentd.resources.limits.memory`                           | Fluentd sidecar memory limit                                                                         | `nil`                      |
-| `fluentd.config`                                            | Fluentd configuration                                                                                | See `values.yaml`          |
-| `hpa.enabled`                                               | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
-| `hpa.minReplicas`                                           | Minimum number of replicas                                                                           | `2`                        |
-| `hpa.maxReplicas`                                           | Maximum number of replicas                                                                           | `4`                        |
-| `hpa.resource.cpu.enabled`                                  | Enable CPU-based autoscaling                                                                         | `true`                     |
-| `hpa.resource.cpu.average.threshold`                        | Average CPU threshold for autoscaling                                                                | `50`                       |
-| `hpa.resource.memory.enabled`                               | Enable memory-based autoscaling                                                                      | `false`                    |
-| `hpa.resource.memory.average.threshold`                     | Average memory threshold for autoscaling                                                             | `50`                       |
-| `global.busybox.imageRegistry`                              | Container image registry, if not specified the Docker public registry will be used                   | `nil`                      |
-| `global.busybox.image`                                      | BusyBox docker image                                                                                 | `busybox`                  |
-| `global.busybox.tag`                                        | BusyBox image tag                                                                                    | See `values.yaml`          |
+| Parameter                                                          | Description                                                                                          | Default                    |
+|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
+| `iq_server.imageRegistry`                                          | Container image registry, if not specified the Docker public registry will be used                   | `nil`                      |
+| `iq_server.image`                                                  | Sonatype IQ Server docker image                                                                      | `sonatype/nexus-iq-server` |
+| `iq_server.imagePullPolicy`                                        | Sonatype IQ Server image pull policy                                                                 | `IfNotPresent`             |
+| `iq_server.tag`                                                    | Sonatype IQ Server image tag                                                                         | See `values.yaml`          |
+| `iq_server.resources.requests.cpu`                                 | Sonatype IQ Server request for CPU resources in CPU units                                            | `nil`                      |
+| `iq_server.resources.requests.memory`                              | Sonatype IQ Server request for memory resources in bytes                                             | `nil`                      |
+| `iq_server.resources.limits.cpu`                                   | Sonatype IQ Server limit for CPU resources in CPU units                                              | `nil`                      |
+| `iq_server.resources.limits.memory`                                | Sonatype IQ Server limit for memory resources in bytes                                               | `nil`                      |
+| `iq_server.javaOpts`                                               | Value for the JAVA_OPTS environment variable to pass custom settings to the JVM                      | `nil`                      |
+| `iq_server.license`                                                | Path to your Sonatype IQ Server product license file                                                 | `nil`                      |
+| `iq_server.licenseSecret`                                          | The name of the license secret                                                                       | `nil`                      |
+| `iq_server.serviceType`                                            | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
+| `iq_server.database.hostname`                                      | Database hostname                                                                                    | `nil`                      |
+| `iq_server.database.port`                                          | Database port                                                                                        | `5432`                     |
+| `iq_server.database.name`                                          | Database name                                                                                        | `nil`                      |
+| `iq_server.database.username`                                      | Database username                                                                                    | `postgres`                 |
+| `iq_server.database.password`                                      | Database password                                                                                    | `nil`                      |
+| `iq_server.database.passwordSecret`                                | Database password secret                                                                             | `nil`                      |
+| `iq_server.persistence.existingPersistentVolumeClaimName`          | Existing persistent volume claim name                                                                | `nil`                      |
+| `iq_server.persistence.existingPersistentVolumeName`               | Existing persistent volume name                                                                      | `nil`                      |
+| `iq_server.persistence.persistentVolumeName`                       | Persistent volume name                                                                               | `iq-server-pv`             |
+| `iq_server.persistence.persistentVolumeClaimName`                  | Persistent volume claim name                                                                         | `iq-server-pvc`            |
+| `iq_server.persistence.persistentVolumeRetainPolicy`               | Persistent volume retain policy                                                                      | `keep`                     |
+| `iq_server.persistence.persistentVolumeClaimRetainPolicy`          | Persistent volume claim retain policy                                                                | `keep`                     |
+| `iq_server.persistence.size`                                       | Storage capacity for PV/PVC to provision/request                                                     | `1Gi`                      |
+| `iq_server.persistence.storageClassName`                           | Storage class name for the PV/PVC                                                                    | `""`                       |
+| `iq_server.persistence.accessModes[0]`                             | Access mode for the PV/PVC                                                                           | `ReadWriteOnce`            |
+| `iq_server.persistence.csi.driver`                                 | CSI driver name                                                                                      | `nil`                      |
+| `iq_server.persistence.csi.fsType`                                 | File system type                                                                                     | `nil`                      |
+| `iq_server.persistence.csi.volumeHandle`                           | Volume handle                                                                                        | `nil`                      |
+| `iq_server.persistence.nfs.server`                                 | NFS server hostname                                                                                  | `nil`                      |
+| `iq_server.persistence.nfs.path`                                   | NFS server path                                                                                      | `/`                        |
+| `iq_server.podAnnotations`                                         | Annotations for the Sonatype IQ Server pods                                                          | `nil`                      |
+| `iq_server.serviceAccountName`                                     | Sonatype IQ Server service account name                                                              | `default`                  |
+| `iq_server.serviceType`                                            | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
+| `iq_server.applicationServiceAnnotations`                          | Annotations for the Sonatype IQ Server application service                                           | `nil`                      |
+| `iq_server.adminServiceAnnotations`                                | Annotations for the Sonatype IQ Server admin service                                                 | `nil`                      |
+| `iq_server.replicas`                                               | Number of replicas                                                                                   | `2`                        |
+| `iq_server.initialAdminPassword`                                   | Initial admin password                                                                               | `admin123`                 |
+| `iq_server.initialAdminPasswordSecret`                             | Initial admin password secret                                                                        | `nil`                      |
+| `iq_server.readinessProbe.initialDelaySeconds`                     | Initial delay seconds for readiness probe                                                            | `45`                       |
+| `iq_server.readinessProbe.periodSeconds`                           | Period seconds for readiness probe                                                                   | `15`                       |
+| `iq_server.readinessProbe.timeoutSeconds`                          | Timeout seconds for readiness probe                                                                  | `5`                        |
+| `iq_server.readinessProbe.failureThreshold`                        | Failure threshold for readiness probe                                                                | `4`                        |
+| `iq_server.livenessProbe.initialDelaySeconds`                      | Initial delay seconds for liveness probe                                                             | `180`                      |
+| `iq_server.livenessProbe.periodSeconds`                            | Period seconds for liveness probe                                                                    | `20`                       |
+| `iq_server.livenessProbe.timeoutSeconds`                           | Timeout seconds for liveness probe                                                                   | `3`                        |
+| `iq_server.livenessProbe.failureThreshold`                         | Failure threshold for liveness probe                                                                 | `3`                        |
+| `iq_server.fluentd.forwarder.enabled`                              | Enable Fluentd forwarder                                                                             | `true`                     |
+| `iq_server.config`                                                 | A YAML block which will be used as a configuration block for IQ Server                               | See `values.yaml`          |
+| `iq_server.useGitSsh`                                              | Use SSH to execute git operations for SCM integrations                                               | `false`                    |
+| `iq_server.sshPrivateKey`                                          | SSH private key file to store on the nodes for ssh git operations                                    | `nil`                      |
+| `iq_server.sshPrivateKeySecret`                                    | SSH private key stored in k8s secret to be used for ssh git operations                               | `nil`                      |
+| `iq_server.sshKnownHosts`                                          | SSH known hosts file to store on the nodes for ssh git operations                                    | `nil`                      |
+| `iq_server.sshKnownHostsSecret`                                    | SSH known hosts stored in k8s secret to be used for ssh git operations                               | `nil`                      |
+| `iq_server.pvOwnershipOverride`                                    | Specify a custom 'chown' command to modify ownership of directories                                  | See `values.yaml`          |
+| `iq_server.pvOwnershipOverrideResources.resources.requests.cpu`    | Persistence ownership initContainer request for CPU resources in CPU units                           | `nil`                      |
+| `iq_server.pvOwnershipOverrideResources.resources.requests.memory` | Persistence ownership initContainer request for memory resources in bytes                            | `nil`                      |
+| `iq_server.pvOwnershipOverrideResources.resources.limits.cpu`      | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
+| `iq_server.pvOwnershipOverrideResources.resources.limits.memory`   | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
+| `ingress.enabled`                                                  | Enable ingress                                                                                       | `false`                    |
+| `ingress.className`                                                | Ingress class name                                                                                   | `nginx`                    |
+| `ingress.pathType`                                                 | Ingress path type                                                                                    | `Prefix`                   |
+| `ingress.annotations`                                              | Ingress annotations                                                                                  | `nil`                      |
+| `ingress.hostApplication`                                          | Ingress host for application                                                                         | `nil`                      |
+| `ingress.hostApplicationPath`                                      | Ingress path for application                                                                         | `nil`                      |
+| `ingress.hostAdmin`                                                | Ingress host for admin application                                                                   | `nil`                      |
+| `ingress.hostAdminPath`                                            | Ingress path for admin application                                                                   | `nil`                      |
+| `ingress.tls`                                                      | Ingress TLS configuration                                                                            | `nil`                      |
+| `ingress-nginx.enable`                                             | Enable ingress-nginx                                                                                 | `false`                    |
+| `ingress-nginx.controller`                                         | Ingress controller configuration for Nginx                                                           | See `values.yaml`          |
+| `externalDns.enabled`                                              | Enable external-dns                                                                                  | `false`                    |
+| `externalDns.args`                                                 | Array of arguments to pass to the external-dns container                                             | See `values.yaml`          |
+| `serviceAccount.create`                                            | Create service account                                                                               | `false`                    |
+| `serviceAccount.labels`                                            | Service account labels                                                                               | `nil`                      |
+| `serviceAccount.annotations`                                       | Service account annotations                                                                          | `nil`                      |
+| `serviceAccount.autoMountServiceAccountToken`                      | Auto mount service account token                                                                     | `false`                    |
+| `secret.arn`                                                       | AWS secret arn containing initial admin password in a initial_admin_password key                     | `nil`                      |
+| `secret.license.arn`                                               | AWS secret arn containing the binary content of your Sonatype IQ Server license                      | `nil`                      |
+| `secret.rds.arn`                                                   | AWS secret arn containing host, port, name (database name), username, and password keys              | `nil`                      |
+| `secret.sshPrivateKey.arn`                                         | AWS secret arn containing the binary content of your SSH private key for use with ssh git operations | `nil`                      |
+| `secret.sshKnownHosts.arn`                                         | AWS secret arn containing the binary content of your SSH known hosts for use with ssh git operations | `nil`                      |
+| `cloudwatch.enabled`                                               | Enable CloudWatch logging                                                                            | `false`                    |
+| `cloudwatch.region`                                                | CloudWatch region                                                                                    | `nil`                      |
+| `cloudwatch.logGroupName`                                          | CloudWatch log group name                                                                            | `nil`                      |
+| `cloudwatch.logStreamName`                                         | CloudWatch log stream name                                                                           | `nil`                      |
+| `existingApplicationLoadBalancer.applicationTargetGroupARN`        | Target group ARN for target synchronization with application endpoints                               | `nil`                      |
+| `existingApplicationLoadBalancer.adminTargetGroupARN`              | Target group ARN for target synchronization with admin endpoints                                     | `nil`                      |
+| `aggregateLogFileRetention.deleteCron`                             | Cron schedule expression for when to delete old aggregate log files if needed                        | `0 1 * * *`                |
+| `aggregateLogFileRetention.maxLastModifiedDays`                    | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | 50                         |
+| `fluentd.enabled`                                                  | Enable Fluentd                                                                                       | `true`                     |
+| `fluentd.resources.requests.cpu`                                   | Fluentd sidecar cpu request                                                                          | `nil`                      |
+| `fluentd.resources.limits.cpu`                                     | Fluentd sidecar cpu limit                                                                            | `nil`                      |
+| `fluentd.resources.requests.memory`                                | Fluentd sidecar memory request                                                                       | `nil`                      |
+| `fluentd.resources.limits.memory`                                  | Fluentd sidecar memory limit                                                                         | `nil`                      |
+| `fluentd.config`                                                   | Fluentd configuration                                                                                | See `values.yaml`          |
+| `hpa.enabled`                                                      | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
+| `hpa.minReplicas`                                                  | Minimum number of replicas                                                                           | `2`                        |
+| `hpa.maxReplicas`                                                  | Maximum number of replicas                                                                           | `4`                        |
+| `hpa.resource.cpu.enabled`                                         | Enable CPU-based autoscaling                                                                         | `true`                     |
+| `hpa.resource.cpu.average.threshold`                               | Average CPU threshold for autoscaling                                                                | `50`                       |
+| `hpa.resource.memory.enabled`                                      | Enable memory-based autoscaling                                                                      | `false`                    |
+| `hpa.resource.memory.average.threshold`                            | Average memory threshold for autoscaling                                                             | `50`                       |
+| `global.busybox.imageRegistry`                                     | Container image registry, if not specified the Docker public registry will be used                   | `nil`                      |
+| `global.busybox.image`                                             | BusyBox docker image                                                                                 | `busybox`                  |
+| `global.busybox.tag`                                               | BusyBox image tag                                                                                    | See `values.yaml`          |
