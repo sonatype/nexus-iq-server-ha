@@ -197,6 +197,9 @@ tests:
           nfs:
             server: "someServer"
             path: "somePath"
+            mountOptions:
+             - "someValue1"
+             - "someValue2"
     asserts:
       - equal:
           path: spec.nfs
@@ -204,6 +207,12 @@ tests:
             readOnly: false
             server: "someServer"
             path: "somePath"
+        documentIndex: 0
+      - equal:
+          path: spec.mountOptions
+          value:
+            - "someValue1"
+            - "someValue2"
         documentIndex: 0
 
   - it: can set hostPath
