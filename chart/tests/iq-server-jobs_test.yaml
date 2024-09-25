@@ -62,6 +62,9 @@ tests:
                     image: sonatype/nexus-iq-server:1.148.0
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-iq-server-container
+                    resources:
+                      limits:
+                      requests:
                     securityContext:
                       runAsGroup: 1000
                       runAsUser: 1000
@@ -87,6 +90,22 @@ tests:
         image: "iq/snapshot"
         imagePullPolicy: "Always"
         tag: "1.142.0-SNAPSHOT"
+      iq_server_jobs:
+        resources:
+          requests:
+            cpu: 2
+            memory: "500M"
+          limits:
+            cpu: 4
+            memory: "1Gi"
+        env:
+          - name: ENV_VAR_1
+            value: value1
+          - name: ENV_VAR_2
+            valueFrom:
+              secretKeyRef:
+                key: secret-key
+                name: my-secret
     asserts:
       - hasDocuments:
           count: 1
@@ -115,6 +134,13 @@ tests:
                     - -c
                     - /usr/bin/java -jar `ls ./nexus-iq-server*.jar` migrate-db /etc/nexus-iq-server/config.yml
                     env:
+                    - name: ENV_VAR_1
+                      value: value1
+                    - name: ENV_VAR_2
+                      valueFrom:
+                        secretKeyRef:
+                          key: secret-key
+                          name: my-secret
                     - name: NXIQ_DATABASE_HOSTNAME
                       valueFrom:
                         secretKeyRef:
@@ -143,6 +169,13 @@ tests:
                     image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: Always
                     name: RELEASE-NAME-iq-server-container
+                    resources:
+                      limits:
+                        cpu: 4
+                        memory: 1Gi
+                      requests:
+                        cpu: 2
+                        memory: 500M
                     securityContext:
                       runAsGroup: 1000
                       runAsUser: 1000

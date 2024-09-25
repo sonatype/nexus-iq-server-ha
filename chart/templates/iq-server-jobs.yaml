@@ -36,11 +36,11 @@ spec:
               {{- end }}
               {{- if .Values.iq_server_jobs.resources.requests.memory }}
               memory: {{ .Values.iq_server_jobs.resources.requests.memory }}
-              {{ - end }}
+              {{- end }}
             limits:
               {{- if .Values.iq_server_jobs.resources.limits.cpu }}
               cpu: {{ .Values.iq_server_jobs.resources.limits.cpu }}
-              {{ - end }}
+              {{- end }}
               {{- if .Values.iq_server_jobs.resources.limits.memory }}
               memory: {{ .Values.iq_server_jobs.resources.limits.memory }}
               {{- end }}
@@ -52,7 +52,7 @@ spec:
               name: {{ .Release.Name }}-iq-server-secrets-volume
             {{- end }}
           env:
-            {{- range .Values.iq_server.env }}
+            {{- range .Values.iq_server_jobs.env }}
             - name: {{ .name }}
               {{- if .value }}
               value: {{ .value | quote }}
