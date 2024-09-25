@@ -61,17 +61,20 @@ iq_server_jobs:
   # The commented values below are the minimum recommended resources for production.
   resources:
     requests:
-      cpu: #8
-      memory: #8Gi
+      cpu: #500m
+      memory: #1Gi
     limits:
-      cpu: #8
-      memory: #8Gi
+      cpu: #500m
+      memory: #1Gi
     env:
     # Add more environment variables as needed
     # - name: ENV_VAR_1
     #   value: value1
     # - name: ENV_VAR_2
-    #   value: value2
+    #   valueFrom:
+    #     secretKeyRef:
+    #       key: secret-key
+    #       name: my-secret
 
   # Shared file system
   persistence:

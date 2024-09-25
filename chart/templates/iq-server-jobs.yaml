@@ -54,8 +54,17 @@ spec:
           env:
             {{- range .Values.iq_server.env }}
             - name: {{ .name }}
+              {{- if .value }}
               value: {{ .value | quote }}
-            {{ - end }}
+              {{- else if .valueFrom }}
+              valueFrom:
+                {{- if .valueFrom.secretKeyRef }}
+                secretKeyRef:
+                  name: {{ .valueFrom.secretKeyRef.name }}
+                  key: {{ .valueFrom.secretKeyRef.key }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
             - name: NXIQ_DATABASE_HOSTNAME
               valueFrom:
                 secretKeyRef:
