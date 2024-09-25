@@ -31,19 +31,19 @@ spec:
           imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
           resources:
             requests:
-              { { - if .Values.iq_server_jobs.resources.requests.cpu } }
-              cpu: { { .Values.iq_server_jobs.resources.requests.cpu } }
-              { { - end } }
-              { { - if .Values.iq_server_jobs.resources.requests.memory } }
-              memory: { { .Values.iq_server_jobs.resources.requests.memory } }
-              { { - end } }
+              {{- if .Values.iq_server_jobs.resources.requests.cpu }}
+              cpu: {{ .Values.iq_server_jobs.resources.requests.cpu }}
+              {{- end }}
+              {{- if .Values.iq_server_jobs.resources.requests.memory }}
+              memory: {{ .Values.iq_server_jobs.resources.requests.memory }}
+              {{ - end }}
             limits:
-              { { - if .Values.iq_server_jobs.resources.limits.cpu } }
-              cpu: { { .Values.iq_server_jobs.resources.limits.cpu } }
-              { { - end } }
-              { { - if .Values.iq_server_jobs.resources.limits.memory } }
-              memory: { { .Values.iq_server_jobs.resources.limits.memory } }
-              { { - end } }
+              {{- if .Values.iq_server_jobs.resources.limits.cpu }}
+              cpu: {{ .Values.iq_server_jobs.resources.limits.cpu }}
+              {{ - end }}
+              {{- if .Values.iq_server_jobs.resources.limits.memory }}
+              memory: {{ .Values.iq_server_jobs.resources.limits.memory }}
+              {{- end }}
           volumeMounts:
             - mountPath: "/etc/nexus-iq-server"
               name: {{ .Release.Name }}-iq-server-pod-config-volume
