@@ -670,3 +670,11 @@ fluentd:
     initScripts:
       # Plugin which can be configured to send logs to CloudWatch
       plugins.sh: "fluent-gem install fluent-plugin-cloudwatch-logs"
+
+  securityContext: {}
+  #   capabilities:
+  #     drop:
+  #     - ALL
+  #   readOnlyRootFilesystem: true
+  #   runAsNonRoot: true
+  #   runAsUser: 1000
