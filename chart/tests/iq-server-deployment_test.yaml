@@ -253,6 +253,10 @@ tests:
           limits:
             cpu: 4
             memory: "1Gi"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
     asserts:
       - hasDocuments:
           count: 1
@@ -375,6 +379,10 @@ tests:
                     image: bitnami/fluentd:1.15.3-debian-11-r20
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-fluentd-container
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop: [ "ALL" ]
                     resources:
                       requests:
                         cpu: 2
