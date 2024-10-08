@@ -140,6 +140,9 @@ iq_server:
       name: ${NXIQ_DATABASE_NAME}
       username: ${NXIQ_DATABASE_USERNAME}
       password: ${NXIQ_DATABASE_PASSWORD}
+      ## optional key-value pairs to be appended to the database connection URL
+      #parameters: 
+        #example-param-key-name: example-param-value
     # Pickup product license path from an environment variable
     licenseFile: ${NXIQ_LICENSE_FILE}
     server:
