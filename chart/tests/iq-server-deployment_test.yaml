@@ -169,6 +169,14 @@ tests:
           limits:
             cpu: 10
             memory: "10Gi"
+        env:
+          - name: ENV_VAR_1
+            value: value1
+          - name: ENV_VAR_2
+            valueFrom:
+              secretKeyRef:
+                key: secret-key
+                name: my-secret
         javaOpts: "-Xms8g -Xmx32g"
         serviceAccountName: "my-service-account"
         imageRegistry: "docker-all.repo.sonatype.com"
@@ -321,6 +329,13 @@ tests:
                         value: "false"
                       - name: JAVA_OPTS
                         value: "-Xms8g -Xmx32g"
+                      - name: ENV_VAR_1
+                        value: value1
+                      - name: ENV_VAR_2
+                        valueFrom:
+                          secretKeyRef:
+                            name: my-secret
+                            key: secret-key
                     image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: Always
                     livenessProbe:

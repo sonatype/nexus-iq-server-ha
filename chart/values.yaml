@@ -21,6 +21,16 @@ iq_server:
       cpu: #8
       memory: #8Gi
 
+  env:
+  # Add more environment variables as needed
+  # - name: ENV_VAR_1
+  #   value: value1
+  # - name: ENV_VAR_2
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: my-secret
+  #       key: secret-key
+
   # Value for the JAVA_OPTS environment variable to pass custom settings to the JVM
   javaOpts:
 
@@ -223,15 +233,15 @@ iq_server_jobs:
     limits:
       cpu: #500m
       memory: #1Gi
-    env:
-    # Add more environment variables as needed
-    # - name: ENV_VAR_1
-    #   value: value1
-    # - name: ENV_VAR_2
-    #   valueFrom:
-    #     secretKeyRef:
-    #       key: secret-key
-    #       name: my-secret
+  env:
+  # Add more environment variables as needed
+  # - name: ENV_VAR_1
+  #   value: value1
+  # - name: ENV_VAR_2
+  #   valueFrom:
+  #     secretKeyRef:
+  #       key: secret-key
+  #       name: my-secret
 
 global:
   busybox: # Container image registry, if not specified the Docker public registry will be used
