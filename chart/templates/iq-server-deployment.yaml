@@ -159,6 +159,19 @@ spec:
             - name: JAVA_OPTS
               value: {{ .Values.iq_server.javaOpts }}
             {{- end }}
+            {{- range .Values.iq_server.env }}
+            - name: {{ .name }}
+              {{- if .value }}
+              value: {{ .value | quote }}
+              {{- else if .valueFrom }}
+              valueFrom:
+                {{- if .valueFrom.secretKeyRef }}
+                secretKeyRef:
+                  name: {{ .valueFrom.secretKeyRef.name }}
+                  key: {{ .valueFrom.secretKeyRef.key }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
           readinessProbe:
             initialDelaySeconds: {{ .Values.iq_server.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.iq_server.readinessProbe.periodSeconds }}
