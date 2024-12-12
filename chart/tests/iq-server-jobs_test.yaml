@@ -38,7 +38,7 @@ tests:
                   - command:
                       - /bin/sh
                       - -c
-                      - /usr/bin/java -jar `ls ./nexus-iq-server*.jar` migrate-db /etc/nexus-iq-server/config.yml
+                      - /opt/sonatype/nexus-iq-server/bin/nexus-iq-server migrate-db /etc/nexus-iq-server/config.yml
                     env:
                     - name: NXIQ_DATABASE_HOSTNAME
                       valueFrom:
@@ -138,7 +138,7 @@ tests:
                   - command:
                     - /bin/sh
                     - -c
-                    - /usr/bin/java -jar `ls ./nexus-iq-server*.jar` migrate-db /etc/nexus-iq-server/config.yml
+                    - /opt/sonatype/nexus-iq-server/bin/nexus-iq-server migrate-db /etc/nexus-iq-server/config.yml
                     env:
                     - name: ENV_VAR_1
                       value: value1
