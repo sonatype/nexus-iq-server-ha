@@ -96,7 +96,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - "/usr/bin/java -jar `ls ./nexus-iq-server*.jar` migrate-db /etc/nexus-iq-server/config.yml"
+            - "/opt/sonatype/nexus-iq-server/bin nexus-iq-server migrate-db /etc/nexus-iq-server/config.yml"
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
