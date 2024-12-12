@@ -20,11 +20,8 @@ tests:
           path: metadata.name
           value: RELEASE-NAME-migrate-db
         documentIndex: 0
-      - equal:
+      - isNull:
           path: metadata.annotations
-          value:
-            "helm.sh/hook": pre-install,pre-upgrade
-            "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
         documentIndex: 0
       - equal:
           path: spec
@@ -97,6 +94,9 @@ tests:
         imagePullPolicy: "Always"
         tag: "1.142.0-SNAPSHOT"
       iq_server_jobs:
+        migrationJobAnnotations:
+          "test_key_1": test_value_1
+          "test_key_2": test_value_2
         resources:
           requests:
             cpu: 2
@@ -126,6 +126,11 @@ tests:
           path: metadata.name
           value: RELEASE-NAME-migrate-db
         documentIndex: 0
+      - equal:
+          path: metadata.annotations
+          value:
+            "test_key_1": test_value_1
+            "test_key_2": test_value_2
       - equal:
           path: spec
           value:

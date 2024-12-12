@@ -687,6 +687,12 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `iq_server.pvOwnershipOverrideResources.resources.requests.memory` | Persistence ownership initContainer request for memory resources in bytes                            | `nil`                      |
 | `iq_server.pvOwnershipOverrideResources.resources.limits.cpu`      | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
 | `iq_server.pvOwnershipOverrideResources.resources.limits.memory`   | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
+| `iq_server_jobs.migrationJobAnnotations`                           | Sonatype IQ DB Migration job Annotations                                                             | `nil`                      |
+| `iq_server_jobs.env`                                               | Sonatype IQ DB Migration job environment variables                                                   | `nil`                      |
+| `iq_server_jobs.resources.requests.cpu`                            | Sonatype IQ DB Migration job request for CPU resources in CPU units                                  | `nil`                      |
+| `iq_server_jobs.resources.requests.memory`                         | Sonatype IQ DB Migration job request for memory resources in bytes                                   | `nil`                      |
+| `iq_server_jobs.resources.limits.cpu`                              | Sonatype IQ DB Migration job limit for CPU resources in CPU units                                    | `nil`                      |
+| `iq_server_jobs.resources.limits.memory`                           | Sonatype IQ DB Migration job limit for memory resources in bytes                                     | `nil`                      |
 | `ingress.enabled`                                                  | Enable ingress                                                                                       | `false`                    |
 | `ingress.className`                                                | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                                 | Ingress path type                                                                                    | `Prefix`                   |

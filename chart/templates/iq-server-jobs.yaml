@@ -2,9 +2,10 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ .Release.Name }}-migrate-db
+  {{- with .Values.iq_server_jobs.migrationJobAnnotations }}
   annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   completions: 1
   parallelism: 1
