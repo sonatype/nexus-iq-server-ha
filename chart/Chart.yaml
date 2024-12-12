@@ -1,6 +1,6 @@
 apiVersion: v2
 name: nexus-iq-server-ha
-version: 185.1.0
+version: 1.185.1
 appVersion: 1.185.0
 description: A cluster of Sonatype Nexus IQ Servers to continuously monitor your entire software supply chain
 type: application
