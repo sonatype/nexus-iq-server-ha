@@ -1,0 +1,34 @@
+name: Helm Tests
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  helm-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.14.4
+
+      - name: Install dependencies
+        run: helm dependency update chart/
+
+      - name: Run Helm lint
+        run: helm lint chart/
+
+      - name: Run Helm template
+        run: helm template chart/
+
+      - name: Install unittest plugin
+        run: helm plugin install https://github.com/quintush/helm-unittest --version v0.2.11
+
+      - name: Run Helm tests
+        run: helm unittest --helm3 chart/
