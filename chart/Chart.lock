@@ -4,6 +4,6 @@ dependencies:
   version: 4.4.2
 - name: fluentd
   repository: https://charts.bitnami.com/bitnami
-  version: 5.5.12
-digest: sha256:3001c4faf25aa8e74482a992d2e85b72bb0b4a6f0d9b6c6cce2c6f7f3874ac51
-generated: "2023-01-17T15:12:14.6881484Z"
+  version: 7.0.3
+digest: sha256:d601322ce9754462b0defe7e96c86765b5e1c56ff3225569ab2cf97751025f30
+generated: "2024-12-12T13:12:09.665889Z"

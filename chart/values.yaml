@@ -667,32 +667,14 @@ fluentd:
             name: cloudwatch
             key: logStreamName
             optional: true
-    podSecurityContext:
-      enabled: true
-      runAsUser: 1000
-      runAsGroup: 0
-      fsGroup: 0
-    containerSecurityContext:
-      enabled: true
-      allowPrivilegeEscalation: true
-      readOnlyRootFilesystem: false
-      privileged: true
     initContainers:
       - name: "{{ .Release.Name }}-set-fluentd-persistence-ownership"
         image: "{{ tpl (include \"nexus-iq-server-ha.busyboxImage\" .) $}}"
-        command: [ "sh", "-c", "chown -R 1000:1000 /opt/bitnami/fluentd/logs/nexus-iq-server" ]
+        command: [ "sh", "-c", "chown -R 1001:1001 /opt/bitnami/fluentd/logs/nexus-iq-server" ]
         volumeMounts:
           - mountPath: "/opt/bitnami/fluentd/logs/nexus-iq-server"
             name: "iq-server-pod-volume"
             subPath: log
-    initScripts:
+    extraGems:
       # Plugin which can be configured to send logs to CloudWatch
-      plugins.sh: "fluent-gem install fluent-plugin-cloudwatch-logs"
-
-  securityContext: {}
-  #   capabilities:
-  #     drop:
-  #     - ALL
-  #   readOnlyRootFilesystem: true
-  #   runAsNonRoot: true
-  #   runAsUser: 1000
+      - fluent-plugin-cloudwatch-logs

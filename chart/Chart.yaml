@@ -23,5 +23,5 @@ dependencies:
     condition: ingress-nginx.enabled
   - name: fluentd
     repository: https://charts.bitnami.com/bitnami
-    version: 5.5.12
+    version: 7.0.3
     condition: fluentd.enabled
