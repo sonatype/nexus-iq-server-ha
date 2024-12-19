@@ -577,8 +577,8 @@ Some example commands are shown below.
     --set hpa.enabled=true
     --set iq_server.resources.requests.cpu="500m"
     --set iq_server.resources.limits.cpu="1000m"    
-    --set fluentd.resources.requests.cpu="200m"
-    --set fluentd.resources.limits.cpu="500m"
+    --set fluentd.sidecar_forwarder.resources.requests.cpu="200m"
+    --set fluentd.sidecar_forwarder.resources.requests.cpu="500m"
     ...
    sonatype/nexus-iq-server-ha --version <version>
    ```
@@ -614,6 +614,27 @@ An example command is shown below.
    --set ingress-nginx.enabled=true
    sonatype/nexus-iq-server-ha --version <version>
    ```
+### Useful Example For Local Testing
+
+An example command with a persistence host path set useful for testing is shown below.
+
+#### External Database, HostPath, and ingress-nginx
+```
+helm upgrade --namespace iq-ha iq-cluster  \
+  --set-file iq_server.license="license.lic"
+  --set iq_server.database.hostname=myhost
+  --set iq_server.database.port=5432
+  --set iq_server.database.name=iq
+  --set iq_server.database.username=postgres
+  --set iq_server.database.password=admin123
+  --set iq_server.persistence.hostPath.path="/mnt/iq-server"
+  --set iq_server.persistence.hostPath.type="DirectoryOrCreate"
+  --set iq_server.persistence.accessModes[0]="ReadWriteOnce"
+  --set iq_server.serviceType=NodePort
+  --set ingress.enabled=true
+  --set ingress-nginx.enabled=true
+  sonatype/nexus-iq-server-ha --version <version>
+```
 
 ## Upgrading
 
@@ -623,6 +644,16 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 2. **Backup the database.** See the [IQ server backup guidelines](https://links.sonatype.com/products/nxiq/doc/backup) for more details.
 3. **Update the helm chart.** Typically, this will also update the Sonatype IQ Server version.
 4. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
+
+### To 186.0.0
+In this version all the fluentd sidecar options have been moved under the `fluentd.sidecar_forwarder` prefix to avoid confusion.
+
+- Moved iq_server.fluentd.forwarder.enabled to fluentd.sidecar_forwarder.enabled
+- Moved fluentd.securityContext to fluentd.sidecar_forwarder.securityContext
+- Moved fluentd.resources.requests.cpu to fluentd.sidecar_forwarder.resources.requests.cpu
+- Moved fluentd.resources.requests.memory to fluentd.sidecar_forwarder.resources.requests.memory
+- Moved fluentd.resources.limits.cpu to fluentd.sidecar_forwarder.resources.limits.cpu
+- Moved fluentd.resources.limits.memory to fluentd.sidecar_forwarder.resources.limits.memory
 
 ## Chart Configuration Options
 | Parameter                                                          | Description                                                                                          | Default                    |
@@ -675,7 +706,6 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `iq_server.livenessProbe.periodSeconds`                            | Period seconds for liveness probe                                                                    | `20`                       |
 | `iq_server.livenessProbe.timeoutSeconds`                           | Timeout seconds for liveness probe                                                                   | `3`                        |
 | `iq_server.livenessProbe.failureThreshold`                         | Failure threshold for liveness probe                                                                 | `3`                        |
-| `iq_server.fluentd.forwarder.enabled`                              | Enable Fluentd forwarder                                                                             | `true`                     |
 | `iq_server.config`                                                 | A YAML block which will be used as a configuration block for IQ Server                               | See `values.yaml`          |
 | `iq_server.useGitSsh`                                              | Use SSH to execute git operations for SCM integrations                                               | `false`                    |
 | `iq_server.sshPrivateKey`                                          | SSH private key file to store on the nodes for ssh git operations                                    | `nil`                      |
@@ -722,13 +752,17 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 | `existingApplicationLoadBalancer.applicationTargetGroupARN`        | Target group ARN for target synchronization with application endpoints                               | `nil`                      |
 | `existingApplicationLoadBalancer.adminTargetGroupARN`              | Target group ARN for target synchronization with admin endpoints                                     | `nil`                      |
 | `aggregateLogFileRetention.deleteCron`                             | Cron schedule expression for when to delete old aggregate log files if needed                        | `0 1 * * *`                |
-| `aggregateLogFileRetention.maxLastModifiedDays`                    | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | 50                         |
+| `aggregateLogFileRetention.maxLastModifiedDays`                    | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | `50`                       |
 | `fluentd.enabled`                                                  | Enable Fluentd                                                                                       | `true`                     |
-| `fluentd.resources.requests.cpu`                                   | Fluentd sidecar cpu request                                                                          | `nil`                      |
-| `fluentd.resources.limits.cpu`                                     | Fluentd sidecar cpu limit                                                                            | `nil`                      |
-| `fluentd.resources.requests.memory`                                | Fluentd sidecar memory request                                                                       | `nil`                      |
-| `fluentd.resources.limits.memory`                                  | Fluentd sidecar memory limit                                                                         | `nil`                      |
 | `fluentd.config`                                                   | Fluentd configuration                                                                                | See `values.yaml`          |
+| `fluentd.sidecar_forwarder.enabled`                                | Enable Fluentd sidecar forwarder                                                                     | `true`                     |
+| `fluentd.sidecar_forwarder.resources.requests.cpu`                 | Fluentd sidecar forwarder cpu request                                                                | `nil`                      |
+| `fluentd.sidecar_forwarder.resources.limits.cpu`                   | Fluentd sidecar forwarder cpu limit                                                                  | `nil`                      |
+| `fluentd.sidecar_forwarder.resources.requests.memory`              | Fluentd sidecar forwarder memory request                                                             | `nil`                      |
+| `fluentd.sidecar_forwarder.resources.limits.memory`                | Fluentd sidecar forwarder memory limit                                                               | `nil`                      |
+| `fluentd.sidecar_forwarder.daemonUser`                             | Fluentd sidecar forwarder daemon user (set to root by default because it reads from host paths)      | `root`                     |
+| `fluentd.sidecar_forwarder.daemonGroup`                            | Fluentd sidecar forwarder daemon group (set to root by default because it reads from host paths)     | `root`                     |
+| `fluentd.sidecar_forwarder.securityContext`                        | Fluentd sidecar forwarder security context (See `values.yaml` for non root example)                  | `nil`                      |
 | `hpa.enabled`                                                      | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
 | `hpa.minReplicas`                                                  | Minimum number of replicas                                                                           | `2`                        |
 | `hpa.maxReplicas`                                                  | Maximum number of replicas                                                                           | `4`                        |

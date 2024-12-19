@@ -41,8 +41,10 @@ spec:
             items:
               - key: config
                 path: config.yml
-        {{- if and (.Values.fluentd.enabled) (.Values.iq_server.fluentd.forwarder.enabled) }}
+        {{- if and (.Values.fluentd.enabled) (.Values.fluentd.sidecar_forwarder.enabled) }}
         - name: {{ .Release.Name }}-iq-server-pod-logs
+          emptyDir: {}
+        - name: {{ .Release.Name }}-fluentd-empty-dir
           emptyDir: {}
         - name: {{ .Release.Name }}-fluentd-pod-config-volume
           configMap:
@@ -85,6 +87,8 @@ spec:
             - mountPath: "/opt/sonatype/nexus-iq-server/.ssh"
               name: {{ .Release.Name }}-iq-server-pod-volume
               subPath: .ssh
+            - mountPath: "/etc/nexus-iq-server"
+              name: {{ .Release.Name }}-iq-server-pod-config-volume
             {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) (.Values.secret.sshPrivateKey.arn) (.Values.secret.sshKnownHosts.arn) }}
             - mountPath: "/iq-secrets"
               name: {{ .Release.Name }}-iq-server-secrets-volume
@@ -95,9 +99,7 @@ spec:
               name: {{ .Release.Name }}-iq-server-pod-license-volume
               readOnly: true
             {{- end }}
-            - mountPath: "/etc/nexus-iq-server"
-              name: {{ .Release.Name }}-iq-server-pod-config-volume
-            {{- if and (.Values.fluentd.enabled) (.Values.iq_server.fluentd.forwarder.enabled) }}
+            {{- if and (.Values.fluentd.enabled) (.Values.fluentd.sidecar_forwarder.enabled) }}
             - mountPath: "/var/log/nexus-iq-server"
               name: {{ .Release.Name }}-iq-server-pod-logs
             {{- end }}
@@ -204,37 +206,47 @@ spec:
                       curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}healthcheck/threadDeadlock
                     {{- end }}
                   {{- end }}
-        {{- if and (.Values.fluentd.enabled) (.Values.iq_server.fluentd.forwarder.enabled) }}
+        {{- if and (.Values.fluentd.enabled) (.Values.fluentd.sidecar_forwarder.enabled) }}
         - name: {{ .Release.Name }}-fluentd-container
-          {{- with .Values.fluentd.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           image: {{ .Values.fluentd.image.repository }}:{{ .Values.fluentd.image.tag }}
           imagePullPolicy: {{ .Values.fluentd.image.pullPolicy }}
           resources:
             requests:
-              {{- if .Values.fluentd.resources.requests.cpu }}
-              cpu: {{ .Values.fluentd.resources.requests.cpu }}
+              {{- if .Values.fluentd.sidecar_forwarder.resources.requests.cpu }}
+              cpu: {{ .Values.fluentd.sidecar_forwarder.resources.requests.cpu }}
               {{- end }}
-              {{- if .Values.fluentd.resources.requests.memory }}
-              memory: {{ .Values.fluentd.resources.requests.memory }}
+              {{- if .Values.fluentd.sidecar_forwarder.resources.requests.memory }}
+              memory: {{ .Values.fluentd.sidecar_forwarder.resources.requests.memory }}
               {{- end }}
             limits:
-              {{- if .Values.fluentd.resources.limits.cpu }}
-              cpu: {{ .Values.fluentd.resources.limits.cpu }}
+              {{- if .Values.fluentd.sidecar_forwarder.resources.limits.cpu }}
+              cpu: {{ .Values.fluentd.sidecar_forwarder.resources.limits.cpu }}
               {{- end }}
-              {{- if .Values.fluentd.resources.limits.memory }}
-              memory: {{ .Values.fluentd.resources.limits.memory }}
+              {{- if .Values.fluentd.sidecar_forwarder.resources.limits.memory }}
+              memory: {{ .Values.fluentd.sidecar_forwarder.resources.limits.memory }}
               {{- end }}
           volumeMounts:
-            - mountPath: "/opt/bitnami/fluentd/conf"
-              name: {{ .Release.Name }}-fluentd-pod-config-volume
-            - mountPath: "/var/log/nexus-iq-server"
-              name: {{ .Release.Name }}-iq-server-pod-logs
+            - name: {{ .Release.Name }}-fluentd-pod-config-volume
+              mountPath: "/opt/bitnami/fluentd/conf"
+            - name: {{ .Release.Name }}-iq-server-pod-logs
+              mountPath: "/var/log/nexus-iq-server"
+            - name: {{ .Release.Name }}-fluentd-empty-dir
+              mountPath: /opt/bitnami/fluentd/logs/buffers
           env:
             - name: FLUENTD_CONF
               value: fluentd.yaml
+            {{- if .Values.fluentd.sidecar_forwarder.daemonUser }}
+            - name: FLUENTD_DAEMON_USER
+              value: {{ .Values.fluentd.sidecar_forwarder.daemonUser }}
+            {{- end }}
+            {{- if .Values.fluentd.sidecar_forwarder.daemonGroup }}
+            - name: FLUENTD_DAEMON_GROUP
+              value: {{ .Values.fluentd.sidecar_forwarder.daemonGroup }}
+            {{- end }}
+          {{- with .Values.fluentd.sidecar_forwarder.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         {{- end }}
       initContainers:
         - name: {{ .Release.Name }}-set-iq-persistence-ownership
