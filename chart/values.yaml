@@ -99,7 +99,6 @@ iq_server:
 
   # The service account to use to run the pods/job
   serviceAccountName: "default"
-
   # How the service is exposed
   serviceType: "ClusterIP"
   # Annotations for the application service
@@ -130,12 +129,6 @@ iq_server:
     periodSeconds: 20
     timeoutSeconds: 3
     failureThreshold: 3
-
-  # fluentd sidecar forwarder
-  # Enabled to forward logs to the fluentd daemonset aggregator
-  fluentd:
-    forwarder:
-      enabled: true
 
   # The full text of the config.yml file that will be passed to each Nexus IQ Server
   # Note that log formats must correspond to what the fluentd sidecar configuration is set to recognize
@@ -364,13 +357,6 @@ aggregateLogFileRetention:
 # fluentd configuration
 fluentd:
   enabled: true
-  resources:
-    requests:
-      cpu: #150m
-      memory: #200M
-    limits:
-      cpu: #300m
-      memory: #400M
   config:
     # Configuration for sidecar forwarder
     # Note that source parsing formats must correspond to the Nexus IQ Server log formats
@@ -635,6 +621,24 @@ fluentd:
     enabled: false
     configFile: "fluentd.yaml"
     configMap: "{{ .Release.Name }}-fluentd-daemonset-forwarder-configmap"
+  sidecar_forwarder:
+    # Enabled to forward logs to the fluentd daemonset aggregator
+    enabled: true
+    resources:
+      requests:
+        cpu: #150m
+        memory: #200M
+      limits:
+        cpu: #300m
+        memory: #400M
+    # Optional IQ server sidecar fluentd forwarder configuration to allow running as non root
+    # See: https://artifacthub.io/packages/helm/bitnami/fluentd/#running-as-non-root
+    # daemonUser: fluentd
+    # daemonGroup: fluentd
+    # securityContext:
+    #   runAsUser: 1001
+    #   runAsGroup: 1001
+    #   runAsNonRoot: true
   # Configuration for daemonset aggregator
   aggregator:
     enabled: true

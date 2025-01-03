@@ -283,12 +283,10 @@ tests:
         enabled: true
         forwarder:
           enabled: true
+        sidecar_forwarder:
+          enabled: true
         aggregator:
           enabled: true
-      iq_server:
-        fluentd:
-          forwarder:
-            enabled: true
     asserts:
       - hasDocuments:
           count: 3
@@ -311,12 +309,10 @@ tests:
         enabled: true
         forwarder:
           enabled: true
+        sidecar_forwarder:
+          enabled: false
         aggregator:
           enabled: false
-      iq_server:
-        fluentd:
-          forwarder:
-            enabled: false
     asserts:
       - hasDocuments:
           count: 1
