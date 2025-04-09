@@ -215,6 +215,11 @@ iq_server:
       cpu: #300m
       memory: #400M
 
+  # Optional security context for the main pods.
+  securityContext: {}
+  #  runAsUser: 1000
+  #  runAsGroup: 1000
+
 iq_server_jobs:
   migrationJobAnnotations:
     # Annotations to apply to the DB migration job
