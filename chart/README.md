@@ -263,7 +263,7 @@ A fluentd sidecar container in the same pod tails these log files and forwards t
 aggregator.
 
 For each log file, the aggregator combines its content from each pod into an aggregated log file in
-[ndjson format](http://ndjson.org/), which is output with the current date to the shared file system PV by default to
+ndjson format, which is output with the current date to the shared file system PV by default to
 `/log` such that you end up with
 * `clm-server.<yyyyMMdd>.log`
 * `request.<yyyyMMdd>.log`
