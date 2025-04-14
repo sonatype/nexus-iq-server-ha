@@ -124,6 +124,12 @@ spec:
             - mountPath: "/var/log/nexus-iq-server"
               name: {{ .Release.Name }}-iq-server-pod-logs
             {{- end }}
+            {{- range .Values.iq_server.extraVolumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath | default "" }}
+              readOnly: {{ .readOnly }}
+            {{- end }}
           env:
             {{- if or (.Values.iq_server.licenseSecret) (.Values.iq_server.license) }}
             - name: NXIQ_LICENSE_FILE
