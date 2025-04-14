@@ -17,6 +17,12 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
+
+      {{- with .Values.iq_server.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
       volumes:
         - name: {{ .Release.Name }}-iq-server-pod-volume
           persistentVolumeClaim:
