@@ -53,6 +53,27 @@ spec:
               - key: fluentd
                 path: fluentd.yaml
         {{- end }}
+      {{- range .Values.iq_server.extraVolumes }}
+        - name: {{ .name }}
+          {{- if .existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .existingClaim }}
+          {{- else if .hostPath }}
+          hostPath:
+            {{ toYaml .hostPath | nindent 12 }}
+          {{- else if .configMap }}
+          configMap:
+            {{- toYaml .configMap | nindent 12 }}
+          {{- else if .secret }}
+          secret:
+            secretName: {{ .secret }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- toYaml .emptyDir | nindent 12 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
       containers:
         - name: {{ .Release.Name }}-iq-server-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
