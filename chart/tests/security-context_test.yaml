@@ -1,0 +1,21 @@
+suite: security-context
+templates:
+  - iq-server-deployment.yaml
+tests:
+  - it: is disabled by default
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value: null
+  - it: Sets properties
+    set: 
+      iq_server:
+        securityContext: 
+          runAsUser: 1000
+          runAsGroup: 1000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsUser: 1000
+            runAsGroup: 1000
