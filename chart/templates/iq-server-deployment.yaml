@@ -23,6 +23,11 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
 
+      {{- if .Values.iq_server.imagePullSecret }}
+      imagePullSecrets:
+      - name: {{ .Values.iq_server.imagePullSecret }}
+      {{- end }}
+      
       volumes:
         - name: {{ .Release.Name }}-iq-server-pod-volume
           persistentVolumeClaim:
@@ -63,6 +68,14 @@ spec:
         - name: {{ .Release.Name }}-iq-server-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
           imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
+          {{- if .Values.iq_server.command }}
+          command:
+          {{- .Values.iq_server.command | toYaml | nindent 12}}
+          {{- end }}
+          {{- if .Values.iq_server.args }}
+          args:
+          {{- .Values.iq_server.args | toYaml | nindent 12}}
+          {{- end }}
           resources:
             requests:
               {{- if .Values.iq_server.resources.requests.cpu }}
