@@ -9,6 +9,9 @@ iq_server:
   image: "sonatype/nexus-iq-server"
   tag: "1.191.0"
   imagePullPolicy: "IfNotPresent"
+  imagePullSecret: ""
+  command: []
+  args: []
 
   # We usually recommend not to specify default resources and to leave this as a conscious choice for the user.
   # This also increases the chance that the chart runs on environments with little resources.
