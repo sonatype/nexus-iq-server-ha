@@ -662,6 +662,9 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `iq_server.image`                                                  | Sonatype IQ Server docker image                                                                      | `sonatype/nexus-iq-server` |
 | `iq_server.imagePullPolicy`                                        | Sonatype IQ Server image pull policy                                                                 | `IfNotPresent`             |
 | `iq_server.tag`                                                    | Sonatype IQ Server image tag                                                                         | See `values.yaml`          |
+| `iq_server.imagePullSecret`                                        | Image pull secret name                                                                               | `""`                       |
+| `iq_server.command`                                                | Container command override                                                                           | `[]`                       |
+| `iq_server.args`                                                   | Container args override                                                                              | `[]`                       |
 | `iq_server.resources.requests.cpu`                                 | Sonatype IQ Server request for CPU resources in CPU units                                            | `nil`                      |
 | `iq_server.resources.requests.memory`                              | Sonatype IQ Server request for memory resources in bytes                                             | `nil`                      |
 | `iq_server.resources.limits.cpu`                                   | Sonatype IQ Server limit for CPU resources in CPU units                                              | `nil`                      |
