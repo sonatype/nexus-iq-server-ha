@@ -763,3 +763,61 @@ tests:
                 secretProviderClass: RELEASE-NAME-aws-secret-provider
             name: RELEASE-NAME-iq-server-secrets-volume
         documentIndex: 0
+
+  - it: does not include imagePullSecrets when imagePullSecret is empty string
+    set:
+      iq_server:
+        imagePullSecret: ""
+    asserts:
+      - isNull:
+          path: spec.template.spec.imagePullSecrets
+        documentIndex: 0
+
+  - it: includes imagePullSecrets when imagePullSecret is non-empty
+    set:
+      iq_server:
+        imagePullSecret: "my-pull-secret"
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: "my-pull-secret"
+        documentIndex: 0
+
+  - it: does not include command when command is empty array
+    set:
+      iq_server:
+        command: []
+    asserts:
+      - isNull:
+          path: spec.template.spec.containers[0].command
+        documentIndex: 0
+
+  - it: includes command when command is non-empty
+    set:
+      iq_server:
+        command: ["sh", "-c", "echo hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["sh", "-c", "echo hello"]
+        documentIndex: 0
+
+  - it: does not include args when args is empty array
+    set:
+      iq_server:
+        args: []
+    asserts:
+      - isNull:
+          path: spec.template.spec.containers[0].args
+        documentIndex: 0
+
+  - it: includes args when args is non-empty
+    set:
+      iq_server:
+        args: ["--debug", "--verbose"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["--debug", "--verbose"]
+        documentIndex: 0
