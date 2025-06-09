@@ -1,0 +1,96 @@
+suite: iq-server-service-volumes
+templates:
+  - iq-server-deployment.yaml
+tests:
+  - it: is disabled by default
+    asserts:
+      - isNull:
+          path: spec.template.spec.volumes[5]
+  - it: sets existing volume from claim
+    set:
+      iq_server: 
+        extraVolumes:
+          - name: extra-volume-0
+            existingClaim: volume-claim
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: 
+            name: extra-volume-0
+            persistentVolumeClaim:
+             claimName: volume-claim
+  - it: sets existing volume from hostPath
+    set:
+      iq_server: 
+        extraVolumes:
+          - name: extra-volume-0
+            hostPath: 
+              path: somePath
+              type: someType
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: 
+            name: extra-volume-0
+            hostPath: 
+              path: somePath
+              type: someType
+  - it: sets existing volume from secret
+    set:
+      iq_server: 
+        extraVolumes:
+          - name: extra-volume-0
+            secret: some-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: 
+            name: extra-volume-0
+            secret: 
+              secretName: some-secret
+  - it: sets existing volume from configMap
+    set:
+      iq_server: 
+        extraVolumes:
+          - name: extra-volume-0
+            configMap:
+              name: special-config
+              items:
+              - key: SPECIAL_LEVEL
+                path: keys
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: 
+            configMap:
+              items:
+              - key: SPECIAL_LEVEL
+                path: keys
+              name: special-config
+            name: extra-volume-0
+  - it: sets empty dir
+    set:
+      iq_server: 
+        extraVolumes:
+          - name: extra-volume-0
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: 
+            emptyDir: {}
+            name: extra-volume-0
+  - it: sets empty dir with params
+    set:
+      iq_server: 
+        extraVolumes:
+          - name: extra-volume-0
+            emptyDir:
+              sizeLimit: 500Mi
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: 
+            emptyDir:
+              sizeLimit: 500Mi
+            name: extra-volume-0
+  
