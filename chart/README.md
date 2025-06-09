@@ -693,6 +693,7 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `iq_server.persistence.csi.volumeHandle`                           | Volume handle                                                                                        | `nil`                      |
 | `iq_server.persistence.nfs.server`                                 | NFS server hostname                                                                                  | `nil`                      |
 | `iq_server.persistence.nfs.path`                                   | NFS server path                                                                                      | `/`                        |
+| `iq-server.persitence.nfs.mountOptions`                            | NFS server mount options                                                                                   | `nil`                      |
 | `iq_server.podAnnotations`                                         | Annotations for the Sonatype IQ Server pods                                                          | `nil`                      |
 | `iq_server.serviceAccountName`                                     | Sonatype IQ Server service account name                                                              | `default`                  |
 | `iq_server.serviceType`                                            | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
