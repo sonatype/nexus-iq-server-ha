@@ -701,6 +701,10 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `iq_server.replicas`                                               | Number of replicas                                                                                   | `2`                        |
 | `iq_server.initialAdminPassword`                                   | Initial admin password                                                                               | `admin123`                 |
 | `iq_server.initialAdminPasswordSecret`                             | Initial admin password secret                                                                        | `nil`                      |
+| `iq_server.startupProbe.initialDelaySeconds`                       | Initial delay seconds for startup probe                                                              | `30`                       |
+| `iq_server.startupProbe.periodSeconds`                             | Period seconds for startup probe                                                                     | `10`                       |
+| `iq_server.startupProbe.timeoutSeconds`                            | Timeout seconds for startup probe                                                                    | `2`                        |
+| `iq_server.startupProbe.failureThreshold`                          | Failure threshold for startup probe                                                                  | `180`                      |
 | `iq_server.readinessProbe.initialDelaySeconds`                     | Initial delay seconds for readiness probe                                                            | `45`                       |
 | `iq_server.readinessProbe.periodSeconds`                           | Period seconds for readiness probe                                                                   | `15`                       |
 | `iq_server.readinessProbe.timeoutSeconds`                          | Timeout seconds for readiness probe                                                                  | `5`                        |

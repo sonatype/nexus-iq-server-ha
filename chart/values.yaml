@@ -120,6 +120,12 @@ iq_server:
   # password
   initialAdminPasswordSecret:
   
+  # Configures the startup probe for each pod
+  startupProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 180
   # Configures the readiness probe for each pod
   readinessProbe:
     initialDelaySeconds: 45
