@@ -86,6 +86,17 @@ tests:
                         name: application-0
                       - containerPort: 8071
                         name: admin-0
+                    startupProbe:
+                      exec:
+                        command:
+                          - /bin/sh
+                          - -c
+                          - |
+                            curl -If http://localhost:8071/ping
+                      failureThreshold: 180
+                      initialDelaySeconds: 30
+                      periodSeconds: 10
+                      timeoutSeconds: 2
                     readinessProbe:
                       exec:
                         command:
@@ -198,6 +209,11 @@ tests:
         sshKnownHosts: "/known_hosts"
         replicas: 1
         initialAdminPassword: "admin!234"
+        startupProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 4
+          failureThreshold: 360
         readinessProbe:
           initialDelaySeconds: 60
           periodSeconds: 30
@@ -364,6 +380,17 @@ tests:
                         name: application-0
                       - containerPort: 8073
                         name: admin-0
+                    startupProbe:
+                      exec:
+                        command:
+                          - /bin/sh
+                          - -c
+                          - |
+                            curl -If https://localhost:8073/admin/ping
+                      failureThreshold: 360
+                      initialDelaySeconds: 60
+                      periodSeconds: 20
+                      timeoutSeconds: 4
                     readinessProbe:
                       exec:
                         command:

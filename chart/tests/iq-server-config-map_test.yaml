@@ -111,6 +111,11 @@ tests:
         license: "/iq.lic"
         replicas: 1
         initialAdminPassword: "admin!234"
+        startupProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 4
+          failureThreshold: 360
         readinessProbe:
           initialDelaySeconds: 60
           periodSeconds: 30

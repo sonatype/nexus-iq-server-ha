@@ -193,6 +193,21 @@ spec:
                 {{- end }}
               {{- end }}
             {{- end }}
+          startupProbe:
+            initialDelaySeconds: {{ .Values.iq_server.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.iq_server.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.iq_server.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.iq_server.startupProbe.failureThreshold }}
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  {{- if .Values.iq_server.config.server.adminConnectors }}
+                    {{- with index .Values.iq_server.config.server.adminConnectors 0 }}
+                      curl -If {{ .type }}://localhost:{{ .port }}/{{- if include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}{{ include "nexus-iq-server-ha.trimSpaceAndForwardSlashes" $.Values.iq_server.config.server.adminContextPath }}/{{- end }}ping
+                    {{- end }}
+                  {{- end }}
           readinessProbe:
             initialDelaySeconds: {{ .Values.iq_server.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.iq_server.readinessProbe.periodSeconds }}
