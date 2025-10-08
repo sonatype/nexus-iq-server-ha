@@ -37,11 +37,13 @@ dockerizedBuildPipeline(
     githubStatusUpdate('pending')
   },
   buildAndTest: {
-    sonatypeZionGitConfig()
-    runSafely "git checkout ${gitBranch(env)}"
-    runSafely "./upgrade.sh chart ${chartVersion} ${params.appVersion}"
-    runSafely './build.sh'
-    runSafely 'git add chart'
+    withDockerRegistry("docker-hub-credentials", "docker.io") {
+      sonatypeZionGitConfig()
+      runSafely "git checkout ${gitBranch(env)}"
+      runSafely "./upgrade.sh chart ${chartVersion} ${params.appVersion}"
+      runSafely './build.sh'
+      runSafely 'git add chart'
+    }
   },
   skipVulnerabilityScan: true,
   archiveArtifacts: 'docs/*',
