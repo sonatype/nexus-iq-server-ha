@@ -242,7 +242,7 @@ spec:
                   {{- end }}
         {{- if and (.Values.fluentd.enabled) (.Values.fluentd.sidecar_forwarder.enabled) }}
         - name: {{ .Release.Name }}-fluentd-container
-          image: {{ .Values.fluentd.image.repository }}:{{ .Values.fluentd.image.tag }}
+          image: {{ include "nexus-iq-server-ha.fluentdImage" . }}
           imagePullPolicy: {{ .Values.fluentd.image.pullPolicy }}
           resources:
             requests:
