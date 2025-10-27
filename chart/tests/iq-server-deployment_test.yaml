@@ -126,7 +126,7 @@ tests:
                   - env:
                       - name: FLUENTD_CONF
                         value: fluentd.yaml
-                    image: bitnami/fluentd:1.18.0-debian-12-r0
+                    image: docker.io/bitnami/fluentd:1.18.0-debian-12-r0
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-fluentd-container
                     resources:
@@ -431,7 +431,7 @@ tests:
                         value: fluentd
                       - name: FLUENTD_DAEMON_GROUP
                         value: fluentd
-                    image: bitnami/fluentd:1.18.0-debian-12-r0
+                    image: docker.io/bitnami/fluentd:1.18.0-debian-12-r0
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-fluentd-container
                     securityContext:
@@ -847,4 +847,43 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].args
           value: ["--debug", "--verbose"]
+        documentIndex: 0
+
+  - it: renders fluentd sidecar with custom registry
+    set:
+      iq_server:
+        tag: "1.148.0"
+      fluentd:
+        enabled: true
+        sidecar_forwarder:
+          enabled: true
+        image:
+          registry: "private-registry.example.com"
+          repository: "bitnami/fluentd"
+          tag: "1.18.0"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: "private-registry.example.com/bitnami/fluentd:1.18.0"
+        documentIndex: 0
+
+  - it: renders fluentd sidecar without custom registry
+    set:
+      iq_server:
+        tag: "1.148.0"
+      fluentd:
+        enabled: true
+        sidecar_forwarder:
+          enabled: true
+        image:
+          repository: "bitnami/fluentd"
+          tag: "1.18.0"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: "docker.io/bitnami/fluentd:1.18.0"
         documentIndex: 0
