@@ -370,6 +370,8 @@ aggregateLogFileRetention:
 
 # fluentd configuration
 fluentd:
+  image:
+    repository: "bitnamilegacy/fluentd"
   enabled: true
   config:
     # Configuration for sidecar forwarder
