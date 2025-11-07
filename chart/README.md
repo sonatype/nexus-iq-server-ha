@@ -762,6 +762,7 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `aggregateLogFileRetention.deleteCron`                             | Cron schedule expression for when to delete old aggregate log files if needed                        | `0 1 * * *`                |
 | `aggregateLogFileRetention.maxLastModifiedDays`                    | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | `50`                       |
 | `fluentd.enabled`                                                  | Enable Fluentd                                                                                       | `true`                     |
+| `fluentd.image.repository`                                         | Fluentd image repository                                                                             | See `values.yaml`          |
 | `fluentd.config`                                                   | Fluentd configuration                                                                                | See `values.yaml`          |
 | `fluentd.sidecar_forwarder.enabled`                                | Enable Fluentd sidecar forwarder                                                                     | `true`                     |
 | `fluentd.sidecar_forwarder.resources.requests.cpu`                 | Fluentd sidecar forwarder cpu request                                                                | `nil`                      |
