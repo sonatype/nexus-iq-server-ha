@@ -56,6 +56,34 @@ iq_server:
   # your known hosts file content
   sshKnownHostsSecret:
 
+  
+  extraVolumes: []
+  # - name: extra-volume-0
+  #   existingClaim: volume-claim
+  # - name: extra-volume-1
+  #   hostPath:
+  #     path: /usr/shared/
+  #     type: ""
+  # - name: extra-volume-2
+  #   secret: my-secret-name
+  # - name: extra-volume-3
+  #   configMap: 
+  #    name: special-config
+  #    items:
+  #    - key: SPECIAL_LEVEL
+  #      path: keys
+  # - name: extra-volume-4
+  #   emptyDir: 
+  #    sizeLimit: 500Mi
+  # - name: extra-volume-5
+  extraVolumeMounts: []
+  # - name: extra-volume-0
+  #   mountPath: /mnt/volume0
+  #   subpath: my-subpath
+  #   readOnly: false # true is the default
+  # - name: extra-volume-1
+  #   mountPath: /mnt/volume1
+
   # Database (PostgreSQL 10.7 or newer or a PostgreSQL-compatible service)
   database:
     hostname:
