@@ -79,8 +79,8 @@ iq_server:
   extraVolumeMounts: []
   # - name: extra-volume-0
   #   mountPath: /mnt/volume0
-  #   subpath: my-subpath
-  #   readOnly: false # true is the default
+  #   subPath: my-subpath
+  #   readOnly: false  # optional, defaults to false (read-write) if not specified
   # - name: extra-volume-1
   #   mountPath: /mnt/volume1
 

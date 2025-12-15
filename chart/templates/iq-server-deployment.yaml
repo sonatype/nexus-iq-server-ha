@@ -146,8 +146,12 @@ spec:
             {{- range .Values.iq_server.extraVolumeMounts }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
-              subPath: {{ .subPath | default "" }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if hasKey . "readOnly" }}
               readOnly: {{ .readOnly }}
+              {{- end }}
             {{- end }}
           env:
             {{- if or (.Values.iq_server.licenseSecret) (.Values.iq_server.license) }}
