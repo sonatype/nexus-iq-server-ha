@@ -1,0 +1,36 @@
+suite: iq-server-deployment-extra-volume-mounts
+templates:
+  - iq-server-deployment.yaml
+tests:
+  - it: is disabled by default
+    asserts:
+      - isNull:
+          path: spec.template.spec.containers[0].volumeMounts[4]
+  - it: sets simple volume mount
+    set:
+      iq_server:
+        extraVolumeMounts:
+          - name: extra-volume-mount-0
+            mountPath: /some/path
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: extra-volume-mount-0
+            mountPath: /some/path
+  - it: sets subpath and readonly
+    set:
+      iq_server: 
+        extraVolumeMounts:
+          - name: extra-volume-mount-0
+            mountPath: /some/path
+            readOnly: false
+            subPath: some/subpath
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content: 
+            name: extra-volume-mount-0
+            mountPath: /some/path
+            readOnly: false
+            subPath: some/subpath
