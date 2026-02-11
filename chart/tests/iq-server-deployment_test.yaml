@@ -194,7 +194,7 @@ tests:
                 name: my-secret
         javaOpts: "-Xms8g -Xmx32g"
         serviceAccountName: "my-service-account"
-        imageRegistry: "docker-all.repo.sonatype.com"
+        imageRegistry: "sonatype.repo.sonatype.app/docker-all"
         image: "iq/snapshot"
         imagePullPolicy: "Always"
         tag: "1.142.0-SNAPSHOT"
@@ -361,7 +361,7 @@ tests:
                           secretKeyRef:
                             name: my-secret
                             key: secret-key
-                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
+                    image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: Always
                     livenessProbe:
                       exec:
