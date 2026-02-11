@@ -89,7 +89,7 @@ tests:
     set:
       iq_server:
         serviceAccountName: "my-service-account"
-        imageRegistry: "docker-all.repo.sonatype.com"
+        imageRegistry: "sonatype.repo.sonatype.app/docker-all"
         image: "iq/snapshot"
         imagePullPolicy: "Always"
         tag: "1.142.0-SNAPSHOT"
@@ -177,7 +177,7 @@ tests:
                         secretKeyRef:
                           key: password
                           name: RELEASE-NAME-iq-server-database-password-secret
-                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
+                    image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: Always
                     name: RELEASE-NAME-iq-server-container
                     resources:
@@ -283,7 +283,7 @@ tests:
   - it: can create git ssh job for generating ssh keys and known hosts files
     set:
       iq_server:
-        imageRegistry: "docker-all.repo.sonatype.com"
+        imageRegistry: "sonatype.repo.sonatype.app/docker-all"
         image: "iq/snapshot"
         tag: "1.142.0-SNAPSHOT"
         useGitSsh: true
@@ -319,7 +319,7 @@ tests:
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
                         (yes n | ssh-keygen -q -t rsa -N '' -f /sonatype-work/clm-cluster/.ssh/id_rsa &&
                         chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
-                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
+                    image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
                     volumeMounts:
@@ -339,7 +339,7 @@ tests:
   - it: can create git ssh job with passed in ssh private key and known hosts files
     set:
       iq_server:
-        imageRegistry: "docker-all.repo.sonatype.com"
+        imageRegistry: "sonatype.repo.sonatype.app/docker-all"
         image: "iq/snapshot"
         tag: "1.142.0-SNAPSHOT"
         useGitSsh: true
@@ -379,7 +379,7 @@ tests:
                         (echo "              /private.key" >/sonatype-work/clm-cluster/.ssh/id_rsa &&
                         sed -i'' -e 's/^[ \t]*//g' /sonatype-work/clm-cluster/.ssh/id_rsa &&
                         chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
-                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
+                    image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
                     volumeMounts:
@@ -399,7 +399,7 @@ tests:
   - it: can create git ssh job with passed in aws ssh private key and known hosts files
     set:
       iq_server:
-        imageRegistry: "docker-all.repo.sonatype.com"
+        imageRegistry: "sonatype.repo.sonatype.app/docker-all"
         image: "iq/snapshot"
         tag: "1.142.0-SNAPSHOT"
         useGitSsh: true
@@ -440,7 +440,7 @@ tests:
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
                         (cp /iq-secrets/id_rsa /sonatype-work/clm-cluster/.ssh/id_rsa &&
                         chmod 600 /sonatype-work/clm-cluster/.ssh/id_rsa)
-                    image: docker-all.repo.sonatype.com/iq/snapshot:1.142.0-SNAPSHOT
+                    image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
                     securityContext:
