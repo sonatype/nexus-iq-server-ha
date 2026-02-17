@@ -465,3 +465,51 @@ tests:
                       fsType: ext4
                       secretProviderClass: RELEASE-NAME-aws-secret-provider
         documentIndex: 1
+
+  - it: can set nodeSelector, tolerations, and affinity for jobs
+    set:
+      iq_server_jobs:
+        nodeSelector:
+          nodepool: iq-pool
+          disktype: ssd
+        tolerations:
+          - key: "dedicated"
+            operator: "Equal"
+            value: "iq-workload"
+            effect: "NoSchedule"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: nodepool
+                      operator: In
+                      values:
+                        - iq-pool
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            nodepool: iq-pool
+            disktype: ssd
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "dedicated"
+              operator: "Equal"
+              value: "iq-workload"
+              effect: "NoSchedule"
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: nodepool
+                        operator: In
+                        values:
+                          - iq-pool
+        documentIndex: 0
