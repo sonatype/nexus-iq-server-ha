@@ -725,12 +725,18 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `iq_server.pvOwnershipOverrideResources.resources.limits.cpu`      | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
 | `iq_server.pvOwnershipOverrideResources.resources.limits.memory`   | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
 | `iq_server.securityContext`                                        | Security-related settings for the pod                                                                | `nil`                      |
+| `iq_server.nodeSelector`                                           | Node labels for pod assignment                                                                       | `{}`                       |
+| `iq_server.tolerations`                                            | Tolerations for pod assignment                                                                       | `[]`                       |
+| `iq_server.affinity`                                               | Affinity rules for pod assignment                                                                    | `{}`                       |
 | `iq_server_jobs.migrationJobAnnotations`                           | Sonatype IQ DB Migration job Annotations                                                             | `nil`                      |
 | `iq_server_jobs.env`                                               | Sonatype IQ DB Migration job environment variables                                                   | `nil`                      |
 | `iq_server_jobs.resources.requests.cpu`                            | Sonatype IQ DB Migration job request for CPU resources in CPU units                                  | `nil`                      |
 | `iq_server_jobs.resources.requests.memory`                         | Sonatype IQ DB Migration job request for memory resources in bytes                                   | `nil`                      |
 | `iq_server_jobs.resources.limits.cpu`                              | Sonatype IQ DB Migration job limit for CPU resources in CPU units                                    | `nil`                      |
 | `iq_server_jobs.resources.limits.memory`                           | Sonatype IQ DB Migration job limit for memory resources in bytes                                     | `nil`                      |
+| `iq_server_jobs.nodeSelector`                                      | Node labels for job pod assignment                                                                   | `{}`                       |
+| `iq_server_jobs.tolerations`                                       | Tolerations for job pod assignment                                                                   | `[]`                       |
+| `iq_server_jobs.affinity`                                          | Affinity rules for job pod assignment                                                                | `{}`                       |
 | `ingress.enabled`                                                  | Enable ingress                                                                                       | `false`                    |
 | `ingress.className`                                                | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                                 | Ingress path type                                                                                    | `Prefix`                   |
@@ -761,6 +767,9 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `existingApplicationLoadBalancer.adminTargetGroupARN`              | Target group ARN for target synchronization with admin endpoints                                     | `nil`                      |
 | `aggregateLogFileRetention.deleteCron`                             | Cron schedule expression for when to delete old aggregate log files if needed                        | `0 1 * * *`                |
 | `aggregateLogFileRetention.maxLastModifiedDays`                    | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | `50`                       |
+| `aggregateLogFileRetention.nodeSelector`                           | Node labels for cronjob pod assignment                                                               | `{}`                       |
+| `aggregateLogFileRetention.tolerations`                            | Tolerations for cronjob pod assignment                                                               | `[]`                       |
+| `aggregateLogFileRetention.affinity`                               | Affinity rules for cronjob pod assignment                                                            | `{}`                       |
 | `fluentd.enabled`                                                  | Enable Fluentd                                                                                       | `true`                     |
 | `fluentd.image.repository`                                         | Fluentd image repository                                                                             | See `values.yaml`          |
 | `fluentd.config`                                                   | Fluentd configuration                                                                                | See `values.yaml`          |

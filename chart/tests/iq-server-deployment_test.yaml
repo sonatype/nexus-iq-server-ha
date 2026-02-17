@@ -887,3 +887,84 @@ tests:
           path: spec.template.spec.containers[1].image
           value: "docker.io/bitnami/fluentd:1.18.0"
         documentIndex: 0
+
+  - it: can set nodeSelector, tolerations, and affinity
+    set:
+      iq_server:
+        nodeSelector:
+          nodepool: iq-pool
+          disktype: ssd
+        tolerations:
+          - key: "dedicated"
+            operator: "Equal"
+            value: "iq-workload"
+            effect: "NoSchedule"
+          - key: "special"
+            operator: "Exists"
+            effect: "NoExecute"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: nodepool
+                      operator: In
+                      values:
+                        - iq-pool
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            nodepool: iq-pool
+            disktype: ssd
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "dedicated"
+              operator: "Equal"
+              value: "iq-workload"
+              effect: "NoSchedule"
+            - key: "special"
+              operator: "Exists"
+              effect: "NoExecute"
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: nodepool
+                        operator: In
+                        values:
+                          - iq-pool
+        documentIndex: 0
+
+  - it: does not include nodeSelector when empty
+    set:
+      iq_server:
+        nodeSelector: {}
+    asserts:
+      - isNull:
+          path: spec.template.spec.nodeSelector
+        documentIndex: 0
+
+  - it: does not include tolerations when empty
+    set:
+      iq_server:
+        tolerations: []
+    asserts:
+      - isNull:
+          path: spec.template.spec.tolerations
+        documentIndex: 0
+
+  - it: does not include affinity when empty
+    set:
+      iq_server:
+        affinity: {}
+    asserts:
+      - isNull:
+          path: spec.template.spec.affinity
+        documentIndex: 0

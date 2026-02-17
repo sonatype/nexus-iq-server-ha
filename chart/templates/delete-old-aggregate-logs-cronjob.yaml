@@ -28,4 +28,16 @@ spec:
               - mountPath: /log
                 name: {{ .Release.Name }}-iq-server-pod-volume
                 subPath: log
+          {{- with .Values.aggregateLogFileRetention.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.aggregateLogFileRetention.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.aggregateLogFileRetention.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 {{- end }}

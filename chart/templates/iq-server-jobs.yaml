@@ -101,6 +101,18 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+      {{- with .Values.iq_server_jobs.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.iq_server_jobs.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.iq_server_jobs.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       restartPolicy: OnFailure
 ---
 {{- if .Values.iq_server.useGitSsh }}
@@ -189,5 +201,17 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+      {{- with .Values.iq_server_jobs.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.iq_server_jobs.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.iq_server_jobs.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       restartPolicy: OnFailure
 {{- end }}

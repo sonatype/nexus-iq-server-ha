@@ -257,6 +257,15 @@ iq_server:
   #  runAsUser: 1000
   #  runAsGroup: 1000
 
+  # Node selector for pod assignment
+  nodeSelector: {}
+
+  # Tolerations for pod assignment
+  tolerations: []
+
+  # Affinity for pod assignment
+  affinity: {}
+
 iq_server_jobs:
   migrationJobAnnotations:
     # Annotations to apply to the DB migration job
@@ -282,6 +291,15 @@ iq_server_jobs:
   #     secretKeyRef:
   #       key: secret-key
   #       name: my-secret
+
+  # Node selector for job pod assignment
+  nodeSelector: {}
+
+  # Tolerations for job pod assignment
+  tolerations: []
+
+  # Affinity for job pod assignment
+  affinity: {}
 
 global:
   busybox: # Container image registry, if not specified the Docker public registry will be used
@@ -395,6 +413,15 @@ aggregateLogFileRetention:
   deleteCron: "0 1 * * *"
   # Maximum last modified time of an aggregate log file in days (0 disables deletion)
   maxLastModifiedDays: 50
+
+  # Node selector for cronjob pod assignment
+  nodeSelector: {}
+
+  # Tolerations for cronjob pod assignment
+  tolerations: []
+
+  # Affinity for cronjob pod assignment
+  affinity: {}
 
 # fluentd configuration
 fluentd:
