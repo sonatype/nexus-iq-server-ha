@@ -78,6 +78,12 @@ spec:
     readOnly: false
     server: {{ .Values.iq_server.persistence.nfs.server }}
     path: {{ .Values.iq_server.persistence.nfs.path }}
+  {{- if ((.Values.iq_server.persistence).nfs).mountOptions }}
+  {{- with .Values.iq_server.persistence.nfs.mountOptions }}
+  mountOptions:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
   {{- else if and ((.Values.iq_server.persistence).hostPath).path ((.Values.iq_server.persistence).hostPath).type }}
   hostPath:
     path: {{ .Values.iq_server.persistence.hostPath.path }}
