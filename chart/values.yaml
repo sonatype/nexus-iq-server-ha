@@ -127,6 +127,7 @@ iq_server:
     nfs:
       server:
       path: "/"
+      mountOptions:
 
   # The service account to use to run the pods/job
   serviceAccountName: "default"
