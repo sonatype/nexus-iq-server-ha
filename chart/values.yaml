@@ -388,8 +388,15 @@ secret:
     # ARN storing the binary content of Nexus IQ Server license
     arn:
   rds:
-    # ARN storing the host, port, (database) name, username, and password properties with their respective values
+    # ARN storing the database connection properties in AWS Secrets Manager
     arn:
+    # The JSON key names within the AWS secret. Override these if your secret uses different key names.
+    keys:
+      host: host
+      port: port
+      name: name
+      username: username
+      password: password
   sshPrivateKey:
     # ARN storing the binary content of your SSH private key file for use with ssh git operations
     arn:
