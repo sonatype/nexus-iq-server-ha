@@ -2,7 +2,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: {{ .Values.iq_server.persistence.storageClass.name | default (printf "%s-storageclass" .Release.Name) }}
+  name: {{ include "nexus-iq-server-ha.storageClassName" . }}
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}

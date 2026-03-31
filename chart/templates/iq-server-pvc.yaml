@@ -7,7 +7,7 @@ metadata:
     "helm.sh/resource-policy": {{ .Values.iq_server.persistence.persistentVolumeClaimRetainPolicy }}
 spec:
   volumeMode: Filesystem
-  storageClassName: {{- if .Values.iq_server.persistence.storageClassName }} {{ .Values.iq_server.persistence.storageClassName }} {{- else }} ""{{- end }}
+  storageClassName: {{- with (include "nexus-iq-server-ha.storageClassName" .) }} {{ . }} {{- else }} ""{{- end }}
   accessModes:
   {{- if .Values.iq_server.persistence.accessModes}}
     {{- range .Values.iq_server.persistence.accessModes }}
