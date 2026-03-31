@@ -123,6 +123,10 @@ iq_server:
       create: false
       # Name of the StorageClass (defaults to release name + "-storageclass" if not set)
       name:
+      # Additional annotations (e.g., storageclass.kubernetes.io/is-default-class: "true")
+      annotations: {}
+      # Additional labels beyond the default managed-by and instance labels
+      labels: {}
       # CSI driver provisioner (e.g., efs.csi.aws.com, ebs.csi.aws.com)
       provisioner:
       # Reclaim policy: Retain or Delete

@@ -6,10 +6,17 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- with .Values.iq_server.persistence.storageClass.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.iq_server.persistence.storageClass.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 provisioner: {{ required "iq_server.persistence.storageClass.provisioner is required when storageClass.create is true" .Values.iq_server.persistence.storageClass.provisioner }}
-reclaimPolicy: {{ .Values.iq_server.persistence.storageClass.reclaimPolicy }}
-volumeBindingMode: {{ .Values.iq_server.persistence.storageClass.volumeBindingMode }}
-allowVolumeExpansion: {{ .Values.iq_server.persistence.storageClass.allowVolumeExpansion }}
+reclaimPolicy: {{ .Values.iq_server.persistence.storageClass.reclaimPolicy | default "Delete" }}
+volumeBindingMode: {{ .Values.iq_server.persistence.storageClass.volumeBindingMode | default "Immediate" }}
+allowVolumeExpansion: {{ .Values.iq_server.persistence.storageClass.allowVolumeExpansion | default false }}
 {{- with .Values.iq_server.persistence.storageClass.mountOptions }}
 mountOptions:
   {{- toYaml . | nindent 2 }}
