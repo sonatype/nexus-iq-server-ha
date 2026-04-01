@@ -14,9 +14,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 provisioner: {{ required "iq_server.persistence.storageClass.provisioner is required when storageClass.create is true" .Values.iq_server.persistence.storageClass.provisioner }}
-reclaimPolicy: {{ .Values.iq_server.persistence.storageClass.reclaimPolicy | default "Delete" }}
-volumeBindingMode: {{ .Values.iq_server.persistence.storageClass.volumeBindingMode | default "Immediate" }}
-allowVolumeExpansion: {{ .Values.iq_server.persistence.storageClass.allowVolumeExpansion | default false }}
+reclaimPolicy: {{ .Values.iq_server.persistence.storageClass.reclaimPolicy }}
+volumeBindingMode: {{ .Values.iq_server.persistence.storageClass.volumeBindingMode }}
+allowVolumeExpansion: {{ .Values.iq_server.persistence.storageClass.allowVolumeExpansion }}
 {{- with .Values.iq_server.persistence.storageClass.mountOptions }}
 mountOptions:
   {{- toYaml . | nindent 2 }}
