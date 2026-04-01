@@ -694,6 +694,16 @@ the support zip can collect logs from all nodes and the cleanup CronJob handles 
 | `iq_server.persistence.persistentVolumeClaimRetainPolicy`          | Persistent volume claim retain policy                                                                | `keep`                     |
 | `iq_server.persistence.size`                                       | Storage capacity for PV/PVC to provision/request                                                     | `1Gi`                      |
 | `iq_server.persistence.storageClassName`                           | Storage class name for the PV/PVC                                                                    | `""`                       |
+| `iq_server.persistence.storageClass.create`                        | Whether to create a StorageClass resource                                                            | `false`                    |
+| `iq_server.persistence.storageClass.name`                          | StorageClass name (defaults to `<release>-storageclass`)                                             | `nil`                      |
+| `iq_server.persistence.storageClass.annotations`                   | Additional StorageClass annotations                                                                  | `{}`                       |
+| `iq_server.persistence.storageClass.labels`                        | Additional StorageClass labels                                                                       | `{}`                       |
+| `iq_server.persistence.storageClass.provisioner`                   | CSI driver provisioner (required when `storageClass.create` is true)                                 | `nil`                      |
+| `iq_server.persistence.storageClass.reclaimPolicy`                 | Reclaim policy (`Retain` or `Delete`)                                                                | `Retain`                   |
+| `iq_server.persistence.storageClass.volumeBindingMode`             | Volume binding mode (`Immediate` or `WaitForFirstConsumer`)                                          | `Immediate`                |
+| `iq_server.persistence.storageClass.allowVolumeExpansion`          | Allow volume expansion                                                                               | `true`                     |
+| `iq_server.persistence.storageClass.mountOptions`                  | Mount options                                                                                        | `[]`                       |
+| `iq_server.persistence.storageClass.parameters`                    | Parameters to pass to the provisioner                                                                | `{}`                       |
 | `iq_server.persistence.accessModes[0]`                             | Access mode for the PV/PVC                                                                           | `ReadWriteOnce`            |
 | `iq_server.persistence.csi.driver`                                 | CSI driver name                                                                                      | `nil`                      |
 | `iq_server.persistence.csi.fsType`                                 | File system type                                                                                     | `nil`                      |
