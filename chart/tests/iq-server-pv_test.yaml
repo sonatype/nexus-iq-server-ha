@@ -237,6 +237,43 @@ tests:
             term2: value2
         documentIndex: 0
 
+  - it: uses created storageClass name when storageClass.create is true
+    set:
+      iq_server:
+        persistence:
+          storageClassName: ""
+          storageClass:
+            create: true
+            name: "my-storageclass"
+            provisioner: "efs.csi.aws.com"
+          csi:
+            driver: "efs.csi.aws.com"
+            volumeHandle: "fs-12345"
+            fsType: "efs"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: my-storageclass
+        documentIndex: 0
+
+  - it: uses generated storageClass name when storageClass.create is true and no name set
+    set:
+      iq_server:
+        persistence:
+          storageClassName: ""
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+          csi:
+            driver: "efs.csi.aws.com"
+            volumeHandle: "fs-12345"
+            fsType: "efs"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: RELEASE-NAME-storageclass
+        documentIndex: 0
+
   - it: can set cephfs full
     set:
       iq_server:

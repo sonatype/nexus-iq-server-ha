@@ -124,6 +124,35 @@ tests:
             operator: operator2
         documentIndex: 0
 
+  - it: uses created storageClass name when storageClass.create is true
+    set:
+      iq_server:
+        persistence:
+          storageClassName: ""
+          storageClass:
+            create: true
+            name: "my-storageclass"
+            provisioner: "efs.csi.aws.com"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: my-storageclass
+        documentIndex: 0
+
+  - it: uses generated storageClass name when storageClass.create is true and no name set
+    set:
+      iq_server:
+        persistence:
+          storageClassName: ""
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: RELEASE-NAME-storageclass
+        documentIndex: 0
+
   - it: does create PVC if name is given
     set:
       iq_server:
