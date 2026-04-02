@@ -279,11 +279,10 @@ Most log collectors work out of the box by collecting container stdout output wi
 To also capture JVM stderr and log files from terminated pods, configure your collector to read from the shared PV's
 `log/` directory.
 
-To disable file logging and use only console output, override the logging sections in `iq_server.config` to remove
-the `file` type appenders. For example:
-   ```
-   --set-json 'iq_server.config.logging.appenders=[{"type":"console","threshold":"ALL","logFormat":"%d{\"yyyy-MM-dd HH:mm:ss,SSSZ\"} %level [%thread] %X{username} %logger - %msg%n"}]'
-   ```
+To disable file logging and use only console output, override `iq_server.config` in a values file to remove all
+`type: file` appenders, keeping only the `type: console` entries. See the default `iq_server.config` in
+`values.yaml` for the full structure.
+
 Note that disabling file appenders means the support zip will not include log files, and `stderr-<pod-name>.log` on
 the shared PV will be the only file-based log available.
 
