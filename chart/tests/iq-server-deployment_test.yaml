@@ -67,6 +67,10 @@ tests:
                             name: RELEASE-NAME-iq-server-database-password-secret
                       - name: NXIQ_DATABASE_MIGRATION
                         value: "false"
+                      - name: HOSTNAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.name
                     image: sonatype/nexus-iq-server:1.148.0
                     imagePullPolicy: IfNotPresent
                     livenessProbe:
@@ -121,11 +125,20 @@ tests:
                         subPath: .ssh
                       - mountPath: /etc/nexus-iq-server
                         name: RELEASE-NAME-iq-server-pod-config-volume
+                      - mountPath: /var/log/nexus-iq-server/stderr.log
+                        name: RELEASE-NAME-iq-server-pod-volume
+                        subPathExpr: log/stderr-$(HOSTNAME).log
                 initContainers:
                   - command:
                       - /bin/sh
                       - -c
-                      - chown -R 1000:1000 /sonatype-work/clm-cluster
+                      - touch /sonatype-work/clm-cluster/log/stderr-$(HOSTNAME).log &&
+                        chown -R 1000:1000 /sonatype-work/clm-cluster
+                    env:
+                      - name: HOSTNAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.name
                     image: busybox:1.28
                     name: RELEASE-NAME-set-iq-persistence-ownership
                     volumeMounts:
@@ -316,6 +329,10 @@ tests:
                           secretKeyRef:
                             name: my-secret
                             key: secret-key
+                      - name: HOSTNAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.name
                     image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: Always
                     livenessProbe:
@@ -377,11 +394,19 @@ tests:
                       - mountPath: /license
                         name: RELEASE-NAME-iq-server-pod-license-volume
                         readOnly: true
+                      - mountPath: /var/log/nexus-iq-server/stderr.log
+                        name: RELEASE-NAME-iq-server-pod-volume
+                        subPathExpr: log/stderr-$(HOSTNAME).log
                 initContainers:
                   - command:
                       - /bin/sh
                       - -c
-                      - chown -R 2000:2000 /different/path
+                      - touch /iq/clm-cluster/log/stderr-$(HOSTNAME).log && chown -R 2000:2000 /different/path
+                    env:
+                      - name: HOSTNAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.name
                     image: registry.example.com/busybox2:1.29
                     name: RELEASE-NAME-set-iq-persistence-ownership
                     volumeMounts:
