@@ -257,9 +257,11 @@ persistent volume under the cluster directory:
 * `audit.log` - audit events
 * `policy-violation.log` - policy violation events
 
-By default, each pod writes its log files to `/sonatype-work/clm-cluster/${HOSTNAME}/log/` where `${HOSTNAME}` is the
-pod name. This means log files from all HA nodes are accessible on the shared PV, and the IQ Server support zip can
-collect logs from every node in the cluster.
+By default, each pod writes its log files to `/sonatype-work/clm-cluster/log/` with the pod name suffixed to each
+filename (e.g., `clm-server-iq-server-deployment-abc123.log`). `${HOSTNAME}` is a Kubernetes-provided environment
+variable that resolves to the pod name. This means log files from all HA nodes are accessible on the shared PV, and
+the IQ Server support zip can collect logs from every node in the cluster. Logs of the same type sort together
+alphabetically regardless of which pod produced them.
 
 Log aggregation is **not bundled** with this chart. If you require centralized log forwarding, you are responsible for
 integrating your preferred log aggregation solution. Common options include:
@@ -279,17 +281,16 @@ the `file` type appenders. For example:
    ```
 Note that disabling file appenders means the support zip will not include log files.
 
-#### Legacy aggregate log cleanup
+#### Aggregate log cleanup
 
-If you are upgrading from a previous version that included bundled Fluentd, you may still have aggregate log files
-on your shared PV under the `log/` subPath. A CronJob is included to clean up these legacy files. By default,
-aggregate log files older than 50 days are deleted daily at 1 am. This can be customized as follows
+A CronJob is included to clean up old log files from the shared PV under the `log/` subPath. This handles both
+per-pod log files from terminated pods and any legacy aggregate logs from previous Fluentd-bundled versions. By
+default, log files older than 50 days are deleted daily at 1 am. This can be customized as follows
    ```
    --set aggregateLogFileRetention.deleteCron=<Cron schedule expression, default "0 1 * * *">
    --set aggregateLogFileRetention.maxLastModifiedDays=<max last modified time in days, default 50>
    ```
-Note that setting `aggregateLogFileRetention.maxLastModifiedDays` to 0 disables deletion. This CronJob will be
-removed in a future version.
+Note that setting `aggregateLogFileRetention.maxLastModifiedDays` to 0 disables deletion.
 
 ### Image (optional)
 
@@ -642,8 +643,9 @@ customer. Key changes:
 - Removed the `cloudwatch.*` values (previously used by the Fluentd aggregator)
 - Removed the Fluentd sidecar container from the IQ Server deployment
 - Removed the Fluentd aggregator StatefulSet
-- Log file appenders now write to the shared cluster directory (`/sonatype-work/clm-cluster/${HOSTNAME}/log/`)
-  instead of the container's ephemeral filesystem, so the support zip can collect logs from all HA nodes
+- Log file appenders now write to the shared cluster directory (`/sonatype-work/clm-cluster/log/`) with the pod
+  name suffixed to each filename (e.g., `clm-server-<pod-name>.log`), so the support zip can collect logs from
+  all HA nodes and the existing CronJob handles cleanup automatically
 
 **Action required:** If you were relying on the bundled Fluentd for log aggregation or CloudWatch integration,
 you will need to deploy your own log collection solution. See the updated "Logging" section for guidance.
@@ -652,8 +654,8 @@ you will need to deploy your own log collection solution. See the updated "Loggi
 longer recognized.
 
 **Action required:** If you have customized `iq_server.config` log file paths, update them to write under the
-cluster directory (e.g., `/sonatype-work/clm-cluster/${HOSTNAME}/log/`) to ensure the support zip can collect
-logs from all nodes.
+cluster directory `log/` subdirectory (e.g., `/sonatype-work/clm-cluster/log/<name>-${HOSTNAME}.log`) to ensure
+the support zip can collect logs from all nodes and the cleanup CronJob handles retention.
 
 ## Chart Configuration Options
 | Parameter                                                          | Description                                                                                          | Default                    |
