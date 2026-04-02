@@ -393,7 +393,17 @@ The product license file
 
 The database settings
    ```
-   --set secret.rds.arn=<aws secret arn containing database host, port, name, username, and password keys>
+   --set secret.rds.arn=<aws secret arn containing database connection properties>
+   ```
+
+By default the chart expects the JSON keys inside that secret to be named `host`, `port`, `name`, `username`, and
+`password`. If your secret uses different key names, override them individually:
+   ```
+   --set secret.rds.keys.host=<key name for database hostname, default "host">
+   --set secret.rds.keys.port=<key name for database port, default "port">
+   --set secret.rds.keys.name=<key name for database name, default "name">
+   --set secret.rds.keys.username=<key name for database username, default "username">
+   --set secret.rds.keys.password=<key name for database password, default "password">
    ```
 
 The initial admin password
@@ -756,7 +766,12 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `serviceAccount.autoMountServiceAccountToken`                      | Auto mount service account token                                                                     | `false`                    |
 | `secret.arn`                                                       | AWS secret arn containing initial admin password in a initial_admin_password key                     | `nil`                      |
 | `secret.license.arn`                                               | AWS secret arn containing the binary content of your Sonatype IQ Server license                      | `nil`                      |
-| `secret.rds.arn`                                                   | AWS secret arn containing host, port, name (database name), username, and password keys              | `nil`                      |
+| `secret.rds.arn`                                                   | AWS secret arn containing database connection properties                                             | `nil`                      |
+| `secret.rds.keys.host`                                             | JSON key name in the RDS secret for the database hostname                                            | `host`                     |
+| `secret.rds.keys.port`                                             | JSON key name in the RDS secret for the database port                                                | `port`                     |
+| `secret.rds.keys.name`                                             | JSON key name in the RDS secret for the database name                                                | `name`                     |
+| `secret.rds.keys.username`                                         | JSON key name in the RDS secret for the database username                                            | `username`                 |
+| `secret.rds.keys.password`                                         | JSON key name in the RDS secret for the database password                                            | `password`                 |
 | `secret.sshPrivateKey.arn`                                         | AWS secret arn containing the binary content of your SSH private key for use with ssh git operations | `nil`                      |
 | `secret.sshKnownHosts.arn`                                         | AWS secret arn containing the binary content of your SSH known hosts for use with ssh git operations | `nil`                      |
 | `cloudwatch.enabled`                                               | Enable CloudWatch logging                                                                            | `false`                    |
