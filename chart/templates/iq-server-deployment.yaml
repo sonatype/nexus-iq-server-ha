@@ -139,7 +139,7 @@ spec:
             {{- end }}
             - mountPath: "/var/log/nexus-iq-server/stderr.log"
               name: {{ .Release.Name }}-iq-server-pod-volume
-              subPathExpr: log/stderr-$(HOSTNAME).log
+              subPathExpr: log/$(HOSTNAME)-stderr.log
           env:
             {{- if or (.Values.iq_server.licenseSecret) (.Values.iq_server.license) }}
             - name: NXIQ_LICENSE_FILE
@@ -280,7 +280,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - touch {{ .Values.iq_server.config.clusterDirectory }}/log/stderr-$(HOSTNAME).log && {{ .Values.iq_server.pvOwnershipOverride }}
+            - touch {{ .Values.iq_server.config.clusterDirectory }}/log/$(HOSTNAME)-stderr.log && {{ .Values.iq_server.pvOwnershipOverride }}
           env:
             - name: HOSTNAME
               valueFrom:

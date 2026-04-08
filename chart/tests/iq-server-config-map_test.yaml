@@ -40,8 +40,8 @@ tests:
                 threshold: ALL
                 type: console
               - archivedFileCount: 50
-                archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/clm-server-${HOSTNAME}-%d.log.gz
-                currentLogFilename: /sonatype-work/clm-cluster/log/clm-server-${HOSTNAME}.log
+                archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/${HOSTNAME}-clm-server-%d.log.gz
+                currentLogFilename: /sonatype-work/clm-cluster/log/${HOSTNAME}-clm-server.log
                 logFormat: '%d{''yyyy-MM-dd HH:mm:ss,SSSZ''} %level [%thread] %X{username} %logger
                   - %msg%n'
                 threshold: ALL
@@ -53,15 +53,15 @@ tests:
                   appenders:
                   - type: console
                   - archivedFileCount: 50
-                    archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/audit-${HOSTNAME}-%d.log.gz
-                    currentLogFilename: /sonatype-work/clm-cluster/log/audit-${HOSTNAME}.log
+                    archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/${HOSTNAME}-audit-%d.log.gz
+                    currentLogFilename: /sonatype-work/clm-cluster/log/${HOSTNAME}-audit.log
                     type: file
                 com.sonatype.insight.policy.violation:
                   appenders:
                   - type: console
                   - archivedFileCount: 50
-                    archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/policy-violation-${HOSTNAME}-%d.log.gz
-                    currentLogFilename: /sonatype-work/clm-cluster/log/policy-violation-${HOSTNAME}.log
+                    archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/${HOSTNAME}-policy-violation-%d.log.gz
+                    currentLogFilename: /sonatype-work/clm-cluster/log/${HOSTNAME}-policy-violation.log
                     type: file
                 com.sonatype.insight.scan: INFO
                 eu.medsea.mimeutil.MimeUtil2: INFO
@@ -88,8 +88,8 @@ tests:
                     %elapsedTime "%header{User-Agent}"'
                   type: console
                 - archivedFileCount: 50
-                  archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/request-${HOSTNAME}-%d.log.gz
-                  currentLogFilename: /sonatype-work/clm-cluster/log/request-${HOSTNAME}.log
+                  archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/${HOSTNAME}-request-%d.log.gz
+                  currentLogFilename: /sonatype-work/clm-cluster/log/${HOSTNAME}-request.log
                   logFormat: '%clientHost %l %user [%date] "%requestURL" %statusCode %bytesSent
                     %elapsedTime "%header{User-Agent}"'
                   type: file
@@ -194,15 +194,15 @@ tests:
                   appenders:
                   - type: console
                   - archivedFileCount: 50
-                    archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/audit-${HOSTNAME}-%d.log.gz
-                    currentLogFilename: /sonatype-work/clm-cluster/log/audit-${HOSTNAME}.log
+                    archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/${HOSTNAME}-audit-%d.log.gz
+                    currentLogFilename: /sonatype-work/clm-cluster/log/${HOSTNAME}-audit.log
                     type: file
                 com.sonatype.insight.policy.violation:
                   appenders:
                   - type: console
                   - archivedFileCount: 50
-                    archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/policy-violation-${HOSTNAME}-%d.log.gz
-                    currentLogFilename: /sonatype-work/clm-cluster/log/policy-violation-${HOSTNAME}.log
+                    archivedLogFilenamePattern: /sonatype-work/clm-cluster/log/${HOSTNAME}-policy-violation-%d.log.gz
+                    currentLogFilename: /sonatype-work/clm-cluster/log/${HOSTNAME}-policy-violation.log
                     type: file
                 com.sonatype.insight.scan: INFO
                 eu.medsea.mimeutil.MimeUtil2: INFO

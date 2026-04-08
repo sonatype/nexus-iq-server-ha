@@ -169,7 +169,7 @@ iq_server:
 
   # The full text of the config.yml file that will be passed to each Nexus IQ Server
   # File appenders write to the shared clusterDirectory log/ subdirectory with the pod name
-  # suffixed to each filename, so the support zip can collect logs from all nodes and the
+  # prefixed to each filename, so the support zip can collect logs from all nodes and the
   # existing aggregate log cleanup CronJob handles retention automatically.
   # Console appenders are also enabled for kubectl logs and container log collectors.
   config:
@@ -202,9 +202,9 @@ iq_server:
           - type: console
             logFormat: "%clientHost %l %user [%date] \"%requestURL\" %statusCode %bytesSent %elapsedTime \"%header{User-Agent}\""
           - type: file
-            currentLogFilename: "/sonatype-work/clm-cluster/log/request-${HOSTNAME}.log"
+            currentLogFilename: "/sonatype-work/clm-cluster/log/${HOSTNAME}-request.log"
             logFormat: "%clientHost %l %user [%date] \"%requestURL\" %statusCode %bytesSent %elapsedTime \"%header{User-Agent}\""
-            archivedLogFilenamePattern: "/sonatype-work/clm-cluster/log/request-${HOSTNAME}-%d.log.gz"
+            archivedLogFilenamePattern: "/sonatype-work/clm-cluster/log/${HOSTNAME}-request-%d.log.gz"
             archivedFileCount: 50
     logging:
       level: DEBUG
@@ -224,15 +224,15 @@ iq_server:
           appenders:
             - type: console
             - type: file
-              currentLogFilename: "/sonatype-work/clm-cluster/log/audit-${HOSTNAME}.log"
-              archivedLogFilenamePattern: "/sonatype-work/clm-cluster/log/audit-${HOSTNAME}-%d.log.gz"
+              currentLogFilename: "/sonatype-work/clm-cluster/log/${HOSTNAME}-audit.log"
+              archivedLogFilenamePattern: "/sonatype-work/clm-cluster/log/${HOSTNAME}-audit-%d.log.gz"
               archivedFileCount: 50
         "com.sonatype.insight.policy.violation":
           appenders:
             - type: console
             - type: file
-              currentLogFilename: "/sonatype-work/clm-cluster/log/policy-violation-${HOSTNAME}.log"
-              archivedLogFilenamePattern: "/sonatype-work/clm-cluster/log/policy-violation-${HOSTNAME}-%d.log.gz"
+              currentLogFilename: "/sonatype-work/clm-cluster/log/${HOSTNAME}-policy-violation.log"
+              archivedLogFilenamePattern: "/sonatype-work/clm-cluster/log/${HOSTNAME}-policy-violation-%d.log.gz"
               archivedFileCount: 50
       appenders:
         - type: console
@@ -241,8 +241,8 @@ iq_server:
         - type: file
           threshold: ALL
           logFormat: "%d{'yyyy-MM-dd HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n"
-          currentLogFilename: "/sonatype-work/clm-cluster/log/clm-server-${HOSTNAME}.log"
-          archivedLogFilenamePattern: "/sonatype-work/clm-cluster/log/clm-server-${HOSTNAME}-%d.log.gz"
+          currentLogFilename: "/sonatype-work/clm-cluster/log/${HOSTNAME}-clm-server.log"
+          archivedLogFilenamePattern: "/sonatype-work/clm-cluster/log/${HOSTNAME}-clm-server-%d.log.gz"
           archivedFileCount: 50
     createSampleData: true
   # Specify a custom 'chown' command to modify ownership of directories.

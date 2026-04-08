@@ -127,12 +127,12 @@ tests:
                         name: RELEASE-NAME-iq-server-pod-config-volume
                       - mountPath: /var/log/nexus-iq-server/stderr.log
                         name: RELEASE-NAME-iq-server-pod-volume
-                        subPathExpr: log/stderr-$(HOSTNAME).log
+                        subPathExpr: log/$(HOSTNAME)-stderr.log
                 initContainers:
                   - command:
                       - /bin/sh
                       - -c
-                      - touch /sonatype-work/clm-cluster/log/stderr-$(HOSTNAME).log &&
+                      - touch /sonatype-work/clm-cluster/log/$(HOSTNAME)-stderr.log &&
                         chown -R 1000:1000 /sonatype-work/clm-cluster
                     env:
                       - name: HOSTNAME
@@ -396,12 +396,12 @@ tests:
                         readOnly: true
                       - mountPath: /var/log/nexus-iq-server/stderr.log
                         name: RELEASE-NAME-iq-server-pod-volume
-                        subPathExpr: log/stderr-$(HOSTNAME).log
+                        subPathExpr: log/$(HOSTNAME)-stderr.log
                 initContainers:
                   - command:
                       - /bin/sh
                       - -c
-                      - touch /iq/clm-cluster/log/stderr-$(HOSTNAME).log && chown -R 2000:2000 /different/path
+                      - touch /iq/clm-cluster/log/$(HOSTNAME)-stderr.log && chown -R 2000:2000 /different/path
                     env:
                       - name: HOSTNAME
                         valueFrom:

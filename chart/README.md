@@ -252,21 +252,21 @@ updating this as many values within it are fine-tuned to allow the helm chart to
 
 Each Sonatype IQ Server pod outputs application logs to stdout via console appenders and to log files on the shared
 persistent volume. The default log files under the cluster directory are:
-* `clm-server-<pod-name>.log` - main server log
-* `request-<pod-name>.log` - HTTP request log
-* `audit-<pod-name>.log` - audit events
-* `policy-violation-<pod-name>.log` - policy violation events
-* `stderr-<pod-name>.log` - JVM-level errors that bypass the logging framework (normally empty)
+* `<pod-name>-clm-server.log` - main server log
+* `<pod-name>-request.log` - HTTP request log
+* `<pod-name>-audit.log` - audit events
+* `<pod-name>-policy-violation.log` - policy violation events
+* `<pod-name>-stderr.log` - JVM-level errors that bypass the logging framework (normally empty)
 
-Note that JVM stderr is redirected to `stderr-<pod-name>.log` on the shared PV rather than to the container's stderr
+Note that JVM stderr is redirected to `<pod-name>-stderr.log` on the shared PV rather than to the container's stderr
 stream. This means `kubectl logs` and log collectors that read container stdout/stderr will capture application logs
 but not JVM-level errors such as `OutOfMemoryError` or native crashes. To monitor for these, collect
-`stderr-<pod-name>.log` from the shared PV.
+`<pod-name>-stderr.log` from the shared PV.
 
-By default, each pod writes its log files to `/sonatype-work/clm-cluster/log/` with the pod name suffixed to each
-filename. `${HOSTNAME}` is a Kubernetes-provided environment variable that resolves to the pod name. This means log
-files from all HA nodes are accessible on the shared PV, and the IQ Server support zip can collect logs from every
-node in the cluster. Logs of the same type sort together alphabetically regardless of which pod produced them.
+By default, each pod writes its log files to `/sonatype-work/clm-cluster/log/` with the pod name prefixed to each
+filename (e.g., `iq-server-deployment-abc123-clm-server.log`). `${HOSTNAME}` is a Kubernetes-provided environment
+variable that resolves to the pod name. This means log files from all HA nodes are accessible on the shared PV, and
+the IQ Server support zip can collect logs from every node in the cluster.
 
 Log aggregation is **not bundled** with this chart. If you require centralized log forwarding, you are responsible for
 integrating your preferred log aggregation solution. Common options include:
@@ -283,7 +283,7 @@ To disable file logging and use only console output, override `iq_server.config`
 `type: file` appenders, keeping only the `type: console` entries. See the default `iq_server.config` in
 `values.yaml` for the full structure.
 
-Note that disabling file appenders means the support zip will not include log files, and `stderr-<pod-name>.log` on
+Note that disabling file appenders means the support zip will not include log files, and `<pod-name>-stderr.log` on
 the shared PV will be the only file-based log available.
 
 #### Aggregate log cleanup
@@ -649,7 +649,7 @@ customer. Key changes:
 - Removed the Fluentd sidecar container from the IQ Server deployment
 - Removed the Fluentd aggregator StatefulSet
 - Log file appenders now write to the shared cluster directory (`/sonatype-work/clm-cluster/log/`) with the pod
-  name suffixed to each filename (e.g., `clm-server-<pod-name>.log`), so the support zip can collect logs from
+  name prefixed to each filename (e.g., `<pod-name>-clm-server.log`), so the support zip can collect logs from
   all HA nodes and the existing CronJob handles cleanup automatically
 
 **Action required:** If you were relying on the bundled Fluentd for log aggregation or CloudWatch integration,
