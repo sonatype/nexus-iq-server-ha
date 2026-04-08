@@ -47,13 +47,13 @@ helm lint chart
 The existing unit tests are intended to be run using the `helm-unittest` plugin, which can be installed as follows
 
 ```
-# If using Helm v4+, append --verify=false (https://github.com/helm-unittest/helm-unittest/issues/777)
-helm plugin install https://github.com/quintush/helm-unittest --version v0.2.11
+# --verify=false: plugin does not yet ship .prov files (https://github.com/helm-unittest/helm-unittest/issues/777)
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
 ```
 
 The test suites are located in the [chart/tests directory](./chart/tests). Each test file name must end in
 `_test.yaml` in order for the plugin to automatically execute it.
 
-To run all unit tests, execute `helm unittest --helm3 chart`.
+To run all unit tests, execute `helm unittest chart`.
 
-To run an individual unit test, execute `helm unittest --helm3 chart --file chart/tests/<name_test.yaml>`.
+To run an individual unit test, execute `helm unittest chart --file chart/tests/<name_test.yaml>`.
