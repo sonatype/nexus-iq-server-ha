@@ -67,6 +67,10 @@ tests:
                             name: RELEASE-NAME-iq-server-database-password-secret
                       - name: NXIQ_DATABASE_MIGRATION
                         value: "false"
+                      - name: HOSTNAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.name
                     image: sonatype/nexus-iq-server:1.148.0
                     imagePullPolicy: IfNotPresent
                     livenessProbe:
@@ -121,29 +125,20 @@ tests:
                         subPath: .ssh
                       - mountPath: /etc/nexus-iq-server
                         name: RELEASE-NAME-iq-server-pod-config-volume
-                      - mountPath: /var/log/nexus-iq-server
-                        name: RELEASE-NAME-iq-server-pod-logs
-                  - env:
-                      - name: FLUENTD_CONF
-                        value: fluentd.yaml
-                    image: docker.io/bitnamilegacy/fluentd:1.18.0-debian-12-r0
-                    imagePullPolicy: IfNotPresent
-                    name: RELEASE-NAME-fluentd-container
-                    resources:
-                      requests:
-                      limits:
-                    volumeMounts:
-                      - mountPath: /opt/bitnami/fluentd/conf
-                        name: RELEASE-NAME-fluentd-pod-config-volume
-                      - mountPath: /var/log/nexus-iq-server
-                        name: RELEASE-NAME-iq-server-pod-logs
-                      - mountPath: /opt/bitnami/fluentd/logs/buffers
-                        name: RELEASE-NAME-fluentd-empty-dir
+                      - mountPath: /var/log/nexus-iq-server/stderr.log
+                        name: RELEASE-NAME-iq-server-pod-volume
+                        subPathExpr: log/$(HOSTNAME)-stderr.log
                 initContainers:
                   - command:
                       - /bin/sh
                       - -c
-                      - chown -R 1000:1000 /sonatype-work/clm-cluster
+                      - touch /sonatype-work/clm-cluster/log/$(HOSTNAME)-stderr.log &&
+                        chown -R 1000:1000 /sonatype-work/clm-cluster
+                    env:
+                      - name: HOSTNAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.name
                     image: busybox:1.28
                     name: RELEASE-NAME-set-iq-persistence-ownership
                     volumeMounts:
@@ -162,16 +157,6 @@ tests:
                           path: config.yml
                       name: RELEASE-NAME-iq-server-config-configmap
                     name: RELEASE-NAME-iq-server-pod-config-volume
-                  - emptyDir: {}
-                    name: RELEASE-NAME-iq-server-pod-logs
-                  - emptyDir: {}
-                    name: RELEASE-NAME-fluentd-empty-dir
-                  - configMap:
-                      items:
-                        - key: fluentd
-                          path: fluentd.yaml
-                      name: RELEASE-NAME-fluentd-sidecar-forwarder-configmap
-                    name: RELEASE-NAME-fluentd-pod-config-volume
         documentIndex: 0
 
   - it: renders with overridden values
@@ -273,23 +258,6 @@ tests:
           imageRegistry: registry.example.com
           image: busybox2
           tag: "1.29"
-      fluentd:
-        sidecar_forwarder:
-          resources:
-            requests:
-              cpu: 2
-              memory: "500M"
-            limits:
-              cpu: 4
-              memory: "1Gi"
-          daemonUser: fluentd
-          daemonGroup: fluentd
-          securityContext:
-            runAsUser: 1001
-            runAsGroup: 1001
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
     asserts:
       - hasDocuments:
           count: 1
@@ -361,6 +329,10 @@ tests:
                           secretKeyRef:
                             name: my-secret
                             key: secret-key
+                      - name: HOSTNAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.name
                     image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: Always
                     livenessProbe:
@@ -422,43 +394,19 @@ tests:
                       - mountPath: /license
                         name: RELEASE-NAME-iq-server-pod-license-volume
                         readOnly: true
-                      - mountPath: /var/log/nexus-iq-server
-                        name: RELEASE-NAME-iq-server-pod-logs
-                  - env:
-                      - name: FLUENTD_CONF
-                        value: fluentd.yaml
-                      - name: FLUENTD_DAEMON_USER
-                        value: fluentd
-                      - name: FLUENTD_DAEMON_GROUP
-                        value: fluentd
-                    image: docker.io/bitnamilegacy/fluentd:1.18.0-debian-12-r0
-                    imagePullPolicy: IfNotPresent
-                    name: RELEASE-NAME-fluentd-container
-                    securityContext:
-                      runAsUser: 1001
-                      runAsGroup: 1001
-                      allowPrivilegeEscalation: false
-                      capabilities:
-                        drop: [ "ALL" ]
-                    resources:
-                      requests:
-                        cpu: 2
-                        memory: "500M"
-                      limits:
-                        cpu: 4
-                        memory: "1Gi"
-                    volumeMounts:
-                      - mountPath: /opt/bitnami/fluentd/conf
-                        name: RELEASE-NAME-fluentd-pod-config-volume
-                      - mountPath: /var/log/nexus-iq-server
-                        name: RELEASE-NAME-iq-server-pod-logs
-                      - mountPath: /opt/bitnami/fluentd/logs/buffers
-                        name: RELEASE-NAME-fluentd-empty-dir
+                      - mountPath: /var/log/nexus-iq-server/stderr.log
+                        name: RELEASE-NAME-iq-server-pod-volume
+                        subPathExpr: log/$(HOSTNAME)-stderr.log
                 initContainers:
                   - command:
                       - /bin/sh
                       - -c
-                      - chown -R 2000:2000 /different/path
+                      - touch /iq/clm-cluster/log/$(HOSTNAME)-stderr.log && chown -R 2000:2000 /different/path
+                    env:
+                      - name: HOSTNAME
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.name
                     image: registry.example.com/busybox2:1.29
                     name: RELEASE-NAME-set-iq-persistence-ownership
                     volumeMounts:
@@ -484,16 +432,6 @@ tests:
                           path: config.yml
                       name: RELEASE-NAME-iq-server-config-configmap
                     name: RELEASE-NAME-iq-server-pod-config-volume
-                  - emptyDir: {}
-                    name: RELEASE-NAME-iq-server-pod-logs
-                  - emptyDir: {}
-                    name: RELEASE-NAME-fluentd-empty-dir
-                  - configMap:
-                      items:
-                        - key: fluentd
-                          path: fluentd.yaml
-                      name: RELEASE-NAME-fluentd-sidecar-forwarder-configmap
-                    name: RELEASE-NAME-fluentd-pod-config-volume
         documentIndex: 0
 
   - it: renders iq version tag correctly by default
@@ -847,45 +785,6 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].args
           value: ["--debug", "--verbose"]
-        documentIndex: 0
-
-  - it: renders fluentd sidecar with custom registry
-    set:
-      iq_server:
-        tag: "1.148.0"
-      fluentd:
-        enabled: true
-        sidecar_forwarder:
-          enabled: true
-        image:
-          registry: "private-registry.example.com"
-          repository: "bitnami/fluentd"
-          tag: "1.18.0"
-    asserts:
-      - hasDocuments:
-          count: 1
-      - equal:
-          path: spec.template.spec.containers[1].image
-          value: "private-registry.example.com/bitnami/fluentd:1.18.0"
-        documentIndex: 0
-
-  - it: renders fluentd sidecar without custom registry
-    set:
-      iq_server:
-        tag: "1.148.0"
-      fluentd:
-        enabled: true
-        sidecar_forwarder:
-          enabled: true
-        image:
-          repository: "bitnami/fluentd"
-          tag: "1.18.0"
-    asserts:
-      - hasDocuments:
-          count: 1
-      - equal:
-          path: spec.template.spec.containers[1].image
-          value: "docker.io/bitnami/fluentd:1.18.0"
         documentIndex: 0
 
   - it: can set nodeSelector, tolerations, and affinity

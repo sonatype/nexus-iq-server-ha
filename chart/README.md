@@ -248,48 +248,54 @@ You can retrieve the public key from the pod at <clusterDirectory>/.ssh/id_rsa.p
 A `config.yml` file is required to run. This is generated using the `iq_server.config` value. Care should be taken if
 updating this as many values within it are fine-tuned to allow the helm chart to function.
 
-### Logging (required)
+### Logging
 
-Each Sonatype IQ Server pod has a container running Sonatype IQ Server, which outputs the following log files
-* `clm-server.log`
-* `request.log`
-* `audit.log`
-* `policy-violation.log`
-* `stderr.log`
+Each Sonatype IQ Server pod outputs application logs to stdout via console appenders and to log files on the shared
+persistent volume. The default log files under the cluster directory are:
+* `<pod-name>-clm-server.log` - main server log
+* `<pod-name>-request.log` - HTTP request log
+* `<pod-name>-audit.log` - audit events
+* `<pod-name>-policy-violation.log` - policy violation events
+* `<pod-name>-stderr.log` - JVM-level errors that bypass the logging framework (normally empty)
 
-by default to `/var/log/nexus-iq-server`.
+Note that JVM stderr is redirected to `<pod-name>-stderr.log` on the shared PV rather than to the container's stderr
+stream. This means `kubectl logs` and log collectors that read container stdout/stderr will capture application logs
+but not JVM-level errors such as `OutOfMemoryError` or native crashes. To monitor for these, collect
+`<pod-name>-stderr.log` from the shared PV.
 
-A fluentd sidecar container in the same pod tails these log files and forwards the content to a fluentd daemonset
-aggregator.
+By default, each pod writes its log files to `/sonatype-work/clm-cluster/log/` with the pod name prefixed to each
+filename (e.g., `iq-server-deployment-abc123-clm-server.log`). `${HOSTNAME}` is a Kubernetes-provided environment
+variable that resolves to the pod name. This means log files from all HA nodes are accessible on the shared PV, and
+the IQ Server support zip can collect logs from every node in the cluster.
 
-For each log file, the aggregator combines its content from each pod into an aggregated log file in
-ndjson format, which is output with the current date to the shared file system PV by default to
-`/log` such that you end up with
-* `clm-server.<yyyyMMdd>.log`
-* `request.<yyyyMMdd>.log`
-* `audit.<yyyyMMdd>.log`
-* `policy-violation.<yyyyMMdd>.log`
-* `stderr.<yyyyMMdd>.log`
+Log aggregation is **not bundled** with this chart. If you require centralized log forwarding, you are responsible for
+integrating your preferred log aggregation solution. Common options include:
+* [Fluent Bit](https://fluentbit.io/) or [Fluentd](https://www.fluentd.org/) as a DaemonSet or sidecar
+* [Datadog Agent](https://docs.datadoghq.com/containers/kubernetes/)
+* [AWS CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-logs.html) with the CloudWatch agent
+* [Grafana Loki](https://grafana.com/oss/loki/) with Promtail
 
-where `<yyyyMMdd>` is the current date.
+Most log collectors work out of the box by collecting container stdout output without any chart configuration changes.
+To also capture JVM stderr and log files from terminated pods, configure your collector to read from the shared PV's
+`log/` directory.
 
-The aggregate log files may be required for a support request and by default will be included when generating a support
-zip inside a top-level `cluster_log` directory.
+To disable file logging and use only console output, override `iq_server.config` in a values file to remove all
+`type: file` appenders, keeping only the `type: console` entries. See the default `iq_server.config` in
+`values.yaml` for the full structure.
 
-By default, aggregate log files that have a last modified time older than 50 days are scheduled to be deleted every day
-at 1 am. This can be customized as follows
+Note that disabling file appenders means the support zip will not include log files, and `<pod-name>-stderr.log` on
+the shared PV will be the only file-based log available.
+
+#### Aggregate log cleanup
+
+A CronJob is included to clean up old log files from the shared PV under the `log/` subPath. This handles both
+per-pod log files from terminated pods and any legacy aggregate logs from previous Fluentd-bundled versions. By
+default, log files older than 50 days are deleted daily at 1 am. This can be customized as follows
    ```
    --set aggregateLogFileRetention.deleteCron=<Cron schedule expression, default "0 1 * * *">
-   --set aggregateLogFileRetention.maxLastModifiedDays=<max last modified time in days, default 7>
+   --set aggregateLogFileRetention.maxLastModifiedDays=<max last modified time in days, default 50>
    ```
 Note that setting `aggregateLogFileRetention.maxLastModifiedDays` to 0 disables deletion.
-
-Note that the fluentd daemonset aggregator has separate settings for its PVC and should normally be configured to use
-the same PVC as the Sonatype IQ Server pods as follows
-   ```
-   --set fluentd.aggregator.extraVolumes[0].name="iq-server-pod-volume"
-   --set fluentd.aggregator.extraVolumes[0].persistentVolumeClaim.claimName=<PVC name, default "iq-server-pvc">
-   ```
 
 ### Image (optional)
 
@@ -333,7 +339,6 @@ pre-installed and configured in the cluster to enable AWS Secrets Manager access
    2. `helm repo update`
    3. `helm upgrade --install --namespace kube-system csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --set grpcSupportedProviders="aws" --set syncSecret.enabled=true`
    4. `kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml`
-- [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) configuration for fluentd to send aggregated logs to
 - [`aws-vault`](https://github.com/99designs/aws-vault) [pre-installed and configured](https://github.com/99designs/aws-vault/blob/master/USAGE.md#config)
   to ease authentication, in which case prefix the aws/kubectl/helm commands below with `aws-vault exec <aws-profile> -- <command>`.
 
@@ -485,23 +490,6 @@ by default e.g.
      basePath: "/"
    ```
 
-### CloudWatch
-
-The fluentd aggregator can be configured to send aggregated logs to CloudWatch using the
-[fluent-plugin-cloudwatch-logs plugin](https://github.com/fluent-plugins-nursery/fluent-plugin-cloudwatch-logs).
-
-This requires fluentd aggregator pods to have the [correct permissions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-prerequisites.html)
-, which can either be associated with a service account the fluentd aggregator uses, or with the EKS worker nodes.
-
-Once the permissions are established, you can enable sending aggregated logs to CloudWatch, set the AWS region,
-log group name, and log stream name as follows
-   ```
-   --set cloudwatch.enabled=true
-   --set cloudwatch.region=<AWS region>
-   --set cloudwatch.logGroupName=<CloudWatch log group name>
-   --set cloudwatch.logStreamName=<CloudWatch log stream name>
-   ```
-
 ### Examples
 
 Some example commands are shown below.
@@ -571,8 +559,7 @@ HPA is disabled by default. If you want to enable it, you need to set the `hpa.e
    --set hpa.enabled=true
    ```
 Defined resources requests for all the containers in the IQ Server pod are required for HPA to be able to compute
-metrics. As a result, if you are scaling based on CPU usage you need to specify CPU requests for the IQ server and fluentd
-sidecar. 
+metrics. As a result, if you are scaling based on CPU usage you need to specify CPU requests for the IQ server.
 
 Please refer to the "Chart Configuration Options" table below for detailed parameters for adjusting HPA configuration
 to match your needs.
@@ -586,9 +573,7 @@ Some example commands are shown below.
     ...
     --set hpa.enabled=true
     --set iq_server.resources.requests.cpu="500m"
-    --set iq_server.resources.limits.cpu="1000m"    
-    --set fluentd.sidecar_forwarder.resources.requests.cpu="200m"
-    --set fluentd.sidecar_forwarder.resources.requests.cpu="500m"
+    --set iq_server.resources.limits.cpu="1000m"
     ...
    sonatype/nexus-iq-server-ha --version <version>
    ```
@@ -655,15 +640,27 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 3. **Update the helm chart.** Typically, this will also update the Sonatype IQ Server version.
 4. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
 
-### To 186.0.0
-In this version all the fluentd sidecar options have been moved under the `fluentd.sidecar_forwarder` prefix to avoid confusion.
+### To 202.0.0
+In this version, the bundled Fluentd subchart has been removed. Log aggregation is now the responsibility of the
+customer. Key changes:
 
-- Moved iq_server.fluentd.forwarder.enabled to fluentd.sidecar_forwarder.enabled
-- Moved fluentd.securityContext to fluentd.sidecar_forwarder.securityContext
-- Moved fluentd.resources.requests.cpu to fluentd.sidecar_forwarder.resources.requests.cpu
-- Moved fluentd.resources.requests.memory to fluentd.sidecar_forwarder.resources.requests.memory
-- Moved fluentd.resources.limits.cpu to fluentd.sidecar_forwarder.resources.limits.cpu
-- Moved fluentd.resources.limits.memory to fluentd.sidecar_forwarder.resources.limits.memory
+- Removed the `fluentd` subchart dependency and all `fluentd.*` values
+- Removed the `cloudwatch.*` values (previously used by the Fluentd aggregator)
+- Removed the Fluentd sidecar container from the IQ Server deployment
+- Removed the Fluentd aggregator StatefulSet
+- Log file appenders now write to the shared cluster directory (`/sonatype-work/clm-cluster/log/`) with the pod
+  name prefixed to each filename (e.g., `<pod-name>-clm-server.log`), so the support zip can collect logs from
+  all HA nodes and the existing CronJob handles cleanup automatically
+
+**Action required:** If you were relying on the bundled Fluentd for log aggregation or CloudWatch integration,
+you will need to deploy your own log collection solution. See the updated "Logging" section for guidance.
+
+**Action required:** Remove any `fluentd.*` or `cloudwatch.*` overrides from your Helm values, as these are no
+longer recognized.
+
+**Action required:** If you have customized `iq_server.config` log file paths, update them to write under the
+cluster directory `log/` subdirectory (e.g., `/sonatype-work/clm-cluster/log/<name>-${HOSTNAME}.log`) to ensure
+the support zip can collect logs from all nodes and the cleanup CronJob handles retention.
 
 ## Chart Configuration Options
 | Parameter                                                          | Description                                                                                          | Default                    |
@@ -774,10 +771,6 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `secret.rds.keys.password`                                         | JSON key name in the RDS secret for the database password                                            | `password`                 |
 | `secret.sshPrivateKey.arn`                                         | AWS secret arn containing the binary content of your SSH private key for use with ssh git operations | `nil`                      |
 | `secret.sshKnownHosts.arn`                                         | AWS secret arn containing the binary content of your SSH known hosts for use with ssh git operations | `nil`                      |
-| `cloudwatch.enabled`                                               | Enable CloudWatch logging                                                                            | `false`                    |
-| `cloudwatch.region`                                                | CloudWatch region                                                                                    | `nil`                      |
-| `cloudwatch.logGroupName`                                          | CloudWatch log group name                                                                            | `nil`                      |
-| `cloudwatch.logStreamName`                                         | CloudWatch log stream name                                                                           | `nil`                      |
 | `existingApplicationLoadBalancer.applicationTargetGroupARN`        | Target group ARN for target synchronization with application endpoints                               | `nil`                      |
 | `existingApplicationLoadBalancer.adminTargetGroupARN`              | Target group ARN for target synchronization with admin endpoints                                     | `nil`                      |
 | `aggregateLogFileRetention.deleteCron`                             | Cron schedule expression for when to delete old aggregate log files if needed                        | `0 1 * * *`                |
@@ -785,17 +778,6 @@ In this version all the fluentd sidecar options have been moved under the `fluen
 | `aggregateLogFileRetention.nodeSelector`                           | Node labels for cronjob pod assignment                                                               | `{}`                       |
 | `aggregateLogFileRetention.tolerations`                            | Tolerations for cronjob pod assignment                                                               | `[]`                       |
 | `aggregateLogFileRetention.affinity`                               | Affinity rules for cronjob pod assignment                                                            | `{}`                       |
-| `fluentd.enabled`                                                  | Enable Fluentd                                                                                       | `true`                     |
-| `fluentd.image.repository`                                         | Fluentd image repository                                                                             | See `values.yaml`          |
-| `fluentd.config`                                                   | Fluentd configuration                                                                                | See `values.yaml`          |
-| `fluentd.sidecar_forwarder.enabled`                                | Enable Fluentd sidecar forwarder                                                                     | `true`                     |
-| `fluentd.sidecar_forwarder.resources.requests.cpu`                 | Fluentd sidecar forwarder cpu request                                                                | `nil`                      |
-| `fluentd.sidecar_forwarder.resources.limits.cpu`                   | Fluentd sidecar forwarder cpu limit                                                                  | `nil`                      |
-| `fluentd.sidecar_forwarder.resources.requests.memory`              | Fluentd sidecar forwarder memory request                                                             | `nil`                      |
-| `fluentd.sidecar_forwarder.resources.limits.memory`                | Fluentd sidecar forwarder memory limit                                                               | `nil`                      |
-| `fluentd.sidecar_forwarder.daemonUser`                             | Fluentd sidecar forwarder daemon user (set to root by default because it reads from host paths)      | `root`                     |
-| `fluentd.sidecar_forwarder.daemonGroup`                            | Fluentd sidecar forwarder daemon group (set to root by default because it reads from host paths)     | `root`                     |
-| `fluentd.sidecar_forwarder.securityContext`                        | Fluentd sidecar forwarder security context (See `values.yaml` for non root example)                  | `nil`                      |
 | `hpa.enabled`                                                      | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
 | `hpa.minReplicas`                                                  | Minimum number of replicas                                                                           | `2`                        |
 | `hpa.maxReplicas`                                                  | Maximum number of replicas                                                                           | `4`                        |

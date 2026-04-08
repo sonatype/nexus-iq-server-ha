@@ -21,7 +21,3 @@ dependencies:
     version: 4.4.2
     repository: https://kubernetes.github.io/ingress-nginx
     condition: ingress-nginx.enabled
-  - name: fluentd
-    repository: https://charts.bitnami.com/bitnami
-    version: 7.0.3
-    condition: fluentd.enabled
