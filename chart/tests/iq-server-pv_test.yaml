@@ -237,6 +237,40 @@ tests:
             term2: value2
         documentIndex: 0
 
+  - it: uses explicit storageClassName on PV
+    set:
+      iq_server:
+        persistence:
+          storageClassName: "my-existing-class"
+          csi:
+            driver: "efs.csi.aws.com"
+            volumeHandle: "fs-12345"
+            fsType: "efs"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: my-existing-class
+        documentIndex: 0
+
+  - it: explicit storageClassName takes precedence over storageClass.create on PV
+    set:
+      iq_server:
+        persistence:
+          storageClassName: "pre-existing-class"
+          storageClass:
+            create: true
+            name: "created-class"
+            provisioner: "efs.csi.aws.com"
+          csi:
+            driver: "efs.csi.aws.com"
+            volumeHandle: "fs-12345"
+            fsType: "efs"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: pre-existing-class
+        documentIndex: 0
+
   - it: uses created storageClass name when storageClass.create is true
     set:
       iq_server:

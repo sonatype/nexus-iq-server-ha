@@ -7,6 +7,19 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: is not created when create is false even with fields populated
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: false
+            name: "should-not-exist"
+            provisioner: "efs.csi.aws.com"
+            reclaimPolicy: Delete
+    asserts:
+      - hasDocuments:
+          count: 0
+
   - it: renders with minimal config when create is true
     set:
       iq_server:
@@ -182,3 +195,77 @@ tests:
     asserts:
       - isNull:
           path: metadata.annotations
+
+  - it: fails when provisioner is not set
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "iq_server.persistence.storageClass.provisioner is required when storageClass.create is true"
+
+  - it: renders a realistic EFS configuration
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            name: "iq-efs-sc"
+            provisioner: "efs.csi.aws.com"
+            reclaimPolicy: Retain
+            volumeBindingMode: Immediate
+            allowVolumeExpansion: true
+            annotations:
+              storageclass.kubernetes.io/is-default-class: "false"
+            labels:
+              team: platform
+            mountOptions:
+              - tls
+              - iam
+            parameters:
+              provisioningMode: efs-ap
+              fileSystemId: "fs-0123456789abcdef0"
+              directoryPerms: "700"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: StorageClass
+      - equal:
+          path: metadata.name
+          value: "iq-efs-sc"
+      - equal:
+          path: provisioner
+          value: "efs.csi.aws.com"
+      - equal:
+          path: reclaimPolicy
+          value: Retain
+      - equal:
+          path: volumeBindingMode
+          value: Immediate
+      - equal:
+          path: allowVolumeExpansion
+          value: true
+      - equal:
+          path: metadata.annotations
+          value:
+            storageclass.kubernetes.io/is-default-class: "false"
+      - equal:
+          path: metadata.labels
+          value:
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/instance: RELEASE-NAME
+            team: platform
+      - equal:
+          path: mountOptions
+          value:
+            - tls
+            - iam
+      - equal:
+          path: parameters
+          value:
+            provisioningMode: efs-ap
+            fileSystemId: "fs-0123456789abcdef0"
+            directoryPerms: "700"

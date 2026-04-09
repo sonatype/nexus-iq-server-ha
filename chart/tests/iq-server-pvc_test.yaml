@@ -124,6 +124,32 @@ tests:
             operator: operator2
         documentIndex: 0
 
+  - it: uses explicit storageClassName on PVC
+    set:
+      iq_server:
+        persistence:
+          storageClassName: "my-existing-class"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: my-existing-class
+        documentIndex: 0
+
+  - it: explicit storageClassName takes precedence over storageClass.create on PVC
+    set:
+      iq_server:
+        persistence:
+          storageClassName: "pre-existing-class"
+          storageClass:
+            create: true
+            name: "created-class"
+            provisioner: "efs.csi.aws.com"
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: pre-existing-class
+        documentIndex: 0
+
   - it: uses created storageClass name when storageClass.create is true
     set:
       iq_server:

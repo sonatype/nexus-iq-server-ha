@@ -1,0 +1,89 @@
+suite: storageclass-integration
+templates:
+  - storageclass.yaml
+  - iq-server-pv.yaml
+  - iq-server-pvc.yaml
+tests:
+  - it: StorageClass name matches PV and PVC storageClassName when using custom name
+    set:
+      iq_server:
+        persistence:
+          storageClassName: ""
+          storageClass:
+            create: true
+            name: "my-storageclass"
+            provisioner: "efs.csi.aws.com"
+          csi:
+            driver: "efs.csi.aws.com"
+            volumeHandle: "fs-12345"
+            fsType: "efs"
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-storageclass
+        template: storageclass.yaml
+      - equal:
+          path: spec.storageClassName
+          value: my-storageclass
+        template: iq-server-pv.yaml
+        documentIndex: 0
+      - equal:
+          path: spec.storageClassName
+          value: my-storageclass
+        template: iq-server-pvc.yaml
+        documentIndex: 0
+
+  - it: StorageClass name matches PV and PVC storageClassName when using generated name
+    set:
+      iq_server:
+        persistence:
+          storageClassName: ""
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+          csi:
+            driver: "efs.csi.aws.com"
+            volumeHandle: "fs-12345"
+            fsType: "efs"
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-storageclass
+        template: storageclass.yaml
+      - equal:
+          path: spec.storageClassName
+          value: RELEASE-NAME-storageclass
+        template: iq-server-pv.yaml
+        documentIndex: 0
+      - equal:
+          path: spec.storageClassName
+          value: RELEASE-NAME-storageclass
+        template: iq-server-pvc.yaml
+        documentIndex: 0
+
+  - it: PV and PVC get empty storageClassName when storageClass.create is false with fields populated
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: false
+            name: "should-not-be-used"
+            provisioner: "efs.csi.aws.com"
+          csi:
+            driver: "efs.csi.aws.com"
+            volumeHandle: "fs-12345"
+            fsType: "efs"
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: storageclass.yaml
+      - equal:
+          path: spec.storageClassName
+          value: ""
+        template: iq-server-pv.yaml
+        documentIndex: 0
+      - equal:
+          path: spec.storageClassName
+          value: ""
+        template: iq-server-pvc.yaml
+        documentIndex: 0

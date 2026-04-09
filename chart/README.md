@@ -693,7 +693,7 @@ the support zip can collect logs from all nodes and the cleanup CronJob handles 
 | `iq_server.persistence.persistentVolumeRetainPolicy`               | Persistent volume retain policy                                                                      | `keep`                     |
 | `iq_server.persistence.persistentVolumeClaimRetainPolicy`          | Persistent volume claim retain policy                                                                | `keep`                     |
 | `iq_server.persistence.size`                                       | Storage capacity for PV/PVC to provision/request                                                     | `1Gi`                      |
-| `iq_server.persistence.storageClassName`                           | Storage class name for the PV/PVC                                                                    | `""`                       |
+| `iq_server.persistence.storageClassName`                           | Reference an existing StorageClass; takes precedence over `storageClass.create`                       | `""`                       |
 | `iq_server.persistence.storageClass.create`                        | Whether to create a StorageClass resource                                                            | `false`                    |
 | `iq_server.persistence.storageClass.name`                          | StorageClass name (defaults to `<release>-storageclass`)                                             | `nil`                      |
 | `iq_server.persistence.storageClass.annotations`                   | Additional StorageClass annotations                                                                  | `{}`                       |
