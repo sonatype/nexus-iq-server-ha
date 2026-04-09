@@ -117,6 +117,28 @@ iq_server:
     # Access mode for PV/PVC (should correspond to the volume type)
     accessModes:
       - ReadWriteMany
+    # Storage class for dynamic provisioning
+    # Set storageClass.create to true to create a StorageClass resource
+    storageClass:
+      create: false
+      # Name of the StorageClass (defaults to release name + "-storageclass" if not set)
+      name:
+      # Additional annotations (e.g., storageclass.kubernetes.io/is-default-class: "true")
+      annotations: {}
+      # Additional labels beyond the default managed-by and instance labels
+      labels: {}
+      # CSI driver provisioner (e.g., efs.csi.aws.com, ebs.csi.aws.com)
+      provisioner:
+      # Reclaim policy: Retain or Delete
+      reclaimPolicy: Retain
+      # Volume binding mode: Immediate or WaitForFirstConsumer
+      volumeBindingMode: Immediate
+      # Allow volume expansion
+      allowVolumeExpansion: true
+      # Mount options
+      mountOptions: []
+      # Parameters to pass to the provisioner
+      parameters: {}
     # Volume type
     # Whichever one has all required parameters set will be used
     # If this applies to multiple, then one will be selected in the preference order of csi then nfs

@@ -1,0 +1,28 @@
+{{- if .Values.iq_server.persistence.storageClass.create }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ include "nexus-iq-server-ha.storageClassName" . }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- with .Values.iq_server.persistence.storageClass.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.iq_server.persistence.storageClass.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+provisioner: {{ required "iq_server.persistence.storageClass.provisioner is required when storageClass.create is true" .Values.iq_server.persistence.storageClass.provisioner }}
+reclaimPolicy: {{ .Values.iq_server.persistence.storageClass.reclaimPolicy }}
+volumeBindingMode: {{ .Values.iq_server.persistence.storageClass.volumeBindingMode }}
+allowVolumeExpansion: {{ .Values.iq_server.persistence.storageClass.allowVolumeExpansion }}
+{{- with .Values.iq_server.persistence.storageClass.mountOptions }}
+mountOptions:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.iq_server.persistence.storageClass.parameters }}
+parameters:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}

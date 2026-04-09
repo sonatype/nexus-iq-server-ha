@@ -1,0 +1,271 @@
+suite: storageclass
+templates:
+  - storageclass.yaml
+tests:
+  - it: is disabled by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is not created when create is false even with fields populated
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: false
+            name: "should-not-exist"
+            provisioner: "efs.csi.aws.com"
+            reclaimPolicy: Delete
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders with minimal config when create is true
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: StorageClass
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-storageclass
+      - equal:
+          path: provisioner
+          value: "efs.csi.aws.com"
+      - equal:
+          path: reclaimPolicy
+          value: Retain
+      - equal:
+          path: volumeBindingMode
+          value: Immediate
+      - equal:
+          path: allowVolumeExpansion
+          value: true
+      - equal:
+          path: metadata.labels
+          value:
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/instance: RELEASE-NAME
+
+  - it: renders with custom name
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            name: "my-custom-storageclass"
+            provisioner: "ebs.csi.aws.com"
+    asserts:
+      - equal:
+          path: metadata.name
+          value: "my-custom-storageclass"
+
+  - it: renders with overridden values
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "ebs.csi.aws.com"
+            reclaimPolicy: Delete
+            volumeBindingMode: WaitForFirstConsumer
+            allowVolumeExpansion: false
+    asserts:
+      - equal:
+          path: provisioner
+          value: "ebs.csi.aws.com"
+      - equal:
+          path: reclaimPolicy
+          value: Delete
+      - equal:
+          path: volumeBindingMode
+          value: WaitForFirstConsumer
+      - equal:
+          path: allowVolumeExpansion
+          value: false
+
+  - it: renders with annotations
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+            annotations:
+              storageclass.kubernetes.io/is-default-class: "true"
+    asserts:
+      - equal:
+          path: metadata.annotations
+          value:
+            storageclass.kubernetes.io/is-default-class: "true"
+
+  - it: renders with custom labels
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+            labels:
+              team: platform
+              cost-center: infra
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/instance: RELEASE-NAME
+            team: platform
+            cost-center: infra
+
+  - it: renders with mount options
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+            mountOptions:
+              - tls
+              - iam
+    asserts:
+      - equal:
+          path: mountOptions
+          value:
+            - tls
+            - iam
+
+  - it: renders with parameters
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "ebs.csi.aws.com"
+            parameters:
+              type: gp3
+              fsType: ext4
+              iopsPerGB: "10"
+    asserts:
+      - equal:
+          path: parameters
+          value:
+            type: gp3
+            fsType: ext4
+            iopsPerGB: "10"
+
+  - it: does not render mountOptions when empty
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+            mountOptions: []
+    asserts:
+      - isNull:
+          path: mountOptions
+
+  - it: does not render parameters when empty
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+            parameters: {}
+    asserts:
+      - isNull:
+          path: parameters
+
+  - it: does not render annotations when empty
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            provisioner: "efs.csi.aws.com"
+            annotations: {}
+    asserts:
+      - isNull:
+          path: metadata.annotations
+
+  - it: fails when provisioner is not set
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "iq_server.persistence.storageClass.provisioner is required when storageClass.create is true"
+
+  - it: renders a realistic EFS configuration
+    set:
+      iq_server:
+        persistence:
+          storageClass:
+            create: true
+            name: "iq-efs-sc"
+            provisioner: "efs.csi.aws.com"
+            reclaimPolicy: Retain
+            volumeBindingMode: Immediate
+            allowVolumeExpansion: true
+            annotations:
+              storageclass.kubernetes.io/is-default-class: "false"
+            labels:
+              team: platform
+            mountOptions:
+              - tls
+              - iam
+            parameters:
+              provisioningMode: efs-ap
+              fileSystemId: "fs-0123456789abcdef0"
+              directoryPerms: "700"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: StorageClass
+      - equal:
+          path: metadata.name
+          value: "iq-efs-sc"
+      - equal:
+          path: provisioner
+          value: "efs.csi.aws.com"
+      - equal:
+          path: reclaimPolicy
+          value: Retain
+      - equal:
+          path: volumeBindingMode
+          value: Immediate
+      - equal:
+          path: allowVolumeExpansion
+          value: true
+      - equal:
+          path: metadata.annotations
+          value:
+            storageclass.kubernetes.io/is-default-class: "false"
+      - equal:
+          path: metadata.labels
+          value:
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/instance: RELEASE-NAME
+            team: platform
+      - equal:
+          path: mountOptions
+          value:
+            - tls
+            - iam
+      - equal:
+          path: parameters
+          value:
+            provisioningMode: efs-ap
+            fileSystemId: "fs-0123456789abcdef0"
+            directoryPerms: "700"
