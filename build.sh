@@ -12,7 +12,8 @@
 # Eclipse Foundation. All other trademarks are the property of their respective owners.
 #
 
-helm plugin install https://github.com/quintush/helm-unittest --version v0.2.11
+# --verify=false: plugin does not yet ship .prov files (https://github.com/helm-unittest/helm-unittest/issues/777)
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
 
 set -e
 
@@ -23,7 +24,7 @@ helm dependency update chart
 helm lint chart
 
 # unit test
-(cd ./chart; helm unittest -3 -t junit -o test-output.xml .)
+(cd ./chart; helm unittest -t junit -o test-output.xml .)
 
 # package the chart into tgz archives
 helm package chart --destination docs
