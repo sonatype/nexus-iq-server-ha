@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: iq-ha
+  labels:
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/component: log-aggregator
+    app.kubernetes.io/part-of: nexus-iq-server
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fluent-bit
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fluent-bit
+        app.kubernetes.io/component: log-aggregator
+    spec:
+      serviceAccountName: fluent-bit
+      tolerations:
+        # Allow to run on master nodes if needed
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+          operator: Exists
+        # Allow to run on control-plane nodes if needed
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+          operator: Exists
+      containers:
+        - name: fluent-bit
+          image: fluent/fluent-bit:3.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 2020
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            # Mount the IQ Server log directory from the shared PVC
+            - name: iq-server-logs
+              mountPath: /logs/log
+              readOnly: false
+            # Mount the Fluent Bit configuration
+            - name: fluent-bit-config
+              mountPath: /fluent-bit/etc/
+      volumes:
+        # Reference the existing PVC created by the IQ Server Helm chart
+        # This PVC must have ReadWriteMany access mode for multi-node access
+        - name: iq-server-logs
+          persistentVolumeClaim:
+            claimName: iq-server-pvc
+        # ConfigMap containing Fluent Bit configuration
+        - name: fluent-bit-config
+          configMap:
+            name: fluent-bit-config
+            items:
+              - key: fluent-bit.conf
+                path: fluent-bit.conf
+              - key: parsers.conf
+                path: parsers.conf
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: iq-ha
+  labels:
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/component: log-aggregator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fluent-bit-read
+  labels:
+    app.kubernetes.io/name: fluent-bit
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - namespaces
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fluent-bit-read
+  labels:
+    app.kubernetes.io/name: fluent-bit
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fluent-bit-read
+subjects:
+  - kind: ServiceAccount
+    name: fluent-bit
+    namespace: iq-ha

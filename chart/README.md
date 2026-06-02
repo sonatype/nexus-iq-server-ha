@@ -269,11 +269,7 @@ variable that resolves to the pod name. This means log files from all HA nodes a
 the IQ Server support zip can collect logs from every node in the cluster.
 
 Log aggregation is **not bundled** with this chart. If you require centralized log forwarding, you are responsible for
-integrating your preferred log aggregation solution. Common options include:
-* [Fluent Bit](https://fluentbit.io/) or [Fluentd](https://www.fluentd.org/) as a DaemonSet or sidecar
-* [Datadog Agent](https://docs.datadoghq.com/containers/kubernetes/)
-* [AWS CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-logs.html) with the CloudWatch agent
-* [Grafana Loki](https://grafana.com/oss/loki/) with Promtail
+integrating your preferred log aggregation solution. A validated Fluent Bit example is provided in the `examples/` directory.
 
 Most log collectors work out of the box by collecting container stdout output without any chart configuration changes.
 To also capture JVM stderr and log files from terminated pods, configure your collector to read from the shared PV's
@@ -661,6 +657,68 @@ longer recognized.
 **Action required:** If you have customized `iq_server.config` log file paths, update them to write under the
 cluster directory `log/` subdirectory (e.g., `/sonatype-work/clm-cluster/log/<name>-${HOSTNAME}.log`) to ensure
 the support zip can collect logs from all nodes and the cleanup CronJob handles retention.
+
+## Log Aggregation
+
+As of version 202.0.0, the Helm chart no longer includes a bundled log aggregator. Customers are responsible for
+deploying their own log aggregation solution. This section provides guidance on integrating external log aggregators.
+
+### Log File Locations
+
+IQ Server pods write logs to the shared cluster directory, which is accessible via the PVC:
+
+| Log Type | File Pattern | Path |
+|----------|-------------|------|
+| Server | `<pod-name>-clm-server.log` | `/sonatype-work/clm-cluster/log/` |
+| Request | `<pod-name>-request.log` | `/sonatype-work/clm-cluster/log/` |
+| Audit | `<pod-name>-audit.log` | `/sonatype-work/clm-cluster/log/` |
+| Policy Violation | `<pod-name>-policy-violation.log` | `/sonatype-work/clm-cluster/log/` |
+| Stderr | `<pod-name>-stderr.log` | `/sonatype-work/clm-cluster/log/` |
+
+### Log Format
+
+Logs are written in plain text with the following format:
+
+```
+YYYY-MM-DD HH:MM:SS,SSS+ZZZZ LEVEL [thread] user logger - message
+```
+
+Example:
+```
+2026-06-02 17:01:28,138+0000 INFO [main] *SYSTEM com.sonatype.insight.brain.service.InsightBrainService - Initializing...
+```
+
+### Integrating External Log Aggregators
+
+The Helm chart supports a "bring your own aggregator" model. To integrate Fluent Bit:
+
+1. **Deploy Fluent Bit** as a separate Kubernetes resource
+2. **Mount the existing PVC** (`iq-server-pvc` by default) to access log files
+3. **Configure Fluent Bit** to tail the log files from `/sonatype-work/clm-cluster/log/`
+4. **Forward logs** to your desired destination
+
+### Example: Fluent Bit Integration
+
+A working Fluent Bit example is provided in the `examples/fluent-bit/` directory of this repository:
+
+```bash
+# Deploy Fluent Bit with file output (local aggregation)
+kubectl apply -f examples/fluent-bit/fluent-bit-configmap.yaml
+kubectl apply -f examples/fluent-bit/fluent-bit-daemonset.yaml
+```
+
+See the [examples/README.md](../examples/README.md) for complete documentation. The example ConfigMap uses file output to write aggregated logs back to the shared PVC. To forward logs to external systems, modify the `[OUTPUT]` sections in the ConfigMap.
+
+### PVC Requirements for Log Aggregation
+
+- **Access Mode**: `ReadWriteMany` (RWX) is required for multiple pods to share the volume
+- **PVC Name**: `iq-server-pvc` (default, configurable via `iq_server.persistence.persistentVolumeClaimName`)
+- **Mount Path in Aggregator**: Mount to any path and configure your aggregator to read from `<mount>/log/`
+
+### Support Zip Integration
+
+Logs written to the cluster directory are automatically included in support zips under the `cluster_log` directory.
+This ensures that support can access aggregated logs from all HA nodes.
 
 ## Chart Configuration Options
 | Parameter                                                          | Description                                                                                          | Default                    |
