@@ -699,15 +699,44 @@ The Helm chart supports a "bring your own aggregator" model. To integrate Fluent
 
 ### Example: Fluent Bit Integration
 
-A working Fluent Bit example is provided in the `examples/fluent-bit/` directory of this repository:
+A working Fluent Bit example is provided in the `examples/fluent-bit/` directory of this repository.
+
+**Prerequisites:**
+- The example assumes your namespace is `iq-ha` (the YAML default). If using a different namespace, see the customization steps below.
+- The example assumes your PVC is named `iq-server-pvc` (the chart default).
+
+**Quick Deploy:**
 
 ```bash
 # Deploy Fluent Bit with file output (local aggregation)
+# These files create resources in the 'iq-ha' namespace by default
 kubectl apply -f examples/fluent-bit/fluent-bit-configmap.yaml
 kubectl apply -f examples/fluent-bit/fluent-bit-daemonset.yaml
 ```
 
-See the [examples/README.md](../examples/README.md) for complete documentation. The example ConfigMap uses file output to write aggregated logs back to the shared PVC. To forward logs to external systems, modify the `[OUTPUT]` sections in the ConfigMap.
+**To use a different namespace:**
+
+```bash
+# Option 1: Edit files before applying
+sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-configmap.yaml | kubectl apply -f -
+sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-daemonset.yaml | kubectl apply -f -
+
+# Option 2: Download and modify
+mkdir -p my-fluent-bit
+cp examples/fluent-bit/*.yaml my-fluent-bit/
+sed -i 's/namespace: iq-ha/namespace: your-namespace/g' my-fluent-bit/*.yaml
+kubectl apply -f my-fluent-bit/
+```
+
+**To use a different PVC name** (if you customized `iq_server.persistence.persistentVolumeClaimName`):
+
+```bash
+# Update the claimName in the DaemonSet
+sed -i 's/claimName: iq-server-pvc/claimName: your-pvc-name/g' my-fluent-bit/fluent-bit-daemonset.yaml
+kubectl apply -f my-fluent-bit/
+```
+
+See the [examples/fluent-bit/README.md](../examples/fluent-bit/README.md) for complete documentation including verification steps and customization options. The example ConfigMap uses file output to write aggregated logs back to the shared PVC. To forward logs to external systems, modify the `[OUTPUT]` sections in the ConfigMap.
 
 ### PVC Requirements for Log Aggregation
 

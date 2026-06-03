@@ -67,13 +67,42 @@ These manifests are **specifically designed for IQ Server HA** - they are not ge
 
 ## Quick Start
 
+The provided YAML files use `namespace: iq-ha` by default. Choose the option that matches your setup:
+
+### Option A: Using the default namespace (`iq-ha`)
+
 ```bash
-# Deploy Fluent Bit
+# Deploy Fluent Bit (creates resources in 'iq-ha' namespace)
 kubectl apply -f fluent-bit-configmap.yaml
 kubectl apply -f fluent-bit-daemonset.yaml
 
 # Verify deployment
-kubectl get pods -n <namespace> -l app.kubernetes.io/name=fluent-bit
+kubectl get pods -n iq-ha -l app.kubernetes.io/name=fluent-bit
+```
+
+### Option B: Using a custom namespace
+
+```bash
+# Replace 'your-namespace' with your actual namespace
+NAMESPACE=your-namespace
+
+# Deploy with namespace substitution
+sed "s/namespace: iq-ha/namespace: $NAMESPACE/g" fluent-bit-configmap.yaml | kubectl apply -f -
+sed "s/namespace: iq-ha/namespace: $NAMESPACE/g" fluent-bit-daemonset.yaml | kubectl apply -f -
+
+# Verify deployment
+kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=fluent-bit
+```
+
+### Option C: Copy and customize the files
+
+```bash
+# Copy files for editing
+cp fluent-bit-configmap.yaml my-fluent-bit-configmap.yaml
+cp fluent-bit-daemonset.yaml my-fluent-bit-daemonset.yaml
+
+# Edit the files to change namespace and/or PVC name, then apply
+kubectl apply -f my-fluent-bit-configmap.yaml -f my-fluent-bit-daemonset.yaml
 ```
 
 ## Log Files
@@ -167,8 +196,13 @@ kubectl describe pod -n <namespace> -l app.kubernetes.io/name=fluent-bit | grep 
 ## Cleanup
 
 ```bash
-kubectl delete -f fluent-bit-daemonset.yaml
-kubectl delete -f fluent-bit-configmap.yaml
+# If using the default namespace (iq-ha)
+kubectl delete -f fluent-bit-daemonset.yaml -n iq-ha
+kubectl delete -f fluent-bit-configmap.yaml -n iq-ha
+
+# If using a custom namespace, specify it:
+# kubectl delete -f fluent-bit-daemonset.yaml -n your-namespace
+# kubectl delete -f fluent-bit-configmap.yaml -n your-namespace
 ```
 
 ## See Also

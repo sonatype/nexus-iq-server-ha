@@ -72,14 +72,20 @@ iq-cluster-iq-server-deployment-777c4869f5-xf8jh-clm-server.log
 ## Quick Start
 
 1. Review the configuration files in `fluent-bit/`
-2. Update the `namespace` in the manifests if needed (default: `iq-ha`)
+2. Customize the namespace if needed (default: `iq-ha`)
 3. Apply the manifests:
 
 ```bash
-# Deploy Fluent Bit with file output (local aggregation)
+# Option 1: Using the default namespace (iq-ha)
 kubectl apply -f fluent-bit/fluent-bit-configmap.yaml
 kubectl apply -f fluent-bit/fluent-bit-daemonset.yaml
+
+# Option 2: Using a custom namespace (replace 'your-namespace')
+sed 's/namespace: iq-ha/namespace: your-namespace/g' fluent-bit/fluent-bit-configmap.yaml | kubectl apply -f -
+sed 's/namespace: iq-ha/namespace: your-namespace/g' fluent-bit/fluent-bit-daemonset.yaml | kubectl apply -f -
 ```
+
+> **Note:** The YAML files have `namespace: iq-ha` hardcoded. When using a custom namespace, either use the `sed` approach above or make a local copy of the files and edit them.
 
 ## Customization
 
@@ -94,19 +100,28 @@ Each example includes a ConfigMap that you can customize for your environment:
 ### Check Log Aggregator Status
 
 ```bash
-kubectl get pods -n <namespace> -l app.kubernetes.io/component=log-aggregator
+# Using default namespace
+kubectl get pods -n iq-ha -l app.kubernetes.io/component=log-aggregator
+
+# Using custom namespace
+kubectl get pods -n your-namespace -l app.kubernetes.io/component=log-aggregator
 ```
 
 ### View Aggregator Logs
 
 ```bash
-kubectl logs -n <namespace> -l app.kubernetes.io/component=log-aggregator
+# Using default namespace
+kubectl logs -n iq-ha -l app.kubernetes.io/component=log-aggregator
+
+# Using custom namespace
+kubectl logs -n your-namespace -l app.kubernetes.io/component=log-aggregator
 ```
 
 ### Verify PVC Mount
 
 ```bash
-kubectl exec -n <namespace> deployment/<iq-server-deployment> -- \
+# Using default namespace and PVC name
+kubectl exec -n iq-ha deployment/iq-cluster-iq-server-deployment -- \
   ls -la /sonatype-work/clm-cluster/log/
 ```
 
