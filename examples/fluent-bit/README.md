@@ -132,9 +132,9 @@ Fluent Bit writes aggregated logs back to the shared PVC:
 └── stderr.aggregated.log
 ```
 
-Each file contains plain text log entries from all IQ Server pods combined. The logs retain their original format with parsed fields available for downstream processing.
+Each file contains entries from all IQ Server pods combined, one record per line. Because the `nexus_iq` parser produces a structured record, the file output writes each record as JSON (with `time`, `level`, `thread`, `user`, `logger`, and `message` keys) regardless of whether `Format plain` or `Format json` is set in `[OUTPUT]`.
 
-> **Note**: To output JSON-formatted logs instead, change `Format plain` to `Format json` in each `[OUTPUT]` section of the ConfigMap.
+> **Note**: If you need the raw log line back instead of a JSON record, drop the `Parser nexus_iq` line from each `[INPUT]` section.
 
 ## Verification
 

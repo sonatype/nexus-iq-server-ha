@@ -12,13 +12,21 @@ data:
       Log_Level     info
       Daemon        off
       Parsers_File  parsers.conf
+      # Enable the HTTP monitoring server so the DaemonSet's liveness and
+      # readiness probes (/api/v1/health on port 2020) succeed.
+      HTTP_Server   On
+      HTTP_Listen   0.0.0.0
+      HTTP_Port     2020
 
-    # Tail all IQ Server log files from the shared volume
+    # Tail all IQ Server log files from the shared volume.
+    # DB persists tail offsets across refreshes so log entries are not
+    # re-emitted every Refresh_Interval.
     [INPUT]
       Name              tail
       Path              /logs/log/*-clm-server.log
       Parser            nexus_iq
       Tag               iq_server.clm-server
+      DB                /logs/log/.fluent-bit-clm-server.db
       Mem_Buf_Limit     50MB
       Skip_Long_Lines   On
       Read_From_Head    true
@@ -29,6 +37,7 @@ data:
       Path              /logs/log/*-request.log
       Parser            nexus_iq
       Tag               iq_server.request
+      DB                /logs/log/.fluent-bit-request.db
       Mem_Buf_Limit     50MB
       Skip_Long_Lines   On
       Read_From_Head    true
@@ -39,6 +48,7 @@ data:
       Path              /logs/log/*-audit.log
       Parser            nexus_iq
       Tag               iq_server.audit
+      DB                /logs/log/.fluent-bit-audit.db
       Mem_Buf_Limit     50MB
       Skip_Long_Lines   On
       Read_From_Head    true
@@ -49,6 +59,7 @@ data:
       Path              /logs/log/*-policy-violation.log
       Parser            nexus_iq
       Tag               iq_server.policy-violation
+      DB                /logs/log/.fluent-bit-policy-violation.db
       Mem_Buf_Limit     50MB
       Skip_Long_Lines   On
       Read_From_Head    true
@@ -59,6 +70,7 @@ data:
       Path              /logs/log/*-stderr.log
       Parser            nexus_iq
       Tag               iq_server.stderr
+      DB                /logs/log/.fluent-bit-stderr.db
       Mem_Buf_Limit     50MB
       Skip_Long_Lines   On
       Read_From_Head    true
