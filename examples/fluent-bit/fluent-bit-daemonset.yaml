@@ -55,9 +55,12 @@ spec:
               cpu: 500m
               memory: 512Mi
           volumeMounts:
-            # Mount the IQ Server log directory from the shared PVC
+            # Mount the IQ Server PVC. The chart mounts this same PVC at
+            # /sonatype-work/clm-cluster, so log files live at <pvc-root>/log/*.
+            # Mounting at /logs here makes those files visible at /logs/log/*,
+            # which matches the tail paths in the ConfigMap.
             - name: iq-server-logs
-              mountPath: /logs/log
+              mountPath: /logs
               readOnly: false
             # Mount the Fluent Bit configuration
             - name: fluent-bit-config
