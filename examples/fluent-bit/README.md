@@ -119,6 +119,13 @@ The ConfigMap includes a regex parser that extracts:
 - `logger` - Logger class name
 - `message` - Log message
 
+> **Note**: The regex assumes the chart's default `iq_server.iqLogConfig.logFormat`
+> (`%d{...} %level [%thread] %X{username} %logger - %msg%n`), which emits a single
+> space between the level and `[thread]`. If you customize `logFormat` to use a
+> padded level (e.g. `%-5level`), update the regex in `parsers.conf` to match —
+> otherwise non-`ERROR` lines will fall through to a raw `{"log":"..."}` record
+> with no structured fields.
+
 ## Aggregated Output
 
 Fluent Bit writes aggregated logs back to the shared PVC:
