@@ -692,9 +692,9 @@ Example:
 
 The Helm chart supports a "bring your own aggregator" model. To integrate Fluent Bit:
 
-1. **Deploy Fluent Bit** as a separate Kubernetes resource
+1. **Deploy your log aggregator** as a separate Kubernetes resource
 2. **Mount the existing PVC** (`iq-server-pvc` by default) to access log files
-3. **Configure Fluent Bit** to tail the log files from `/sonatype-work/clm-cluster/log/`
+3. **Configure your log aggregator** to tail the log files from `/sonatype-work/clm-cluster/log/`
 4. **Forward logs** to your desired destination
 
 ### Example: Fluent Bit Integration
