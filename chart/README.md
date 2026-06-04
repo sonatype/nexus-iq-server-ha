@@ -717,15 +717,17 @@ kubectl apply -f examples/fluent-bit/fluent-bit-daemonset.yaml
 **To use a different namespace:**
 
 ```bash
-# Option 1: Edit files before applying
-sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-configmap.yaml | kubectl apply -f -
-sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-daemonset.yaml | kubectl apply -f -
-
-# Option 2: Download and modify
+# Download and modify
 mkdir -p my-fluent-bit
 cp examples/fluent-bit/*.yaml my-fluent-bit/
 sed -i 's/namespace: iq-ha/namespace: your-namespace/g' my-fluent-bit/*.yaml
 kubectl apply -f my-fluent-bit/
+
+# Edit files with any custom changes before applying
+sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-configmap.yaml | kubectl apply -f -
+sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-daemonset.yaml | kubectl apply -f -
+
+
 ```
 
 **To use a different PVC name** (if you customized `iq_server.persistence.persistentVolumeClaimName`):
