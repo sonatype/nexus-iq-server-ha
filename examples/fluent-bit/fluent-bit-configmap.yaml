@@ -18,13 +18,17 @@ data:
       HTTP_Listen   0.0.0.0
       HTTP_Port     2020
 
-    # Tail all IQ Server log files from the shared volume.
-    # DB persists tail offsets across refreshes so log entries are not
-    # re-emitted every Refresh_Interval.
+    # IQ Server emits five distinct log files, each with its own format. We
+    # tail each pattern through a parser that matches that format so the
+    # aggregated output is structured (one JSON record per event) instead of
+    # a flat string. DB persists tail offsets across refreshes so log
+    # entries are not re-emitted every Refresh_Interval.
+
+    # Server application log: Logback appender, plain-text format.
     [INPUT]
       Name              tail
       Path              /logs/log/*-clm-server.log
-      Parser            nexus_iq
+      Parser            nexus_iq_server
       Tag               iq_server.clm-server
       DB                /logs/log/.fluent-bit-clm-server.db
       Mem_Buf_Limit     50MB
@@ -32,10 +36,11 @@ data:
       Read_From_Head    true
       Refresh_Interval  10
 
+    # Request log: Jetty access log, plain-text format.
     [INPUT]
       Name              tail
       Path              /logs/log/*-request.log
-      Parser            nexus_iq
+      Parser            nexus_iq_request
       Tag               iq_server.request
       DB                /logs/log/.fluent-bit-request.db
       Mem_Buf_Limit     50MB
@@ -43,32 +48,42 @@ data:
       Read_From_Head    true
       Refresh_Interval  10
 
+    # Audit log: native JSON from com.sonatype.insight.audit appender.
+    # Buffer_Max_Size is bumped to 1MB because individual audit records can
+    # exceed the default 32KB (e.g., scan results with many components).
     [INPUT]
-      Name              tail
-      Path              /logs/log/*-audit.log
-      Parser            nexus_iq
-      Tag               iq_server.audit
-      DB                /logs/log/.fluent-bit-audit.db
-      Mem_Buf_Limit     50MB
-      Skip_Long_Lines   On
-      Read_From_Head    true
-      Refresh_Interval  10
+      Name               tail
+      Path               /logs/log/*-audit.log
+      Parser             nexus_iq_audit
+      Tag                iq_server.audit
+      DB                 /logs/log/.fluent-bit-audit.db
+      Buffer_Chunk_Size  256k
+      Buffer_Max_Size    1M
+      Mem_Buf_Limit      50MB
+      Skip_Long_Lines    On
+      Read_From_Head     true
+      Refresh_Interval   10
 
+    # Policy-violation log: native JSON from com.sonatype.insight.policy.violation appender.
+    # Same buffer treatment as audit since violation records embed component data.
     [INPUT]
-      Name              tail
-      Path              /logs/log/*-policy-violation.log
-      Parser            nexus_iq
-      Tag               iq_server.policy-violation
-      DB                /logs/log/.fluent-bit-policy-violation.db
-      Mem_Buf_Limit     50MB
-      Skip_Long_Lines   On
-      Read_From_Head    true
-      Refresh_Interval  10
+      Name               tail
+      Path               /logs/log/*-policy-violation.log
+      Parser             nexus_iq_policy_violation
+      Tag                iq_server.policy-violation
+      DB                 /logs/log/.fluent-bit-policy-violation.db
+      Buffer_Chunk_Size  256k
+      Buffer_Max_Size    1M
+      Mem_Buf_Limit      50MB
+      Skip_Long_Lines    On
+      Read_From_Head     true
+      Refresh_Interval   10
 
+    # Stderr: raw JVM stderr. No parser - lines are forwarded as-is so any
+    # crash output, JVM warnings, and multi-line stack traces are preserved.
     [INPUT]
       Name              tail
       Path              /logs/log/*-stderr.log
-      Parser            nexus_iq
       Tag               iq_server.stderr
       DB                /logs/log/.fluent-bit-stderr.db
       Mem_Buf_Limit     50MB
@@ -76,7 +91,7 @@ data:
       Read_From_Head    true
       Refresh_Interval  10
 
-    # Output aggregated logs back to the shared volume
+    # Output aggregated logs back to the shared volume.
     [OUTPUT]
       Name              file
       Match             iq_server.clm-server
@@ -113,10 +128,51 @@ data:
       Format            plain
 
   parsers.conf: |
+    # IQ Server application log (clm-server.log).
+    # Matches the chart's default logFormat:
+    #   %d{'yyyy-MM-dd HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n
+    # Samples:
+    #   With user:    2026-06-05 17:20:34,286+0000 INFO [main] *SYSTEM com.sonatype.insight.brain.service - Initializing...
+    #   Empty user:   2026-06-05 17:49:04,664+0000 DEBUG [Quartz...]  com.sonatype.insight.brain.scheduler - ClusterManager: Check-in complete.
+    # The user field is optional because Logback emits an empty string for
+    # %X{username} when the MDC has no username set (scheduler/internal threads),
+    # which leaves two consecutive spaces between the thread bracket and the logger.
     [PARSER]
-      Name        nexus_iq
+      Name        nexus_iq_server
       Format      regex
-      Regex       ^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}[+-]\d{4}) (?<level>\w+) \[(?<thread>[^\]]+)\] (?<user>\S+) (?<logger>\S+) - (?<message>.*)$
+      Regex       ^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}[+-]\d{4}) (?<level>\w+) \[(?<thread>[^\]]+)\] (?:(?<user>\S+) )?\s*(?<logger>\S+) - (?<message>.*)$
       Time_Key    time
       Time_Format %Y-%m-%d %H:%M:%S,%L%z
+      Time_Keep   On
+
+    # IQ Server access log (request.log).
+    # Matches the chart's default request appender logFormat:
+    #   %clientHost %l %user [%date] "%requestURL" %statusCode %bytesSent %elapsedTime "%header{User-Agent}"
+    # Sample line:
+    #   [0:0:0:0:0:0:0:1] - - [05/Jun/2026:17:21:11 +0000] "HEAD /ping HTTP/1.1" 200 5 33 "curl/7.76.1"
+    [PARSER]
+      Name        nexus_iq_request
+      Format      regex
+      Regex       ^(?<client_host>\S+) (?<ident>\S+) (?<user>\S+) \[(?<time>[^\]]+)\] "(?<request_url>[^"]*)" (?<status_code>\d+) (?<bytes_sent>\d+) (?<elapsed_ms>\d+) "(?<user_agent>[^"]*)"$
+      Time_Key    time
+      Time_Format %d/%b/%Y:%H:%M:%S %z
+      Time_Keep   On
+
+    # IQ Server audit log (audit.log) - native JSON, one object per line.
+    # Sample line:
+    #   {"timestamp":"2026-06-05T17:20:36.714Z","username":"*SYSTEM","domain":"server","type":"start", ... }
+    [PARSER]
+      Name        nexus_iq_audit
+      Format      json
+      Time_Key    timestamp
+      Time_Format %Y-%m-%dT%H:%M:%S.%LZ
+      Time_Keep   On
+
+    # IQ Server policy-violation log (policy-violation.log) - native JSON, one object per line.
+    # Time field is eventTimestamp (not timestamp).
+    [PARSER]
+      Name        nexus_iq_policy_violation
+      Format      json
+      Time_Key    eventTimestamp
+      Time_Format %Y-%m-%dT%H:%M:%S.%LZ
       Time_Keep   On

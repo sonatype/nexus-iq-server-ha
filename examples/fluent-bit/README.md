@@ -47,7 +47,7 @@ These manifests are **specifically designed for IQ Server HA** - they are not ge
 | Component | IQ Server-Specific Details |
 |-----------|---------------------------|
 | Log file paths | Tails `*-clm-server.log`, `*-request.log`, `*-audit.log`, etc. from `/sonatype-work/clm-cluster/log/` |
-| Log format parser | Custom regex for IQ Server format: `YYYY-MM-DD HH:MM:SS,SSS+ZZZZ LEVEL [thread] user logger - message` |
+| Log format parsers | Four format-specific parsers (one per log type, plus raw passthrough for stderr) — see [Log Formats and Parsers](#log-formats-and-parsers) below |
 | PVC mount | Mounts `iq-server-pvc` (the Helm chart's default PVC) |
 | Namespace | Uses `iq-ha` (matches Helm chart default) |
 
@@ -98,33 +98,50 @@ Fluent Bit tails these log files from the shared PVC:
 | Policy Violation | `*-policy-violation.log` | Policy evaluation logs |
 | Stderr | `*-stderr.log` | Standard error output |
 
-## Log Format
+## Log Formats and Parsers
 
-By default, the server log uses this format:
+IQ Server emits five distinct log files, each with a different format. Using
+one parser for all of them produces poor output — JSON records get
+double-wrapped, and access-log fields (status code, URL, latency) are lost in a
+flat string. The ConfigMap defines a separate parser per log type so the
+aggregated output is structured for every record:
 
-```
-YYYY-MM-DD HH:MM:SS,SSS+ZZZZ LEVEL [thread] user logger - message
-```
+| Source pattern | Parser | Format | Fields extracted |
+|----------------|--------|--------|------------------|
+| `*-clm-server.log` | `nexus_iq_server` | regex | `time`, `level`, `thread`, `user`, `logger`, `message` |
+| `*-request.log` | `nexus_iq_request` | regex | `client_host`, `ident`, `user`, `time`, `request_url`, `status_code`, `bytes_sent`, `elapsed_ms`, `user_agent` |
+| `*-audit.log` | `nexus_iq_audit` | JSON | All top-level keys (e.g. `timestamp`, `username`, `domain`, `type`, `data`) |
+| `*-policy-violation.log` | `nexus_iq_policy_violation` | JSON | All top-level keys (e.g. `eventTimestamp`, `policyName`, `policyThreatLevel`, `componentIdentifier`) |
+| `*-stderr.log` | _(none)_ | raw | Lines forwarded as-is in `{"log": "..."}` records |
 
-Example:
-```
-2026-06-02 17:01:28,138+0000 INFO [main] *SYSTEM com.sonatype.insight.brain.service - Initializing...
-```
+### Format assumptions
 
-The ConfigMap includes a regex parser that extracts:
-- `time` - Timestamp
-- `level` - Log level (INFO, DEBUG, ERROR, etc.)
-- `thread` - Thread name
-- `user` - User context
-- `logger` - Logger class name
-- `message` - Log message
+The two regex parsers assume the chart's default `logFormat` strings:
 
-> **Note**: The regex assumes the chart's default `iq_server.iqLogConfig.logFormat`
-> (`%d{...} %level [%thread] %X{username} %logger - %msg%n`), which emits a single
-> space between the level and `[thread]`. If you customize `logFormat` to use a
-> padded level (e.g. `%-5level`), update the regex in `parsers.conf` to match —
-> otherwise non-`ERROR` lines will fall through to a raw `{"log":"..."}` record
-> with no structured fields.
+- **Server log** uses `%d{'yyyy-MM-dd HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n`. The `%X{username}` MDC value is empty for many internal threads (scheduler, cluster manager), which produces two consecutive spaces between `[thread]` and the logger — the regex makes the user field optional to handle both cases. If you customize `logFormat` (e.g. add a padded level `%-5level`), update the regex to match, otherwise lines fall through to a raw `{"log":"..."}` record.
+- **Request log** uses `%clientHost %l %user [%date] "%requestURL" %statusCode %bytesSent %elapsedTime "%header{User-Agent}"`. Same caveat — customize the request `logFormat` and you'll need to update the regex.
+
+The two JSON parsers are robust to schema additions (extra keys are passed through). They use `Time_Key` to identify the timestamp field — `timestamp` for audit, `eventTimestamp` for policy-violation, matching IQ Server's published log schemas.
+
+### Buffer sizing for large records
+
+Audit and policy-violation records can exceed Fluent Bit's default 32KB
+per-line buffer (e.g. an audit `data` payload containing many components, or a
+policy-violation event referencing a large dependency tree). The two JSON
+inputs set `Buffer_Max_Size` to 1MB so realistic IQ records aren't dropped by
+`Skip_Long_Lines`.
+
+### Known limitation: multi-line records
+
+Stack traces and other multi-line entries in `*-clm-server.log` and
+`*-stderr.log` fragment because each continuation line is tailed
+independently. The first line of an exception parses cleanly; subsequent
+`at com.foo.Bar(...)` and `Caused by:` lines fall through to raw
+`{"log":"..."}` records. To join continuation lines back to the parent record,
+add a `[MULTILINE_PARSER]` to `parsers.conf` and reference it via
+`multiline.parser` in the matching `[INPUT]` — see the
+[Fluent Bit multiline tail documentation](https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/multiline-parsing).
+This was left out of the example to keep the parser configuration legible.
 
 ## Aggregated Output
 
@@ -139,9 +156,17 @@ Fluent Bit writes aggregated logs back to the shared PVC:
 └── stderr.aggregated.log
 ```
 
-Each file contains entries from all IQ Server pods combined, one record per line. Because the `nexus_iq` parser produces a structured record, the file output writes each record as JSON (with `time`, `level`, `thread`, `user`, `logger`, and `message` keys) regardless of whether `Format plain` or `Format json` is set in `[OUTPUT]`.
+Each file contains entries from all IQ Server pods combined, one JSON record
+per line. The fields in each record match the parser used for that source —
+see the [Log Formats and Parsers](#log-formats-and-parsers) table above. The
+file output writes each record as JSON regardless of whether `Format plain` or
+`Format json` is set in `[OUTPUT]`, because the source records are already
+structured.
 
-> **Note**: If you need the raw log line back instead of a JSON record, drop the `Parser nexus_iq` line from each `[INPUT]` section.
+> **Note**: If you need raw log lines back instead of structured JSON for a
+> given source, drop the `Parser` line from that `[INPUT]` section. The output
+> for that source then becomes `{"log": "..."}` records containing the
+> verbatim line.
 
 ## Verification
 
