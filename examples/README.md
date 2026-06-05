@@ -127,6 +127,4 @@ kubectl exec -n iq-ha deployment/iq-cluster-iq-server-deployment -- \
 
 ## References
 
-- [CLM-39987](https://sonatype.atlassian.net/browse/CLM-39987) - Bring your own log aggregation
-- [CLM-39117](https://sonatype.atlassian.net/browse/CLM-39117) - Remove Fluentd from Helm chart
 - [Fluent Bit Documentation](https://docs.fluentbit.io/)
