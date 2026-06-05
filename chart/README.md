@@ -690,7 +690,7 @@ Example:
 
 ### Integrating External Log Aggregators
 
-The Helm chart supports a "bring your own aggregator" model. To integrate Fluent Bit:
+The Helm chart supports a "bring your own aggregator" model. To integrate your log aggregator:
 
 1. **Deploy your log aggregator** as a separate Kubernetes resource
 2. **Mount the existing PVC** (`iq-server-pvc` by default) to access log files
