@@ -677,7 +677,7 @@ IQ Server pods write logs to the shared cluster directory, which is accessible v
 
 ### Log Format
 
-Logs are written in plain text with the following format:
+Logs are written as text and by default the server log is written with the following format:
 
 ```
 YYYY-MM-DD HH:MM:SS,SSS+ZZZZ LEVEL [thread] user logger - message
