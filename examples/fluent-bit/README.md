@@ -100,7 +100,7 @@ Fluent Bit tails these log files from the shared PVC:
 
 ## Log Format
 
-IQ Server logs use this format:
+By default, the server log uses this format:
 
 ```
 YYYY-MM-DD HH:MM:SS,SSS+ZZZZ LEVEL [thread] user logger - message
