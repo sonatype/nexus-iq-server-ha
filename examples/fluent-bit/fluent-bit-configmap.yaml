@@ -25,11 +25,12 @@ data:
     # entries are not re-emitted every Refresh_Interval.
 
     # Server application log: Logback appender, plain-text format.
+    # The `iq_java_logback` multiline parser joins stack traces into one record.
     [INPUT]
       Name              tail
       Path              /logs/log/*-clm-server.log
       Parser            nexus_iq_server
-      multiline.parser  java
+      multiline.parser  iq_java_logback
       Tag               iq_server.clm-server
       DB                /logs/log/.fluent-bit-clm-server.db
       Mem_Buf_Limit     50MB
@@ -92,6 +93,18 @@ data:
       Read_From_Head    true
       Refresh_Interval  10
 
+    # Re-parse the multiline-joined `log` field into structured fields
+    # (time, level, thread, user, logger, message). Fluent Bit's tail
+    # `Parser` directive is bypassed when `multiline.parser` is set, so we
+    # re-run the regex parser here instead. Only applies to the server log.
+    [FILTER]
+      Name          parser
+      Match         iq_server.clm-server
+      Key_Name      log
+      Parser        nexus_iq_server
+      Reserve_Data  On
+      Preserve_Key  Off
+
     # Output aggregated logs back to the shared volume.
     [OUTPUT]
       Name              file
@@ -129,6 +142,24 @@ data:
       Format            plain
 
   parsers.conf: |
+    # Custom multiline parser for IQ Server clm-server.log.
+    # The built-in `java` parser expects a period-millis timestamp
+    # (`HH:mm:ss.SSS`), but the chart's default Logback layout emits
+    # comma-millis (`HH:mm:ss,SSSZ`). Without a matching start_state regex,
+    # every line of a stack trace would be shipped as its own record.
+    # This parser handles the comma-millis format and recognizes the bare
+    # exception line that IQ Server logs on the line after the leading
+    # log message.
+    [MULTILINE_PARSER]
+      Name           iq_java_logback
+      Type           regex
+      Flush_Timeout  1000
+      Rule           "start_state"  "/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}[+-]\d{4}\s/"  "cont"
+      Rule           "cont"         "/^\s+(?:at\s|\.\.\.\s+\d+\s+more)/"  "cont"
+      Rule           "cont"         "/^(?:Caused\s+by|Suppressed):\s/"  "cont"
+      Rule           "cont"         "/^[a-zA-Z][\w$]*(?:\.[\w$]+)+:?\s/"  "cont"
+      Rule           "cont"         "/^\s*$/"  "cont"
+
     # IQ Server application log (clm-server.log).
     # Matches the chart's default logFormat:
     #   %d{'yyyy-MM-dd HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n
@@ -138,10 +169,13 @@ data:
     # The user field is optional because Logback emits an empty string for
     # %X{username} when the MDC has no username set (scheduler/internal threads),
     # which leaves two consecutive spaces between the thread bracket and the logger.
+    # `(?<message>[\s\S]*)` (instead of `.*$`) lets the message capture
+    # span newlines so multiline-joined stack traces flow into the message
+    # field intact when this parser is used by the [FILTER] stage.
     [PARSER]
       Name        nexus_iq_server
       Format      regex
-      Regex       ^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}[+-]\d{4}) (?<level>\w+) \[(?<thread>[^\]]+)\] (?:(?<user>\S+) )?\s*(?<logger>\S+) - (?<message>.*)$
+      Regex       ^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}[+-]\d{4}) (?<level>\w+) \[(?<thread>[^\]]+)\] (?:(?<user>\S+) )?\s*(?<logger>\S+) - (?<message>[\s\S]*)
       Time_Key    time
       Time_Format %Y-%m-%d %H:%M:%S,%L%z
       Time_Keep   On
