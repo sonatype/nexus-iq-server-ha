@@ -79,6 +79,8 @@ You can confirm your site by checking the URL of the Datadog UI you log in to.
 
 ### 3. Apply the manifests
 
+> **PVC name mismatch?** The manifests assume the Helm chart's default PVC name `iq-server-pvc`. If you customized the name via `iq_server.persistence.persistentVolumeClaimName`, edit `fluent-bit-daemonset.yaml` and replace `claimName: iq-server-pvc` with your actual PVC name before applying.
+
 ```bash
 kubectl apply -f fluent-bit-configmap.yaml
 kubectl apply -f fluent-bit-daemonset.yaml
@@ -106,6 +108,8 @@ All five types share `dd_service: iq-server` and `dd_tags: env:production`. Edit
 ### Datadog UI — Live Tail
 
 Open **Logs → Live Tail** in Datadog and filter by `service:iq-server`. Within ~10 seconds of the DaemonSet rolling out, you should see entries from all five sources streaming in.
+
+> **Historical logs in Datadog:** Audit and policy-violation records carry their own `timestamp` / `eventTimestamp` fields, which Datadog uses as the official log timestamp (not ingest time). If you're testing with older logs or pre-populated PVCs, expand the Logs Explorer time range to match when the events actually occurred.
 
 If nothing appears:
 - Check the Fluent Bit pod logs: `kubectl logs -n iq-ha -l app.kubernetes.io/name=fluent-bit-datadog --tail=50`
