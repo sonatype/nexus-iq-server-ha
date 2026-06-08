@@ -180,6 +180,50 @@ kubectl exec -n <namespace> deployment/<iq-server-deployment> -- \
   head -5 /sonatype-work/clm-cluster/log/clm-server.aggregated.log
 ```
 
+### Triggering policy-violation entries
+
+Unlike the server, request, and audit logs (which write continuously as IQ
+Server runs), `*-policy-violation.log` is event-driven — a record is only
+written when a policy evaluation finds a violation. On a freshly deployed
+cluster the file may not exist yet, and `policy-violation.aggregated.log`
+will be empty until evaluations begin. This is expected behavior, not a
+configuration problem.
+
+To force entries for verification, evaluate a binary that you know will
+produce violations against an application with policies attached:
+
+1. Pick or create an application that inherits the default reference
+   policies (the chart's `createSampleData: true` default seeds a Sandbox
+   Application that already has them).
+2. In the IQ Server UI, open that application and choose **Actions →
+   Evaluate a file**.
+3. Upload a deliberately vulnerable artifact (e.g., a [WebGoat
+   release](https://github.com/WebGoat/WebGoat/releases) JAR — its bundled
+   dependencies trigger many violations against default policies).
+4. After the evaluation completes, confirm the source log was written:
+
+   ```bash
+   kubectl exec -n <namespace> <iq-server-pod> -- \
+     wc -l /sonatype-work/clm-cluster/log/*-policy-violation.log
+   ```
+
+5. Confirm Fluent Bit aggregated the entries (it picks up newly created
+   files on each `Refresh_Interval`, default 10s):
+
+   ```bash
+   kubectl exec -n <namespace> <iq-server-pod> -- \
+     wc -l /sonatype-work/clm-cluster/log/policy-violation.aggregated.log
+   ```
+
+The aggregated line count should match (or exceed, if other evaluations
+have run) the source line count. Each line is a JSON record with the shape
+documented at
+[help.sonatype.com/en/policy-violation-log.html](https://help.sonatype.com/en/policy-violation-log.html):
+
+```json
+{"eventType":"create","eventTimestamp":"2026-06-08T14:22:40.022Z","policyName":"Security-Critical","policyThreatLevel":10,"policyConditionTriggers":[{"reason":"Found security vulnerability CVE-2023-20873 with severity >= 9 (severity = 9.8)"}],"applicationPublicId":"sandbox-application","componentIdentifier":{"format":"maven","coordinates":{"artifactId":"spring-boot-actuator-autoconfigure","groupId":"org.springframework.boot","version":"2.4.3"}}}
+```
+
 ## Customization
 
 ### Changing the Output Destination
