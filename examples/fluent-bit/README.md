@@ -131,17 +131,28 @@ policy-violation event referencing a large dependency tree). The two JSON
 inputs set `Buffer_Max_Size` to 1MB so realistic IQ records aren't dropped by
 `Skip_Long_Lines`.
 
-### Known limitation: multi-line records
+### Multi-line records
 
-Stack traces and other multi-line entries in `*-clm-server.log` and
-`*-stderr.log` fragment because each continuation line is tailed
-independently. The first line of an exception parses cleanly; subsequent
-`at com.foo.Bar(...)` and `Caused by:` lines fall through to raw
-`{"log":"..."}` records. To join continuation lines back to the parent record,
-add a `[MULTILINE_PARSER]` to `parsers.conf` and reference it via
-`multiline.parser` in the matching `[INPUT]` — see the
+Stack traces in `*-clm-server.log` are joined back to their parent log
+entry by Fluent Bit's built-in `java` multiline parser, configured on the
+server-log `[INPUT]` (`multiline.parser  java`). A typical entry like:
+
+```
+2026-06-08 14:22:40,001+0000 ERROR [http-1] *SYSTEM com.example.Foo - Failed
+java.lang.RuntimeException: boom
+    at com.example.Foo.bar(Foo.java:42)
+    at com.example.Foo.baz(Foo.java:30)
+Caused by: java.io.IOException: file not found
+    at java.base/java.io.FileInputStream...
+```
+
+arrives as a single record where `message` contains the entire trace.
+
+`*-stderr.log` entries are still tailed line-by-line. Multi-line stderr
+content (rare in normal operation — JVM crash output is the typical case)
+fragments. To handle it, add a `multiline.parser` line to the stderr
+`[INPUT]` and pick a parser that matches your stderr format — see the
 [Fluent Bit multiline tail documentation](https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/multiline-parsing).
-This was left out of the example to keep the parser configuration legible.
 
 ## Aggregated Output
 

@@ -29,6 +29,7 @@ data:
       Name              tail
       Path              /logs/log/*-clm-server.log
       Parser            nexus_iq_server
+      multiline.parser  java
       Tag               iq_server.clm-server
       DB                /logs/log/.fluent-bit-clm-server.db
       Mem_Buf_Limit     50MB
@@ -79,8 +80,8 @@ data:
       Read_From_Head     true
       Refresh_Interval   10
 
-    # Stderr: raw JVM stderr. No parser - lines are forwarded as-is so any
-    # crash output, JVM warnings, and multi-line stack traces are preserved.
+    # Stderr: raw JVM stderr. No parser - lines are forwarded as-is. Multi-line
+    # content (rare; JVM crash output is the typical case) fragments line-by-line.
     [INPUT]
       Name              tail
       Path              /logs/log/*-stderr.log
