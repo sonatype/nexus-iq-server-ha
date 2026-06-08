@@ -677,15 +677,77 @@ IQ Server pods write logs to the shared cluster directory, which is accessible v
 
 ### Log Format
 
-Logs are written as text and by default the server log is written with the following format:
+Each log type uses a different default format — text for the server and request
+logs, JSON Lines for the audit and policy-violation logs, and raw passthrough
+for stderr. The samples below show what an aggregator tailing each file will
+see under the chart's default configuration.
+
+**Server log** (`*-clm-server.log`) — Logback text format, configured by the
+server appender's `logFormat` in `iq_server.iqLogConfig.appenders`:
 
 ```
-YYYY-MM-DD HH:MM:SS,SSS+ZZZZ LEVEL [thread] user logger - message
+%d{'yyyy-MM-dd HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n
 ```
 
-Example:
+Sample line:
+
 ```
-2026-06-02 17:01:28,138+0000 INFO [main] *SYSTEM com.sonatype.insight.brain.service.InsightBrainService - Initializing...
+2026-06-08 00:14:26,433+0000 DEBUG [QuartzScheduler_ClusterManager]  com.sonatype.insight.brain.scheduler.QuartzJobStoreTX - ClusterManager: Check-in complete.
+```
+
+> Internal threads (scheduler, cluster manager) leave `%X{username}` empty,
+> producing two consecutive spaces between `[thread]` and the logger name.
+> Custom regex parsers must treat the user field as optional.
+
+**Request log** (`*-request.log`) — Jetty access log format, configured by the
+request appender's `logFormat`:
+
+```
+%clientHost %l %user [%date] "%requestURL" %statusCode %bytesSent %elapsedTime "%header{User-Agent}"
+```
+
+Sample line:
+
+```
+[0:0:0:0:0:0:0:1] - - [08/Jun/2026:00:14:39 +0000] "HEAD /healthcheck/threadDeadlock HTTP/1.1" 204 0 0 "curl/7.76.1"
+```
+
+**Audit log** (`*-audit.log`) — one JSON record per line. The schema is fixed
+by the `com.sonatype.insight.audit` appender and is not configurable via
+`logFormat`. The `timestamp` field is the time key.
+
+Sample line:
+
+```json
+{"timestamp":"2026-06-08T14:02:32.659Z","requestMethod":"GET","requestUri":"/rest/user/session","remoteIpAddress":"127.0.0.1","username":"*UNKNOWN","domain":"authentication","type":"failure","error":"bad-session"}
+```
+
+**Policy-violation log** (`*-policy-violation.log`) — one JSON record per
+violation. The schema is fixed by the `com.sonatype.insight.policy.violation`
+appender; see
+[help.sonatype.com/en/policy-violation-log.html](https://help.sonatype.com/en/policy-violation-log.html)
+for the full field reference. The `eventTimestamp` field is the time key
+(not `timestamp`).
+
+> The policy-violation log is event-driven: a record is only written when a
+> policy evaluation finds a violation. On a fresh deployment the file may
+> not exist until the first evaluation runs — this is expected.
+
+Sample line:
+
+```json
+{"eventType":"create","eventTimestamp":"2026-06-08T14:22:40.022Z","policyName":"Security-Critical","policyThreatLevel":10,"policyConditionTriggers":[{"reason":"Found security vulnerability CVE-2023-20873 with severity >= 9 (severity = 9.8)"}],"applicationPublicId":"sandbox-application","componentIdentifier":{"format":"maven","coordinates":{"artifactId":"spring-boot-actuator-autoconfigure","groupId":"org.springframework.boot","version":"2.4.3"}}}
+```
+
+**Stderr** (`*-stderr.log`) — raw JVM stderr passthrough. No fixed schema;
+content is whatever the JVM writes to standard error (deprecation warnings,
+JVM startup messages, uncaught exception stack traces).
+
+Sample lines:
+
+```
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.thoughtworks.xstream.converters.reflection.SunUnsafeReflectionProvider (file:/opt/sonatype/nexus-iq-server/jars/insight-brain-service-1.204.0-01-server.jar)
 ```
 
 ### Integrating External Log Aggregators
