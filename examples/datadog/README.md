@@ -5,7 +5,7 @@
 
 ## Overview
 
-Fluent Bit runs as a DaemonSet alongside the IQ Server HA deployment, tails the five log files IQ Server writes to its shared PVC, applies per-format parsers, and ships each record to two destinations:
+Fluent Bit runs as a single-replica Deployment alongside the IQ Server HA deployment, tails the five log files IQ Server writes to its shared PVC, applies per-format parsers, and ships each record to two destinations:
 
 1. **PVC** — `*.aggregated.log` files (same as the [Fluent Bit example](../fluent-bit/README.md))
 2. **Datadog HTTP intake** — over HTTPS, one source tag per log type
@@ -26,7 +26,7 @@ Keeping the file output gives you a working local copy on day one even if the Da
 │                  │                                             │
 │         ┌────────▼──────────┐                                  │
 │         │ Fluent Bit        │                                  │
-│         │ (this DaemonSet)  │                                  │
+│         │ (1-replica Deploy)│                                  │
 │         └────┬─────────┬────┘                                  │
 │              │         │                                       │
 │              ▼         └─── HTTPS ──┐                          │
@@ -44,13 +44,15 @@ Keeping the file output gives you a working local copy on day one even if the Da
 3. Same Kubernetes namespace as IQ Server (`iq-ha` by default)
 4. A Datadog account and API key — get one from **Organization Settings → API Keys** in the Datadog UI
 
-> **Caution: don't run this DaemonSet alongside the Fluent Bit example's DaemonSet.** Both write to the same `*.aggregated.log` files on the shared PVC, so concurrent writes interleave or duplicate entries. Pick one example per cluster. To switch from the Fluent Bit example to this one, delete or scale down `daemonset/fluent-bit` first: `kubectl delete -f ../fluent-bit/fluent-bit-daemonset.yaml`.
+> **Caution: don't run this Deployment alongside the Fluent Bit example's Deployment.** Both write to the same `*.aggregated.log` files on the shared PVC, so concurrent writes interleave or duplicate entries. Pick one example per cluster. To switch from the Fluent Bit example to this one, delete the other deployment first: `kubectl delete -f ../fluent-bit/fluent-bit-deployment.yaml`.
+
+> **Why a single replica?** IQ Server logs live on a shared RWX PVC, not on per-node storage. A DaemonSet would put one pod on every node, and all of them would tail the same files concurrently — duplicating Datadog ingestion N-fold, racing on the SQLite tail-offset DB, and interleaving writes to the `*.aggregated.log` files. The Deployment uses `strategy: Recreate` so the old pod fully releases the offset DB before the new pod starts. Scaling beyond `replicas: 1` reintroduces the duplication.
 
 ## Quick Start
 
 ### 1. Create the Datadog API key secret
 
-The DaemonSet expects a secret named `datadog-api-key` in the IQ namespace, with the API key under the `api-key` field.
+The Deployment expects a secret named `datadog-api-key` in the IQ namespace, with the API key under the `api-key` field.
 
 **Recommended (imperative):**
 ```bash
@@ -79,12 +81,12 @@ You can confirm your site by checking the URL of the Datadog UI you log in to.
 
 ### 3. Apply the manifests
 
-> **PVC name mismatch?** The manifests assume the Helm chart's default PVC name `iq-server-pvc`. If you customized the name via `iq_server.persistence.persistentVolumeClaimName`, edit `fluent-bit-daemonset.yaml` and replace `claimName: iq-server-pvc` with your actual PVC name before applying.
+> **PVC name mismatch?** The manifests assume the Helm chart's default PVC name `iq-server-pvc`. If you customized the name via `iq_server.persistence.persistentVolumeClaimName`, edit `fluent-bit-deployment.yaml` and replace `claimName: iq-server-pvc` with your actual PVC name before applying.
 
 ```bash
 kubectl apply -f fluent-bit-configmap.yaml
-kubectl apply -f fluent-bit-daemonset.yaml
-kubectl rollout status -n iq-ha daemonset/fluent-bit-datadog
+kubectl apply -f fluent-bit-deployment.yaml
+kubectl rollout status -n iq-ha deployment/fluent-bit-datadog
 ```
 
 ### 4. Verify
@@ -107,7 +109,7 @@ All five types share `dd_service: iq-server` and `dd_tags: env:production`. Edit
 
 ### Datadog UI — Live Tail
 
-Open **Logs → Live Tail** in Datadog and filter by `service:iq-server`. Within ~10 seconds of the DaemonSet rolling out, you should see entries from all five sources streaming in.
+Open **Logs → Live Tail** in Datadog and filter by `service:iq-server`. Within ~10 seconds of the Deployment rolling out, you should see entries from all five sources streaming in.
 
 > **Historical logs in Datadog:** Audit and policy-violation records carry their own `timestamp` / `eventTimestamp` fields, which Datadog uses as the official log timestamp (not ingest time). If you're testing with older logs or pre-populated PVCs, expand the Logs Explorer time range to match when the events actually occurred.
 
@@ -171,7 +173,7 @@ The output should be your API key, not `REPLACE_ME` or empty. Recreate the secre
 
 ### 403 Forbidden in Fluent Bit logs
 
-The `Host` line in the configmap doesn't match your Datadog account's region. Pick the right host from the [site table](#2-set-your-datadog-site) above and `kubectl apply` the updated configmap, then `kubectl rollout restart -n iq-ha daemonset/fluent-bit-datadog`.
+The `Host` line in the configmap doesn't match your Datadog account's region. Pick the right host from the [site table](#2-set-your-datadog-site) above and `kubectl apply` the updated configmap, then `kubectl rollout restart -n iq-ha deployment/fluent-bit-datadog`.
 
 ### Logs visible in `*.aggregated.log` but not in Datadog
 
@@ -184,7 +186,7 @@ The `datadog-api-key` secret doesn't exist in the namespace. Create it (see [Qui
 ## Cleanup
 
 ```bash
-kubectl delete -f fluent-bit-daemonset.yaml
+kubectl delete -f fluent-bit-deployment.yaml
 kubectl delete -f fluent-bit-configmap.yaml
 kubectl delete secret datadog-api-key -n iq-ha
 ```

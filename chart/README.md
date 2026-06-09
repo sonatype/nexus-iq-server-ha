@@ -761,7 +761,7 @@ The Helm chart supports a "bring your own aggregator" model. To integrate your l
 
 ### Example: Fluent Bit Integration
 
-A working Fluent Bit example is provided in the `examples/fluent-bit/` directory of this repository.
+A working Fluent Bit example is provided in the `examples/fluent-bit/` directory of this repository. It runs as a single-replica `Deployment` (not a DaemonSet) — the IQ Server logs live on a shared RWX PVC, so one reader is what's needed; running per-node would duplicate every record N times.
 
 **Prerequisites:**
 - The example assumes your namespace is `iq-ha` (the YAML default). If using a different namespace, see the customization steps below.
@@ -773,7 +773,7 @@ A working Fluent Bit example is provided in the `examples/fluent-bit/` directory
 # Deploy Fluent Bit with file output (local aggregation)
 # These files create resources in the 'iq-ha' namespace by default
 kubectl apply -f examples/fluent-bit/fluent-bit-configmap.yaml
-kubectl apply -f examples/fluent-bit/fluent-bit-daemonset.yaml
+kubectl apply -f examples/fluent-bit/fluent-bit-deployment.yaml
 ```
 
 **To use a different namespace:**
@@ -787,7 +787,7 @@ kubectl apply -f my-fluent-bit/
 
 # Edit files with any custom changes before applying
 sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-configmap.yaml | kubectl apply -f -
-sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-daemonset.yaml | kubectl apply -f -
+sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-deployment.yaml | kubectl apply -f -
 
 
 ```
@@ -795,12 +795,16 @@ sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-
 **To use a different PVC name** (if you customized `iq_server.persistence.persistentVolumeClaimName`):
 
 ```bash
-# Update the claimName in the DaemonSet
-sed -i 's/claimName: iq-server-pvc/claimName: your-pvc-name/g' my-fluent-bit/fluent-bit-daemonset.yaml
+# Update the claimName in the Deployment
+sed -i 's/claimName: iq-server-pvc/claimName: your-pvc-name/g' my-fluent-bit/fluent-bit-deployment.yaml
 kubectl apply -f my-fluent-bit/
 ```
 
 See the [examples/fluent-bit/README.md](../examples/fluent-bit/README.md) for complete documentation including verification steps and customization options. The example ConfigMap uses file output to write aggregated logs back to the shared PVC. To forward logs to external systems, modify the `[OUTPUT]` sections in the ConfigMap.
+
+### Example: Datadog Integration
+
+A second example in `examples/datadog/` shows the same Fluent Bit pattern with an additional Datadog HTTP-intake output (one `dd_source` per log type). It writes the same `*.aggregated.log` files to the PVC and ships records to Datadog over HTTPS. See [examples/datadog/README.md](../examples/datadog/README.md) for setup (API key secret, region selection) and verification steps.
 
 ### PVC Requirements for Log Aggregation
 

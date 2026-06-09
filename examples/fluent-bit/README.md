@@ -28,7 +28,8 @@ As of Helm chart version 202.0.0, the bundled Fluentd has been removed. This exa
 │                     │                                 │
 │            ┌────────▼────────┐                       │
 │            │  Fluent Bit     │                       │
-│            │  DaemonSet      │                       │
+│            │  Deployment     │                       │
+│            │  (1 replica)    │                       │
 │            └────────┬────────┘                       │
 │                     │                                 │
 │            ┌────────▼────────┐                       │
@@ -72,7 +73,7 @@ Copy the manifests, edit them to match your environment, then apply:
 ```bash
 # Copy files for editing
 cp fluent-bit-configmap.yaml my-fluent-bit-configmap.yaml
-cp fluent-bit-daemonset.yaml my-fluent-bit-daemonset.yaml
+cp fluent-bit-deployment.yaml my-fluent-bit-deployment.yaml
 
 # Edit both files to set the namespace and PVC claim name to match your IQ
 # Server deployment. Defaults assumed by the manifests:
@@ -80,11 +81,19 @@ cp fluent-bit-daemonset.yaml my-fluent-bit-daemonset.yaml
 #   claimName:  iq-server-pvc
 
 # Apply
-kubectl apply -f my-fluent-bit-configmap.yaml -f my-fluent-bit-daemonset.yaml
+kubectl apply -f my-fluent-bit-configmap.yaml -f my-fluent-bit-deployment.yaml
 
 # Verify deployment
 kubectl get pods -n <your-namespace> -l app.kubernetes.io/name=fluent-bit
 ```
+
+> **Why a single-replica `Deployment` and not a `DaemonSet`?** IQ Server logs
+> live on a shared RWX PVC, not on per-node storage. A DaemonSet would put one
+> pod on every node, and all of them would tail the same files concurrently —
+> producing duplicate downstream records, racing on the SQLite tail-offset DB,
+> and interleaving writes to the `*.aggregated.log` files. One reader is what
+> this aggregation pattern needs. Scaling beyond `replicas: 1` reintroduces the
+> duplication, so leave the replica count at 1.
 
 ## Log Files
 
@@ -264,9 +273,25 @@ kubectl describe pod -n <namespace> -l app.kubernetes.io/name=fluent-bit | grep 
 ## Cleanup
 
 ```bash
-kubectl delete -f my-fluent-bit-daemonset.yaml -n <your-namespace>
+kubectl delete -f my-fluent-bit-deployment.yaml -n <your-namespace>
 kubectl delete -f my-fluent-bit-configmap.yaml -n <your-namespace>
 ```
+
+## Aggregator state and the cleanup CronJob
+
+The `.fluent-bit-*.db` tail-offset files and the `*.aggregated.log` files
+both live in `/sonatype-work/clm-cluster/log/`, which is the directory the
+chart's `aggregateLogFileRetention` CronJob deletes from
+(`find /log/ -type f -mtime +N -delete`).
+
+Under normal operation this is fine — both file kinds are continuously
+updated while the aggregator runs, so their mtime stays recent and
+`-mtime +N` never matches. The risk window opens only if the aggregator is
+**stopped for longer than the retention window**: the offset DBs age out and
+get deleted, and on next start Fluent Bit re-reads each still-present log
+file from head, producing duplicate records downstream until it catches up.
+If you plan extended downtime, either pause the cleanup CronJob or expect
+that one-time re-read on restart.
 
 ## See Also
 

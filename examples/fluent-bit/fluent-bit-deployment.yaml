@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: fluent-bit
   namespace: iq-ha
@@ -8,6 +8,16 @@ metadata:
     app.kubernetes.io/component: log-aggregator
     app.kubernetes.io/part-of: nexus-iq-server
 spec:
+  # Single replica is intentional. The IQ Server log files live on a shared
+  # RWX PVC, not on per-node storage, so only one pod should tail them.
+  # Running more than one replica means every record is read N times: each
+  # pod ships duplicates to downstream outputs, the SQLite tail offset DBs
+  # race for locks on the shared PVC, and the *.aggregated.log files get
+  # interleaved appends. Recreate ensures the old pod releases the tail
+  # offset DBs before the new one starts.
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: fluent-bit
@@ -18,15 +28,6 @@ spec:
         app.kubernetes.io/component: log-aggregator
     spec:
       serviceAccountName: fluent-bit
-      tolerations:
-        # Allow to run on master nodes if needed
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
-          operator: Exists
-        # Allow to run on control-plane nodes if needed
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
-          operator: Exists
       containers:
         - name: fluent-bit
           image: fluent/fluent-bit:3.1.0
@@ -66,8 +67,9 @@ spec:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc/
       volumes:
-        # Reference the existing PVC created by the IQ Server Helm chart
-        # This PVC must have ReadWriteMany access mode for multi-node access
+        # Reference the existing PVC created by the IQ Server Helm chart.
+        # This PVC must have ReadWriteMany access mode for the chart's
+        # multi-node access; this aggregator only needs one mount.
         - name: iq-server-logs
           persistentVolumeClaim:
             claimName: iq-server-pvc
@@ -89,31 +91,3 @@ metadata:
   labels:
     app.kubernetes.io/name: fluent-bit
     app.kubernetes.io/component: log-aggregator
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: fluent-bit-read
-  labels:
-    app.kubernetes.io/name: fluent-bit
-rules:
-  - apiGroups: [""]
-    resources:
-      - pods
-      - namespaces
-    verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: fluent-bit-read
-  labels:
-    app.kubernetes.io/name: fluent-bit
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: fluent-bit-read
-subjects:
-  - kind: ServiceAccount
-    name: fluent-bit
-    namespace: iq-ha

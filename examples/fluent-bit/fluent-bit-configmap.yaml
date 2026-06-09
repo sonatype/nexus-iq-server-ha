@@ -12,7 +12,7 @@ data:
       Log_Level     info
       Daemon        off
       Parsers_File  parsers.conf
-      # Enable the HTTP monitoring server so the DaemonSet's liveness and
+      # Enable the HTTP monitoring server so the pod's liveness and
       # readiness probes (/api/v1/health on port 2020) succeed.
       HTTP_Server   On
       HTTP_Listen   0.0.0.0
@@ -26,17 +26,23 @@ data:
 
     # Server application log: Logback appender, plain-text format.
     # The `iq_java_logback` multiline parser joins stack traces into one record.
+    # Buffer_Max_Size is bumped because joined stack traces (especially with
+    # chained `Caused by:` clauses) routinely exceed the 32KB default. With
+    # Skip_Long_Lines On, anything over the buffer would be silently dropped.
+    # The tail-stage `Parser` is bypassed when `multiline.parser` is set, so
+    # the regex parser runs in the [FILTER] block below.
     [INPUT]
-      Name              tail
-      Path              /logs/log/*-clm-server.log
-      Parser            nexus_iq_server
-      multiline.parser  iq_java_logback
-      Tag               iq_server.clm-server
-      DB                /logs/log/.fluent-bit-clm-server.db
-      Mem_Buf_Limit     50MB
-      Skip_Long_Lines   On
-      Read_From_Head    true
-      Refresh_Interval  10
+      Name               tail
+      Path               /logs/log/*-clm-server.log
+      multiline.parser   iq_java_logback
+      Tag                iq_server.clm-server
+      DB                 /logs/log/.fluent-bit-clm-server.db
+      Buffer_Chunk_Size  256k
+      Buffer_Max_Size    1M
+      Mem_Buf_Limit      50MB
+      Skip_Long_Lines    On
+      Read_From_Head     true
+      Refresh_Interval   10
 
     # Request log: Jetty access log, plain-text format.
     [INPUT]

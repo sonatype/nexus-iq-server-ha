@@ -8,7 +8,7 @@ This directory contains validated examples for integrating external log aggregat
 
 | Directory | Description | Output Destination |
 |-----------|-------------|-------------------|
-| [`fluent-bit/`](fluent-bit/) | Fluent Bit DaemonSet that tails IQ Server logs and writes parsed records back to the shared PVC | Shared PVC (local file output) |
+| [`fluent-bit/`](fluent-bit/) | Single-replica Fluent Bit Deployment that tails IQ Server logs and writes parsed records back to the shared PVC | Shared PVC (local file output) |
 | [`datadog/`](datadog/) | Same shape as the Fluent Bit example, but also forwards each log type to Datadog's HTTP intake | Datadog + shared PVC |
 
 Each subdirectory has its own README with deployment steps, parser configuration, and verification instructions.

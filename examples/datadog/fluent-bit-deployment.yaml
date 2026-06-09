@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: fluent-bit-datadog
   namespace: iq-ha
@@ -8,6 +8,16 @@ metadata:
     app.kubernetes.io/component: log-aggregator
     app.kubernetes.io/part-of: nexus-iq-server
 spec:
+  # Single replica is intentional. The IQ Server log files live on a shared
+  # RWX PVC, not on per-node storage, so only one pod should tail them.
+  # Running more than one replica means every record ships to Datadog N
+  # times, the SQLite tail offset DBs race for locks on the shared PVC,
+  # and the *.aggregated.log files get interleaved appends. Recreate
+  # ensures the old pod releases the tail offset DBs before the new one
+  # starts.
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: fluent-bit-datadog
@@ -18,13 +28,6 @@ spec:
         app.kubernetes.io/component: log-aggregator
     spec:
       serviceAccountName: fluent-bit-datadog
-      tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
-          operator: Exists
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
-          operator: Exists
       containers:
         - name: fluent-bit
           image: fluent/fluent-bit:3.1.0
@@ -91,31 +94,3 @@ metadata:
   labels:
     app.kubernetes.io/name: fluent-bit-datadog
     app.kubernetes.io/component: log-aggregator
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: fluent-bit-datadog-read
-  labels:
-    app.kubernetes.io/name: fluent-bit-datadog
-rules:
-  - apiGroups: [""]
-    resources:
-      - pods
-      - namespaces
-    verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: fluent-bit-datadog-read
-  labels:
-    app.kubernetes.io/name: fluent-bit-datadog
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: fluent-bit-datadog-read
-subjects:
-  - kind: ServiceAccount
-    name: fluent-bit-datadog
-    namespace: iq-ha
