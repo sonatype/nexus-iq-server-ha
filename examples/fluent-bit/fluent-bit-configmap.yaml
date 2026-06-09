@@ -205,6 +205,8 @@ data:
 
     # IQ Server policy-violation log (policy-violation.log) - native JSON, one object per line.
     # Time field is eventTimestamp (not timestamp).
+    # Sample line:
+    #   {"eventType":"create","eventTimestamp":"2026-06-08T14:22:40.022Z","policyName":"Security-Critical","policyThreatLevel":10,"componentIdentifier":{"format":"maven","coordinates":{"artifactId":"spring-boot-actuator-autoconfigure","groupId":"org.springframework.boot","version":"2.4.3"}}, ... }
     [PARSER]
       Name        nexus_iq_policy_violation
       Format      json
