@@ -280,7 +280,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - touch {{ .Values.iq_server.config.clusterDirectory }}/log/$(HOSTNAME)-stderr.log && {{ .Values.iq_server.pvOwnershipOverride }}
+            - mkdir -p {{ .Values.iq_server.config.clusterDirectory }}/log && touch {{ .Values.iq_server.config.clusterDirectory }}/log/$(HOSTNAME)-stderr.log && {{ .Values.iq_server.pvOwnershipOverride }}
           env:
             - name: HOSTNAME
               valueFrom:
