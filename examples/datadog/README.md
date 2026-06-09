@@ -157,7 +157,7 @@ If you don't want a particular log type forwarded to Datadog (e.g., stderr is to
 
 ## Multi-line records
 
-Stack traces in `*-clm-server.log` are joined back to their parent log entry by Fluent Bit's built-in `java` multiline parser, configured on the server-log `[INPUT]`. Stack traces arrive in Datadog as single records.
+Stack traces in `*-clm-server.log` are joined back to their parent log entry by the custom `iq_java_logback` multiline parser, configured on the server-log `[INPUT]` (`multiline.parser  iq_java_logback`) and defined in the `[MULTILINE_PARSER]` block at the end of the configmap. The built-in `java` parser doesn't match IQ Server's timestamp format (`HH:mm:ss,SSS` with comma-millis, where the built-in expects `HH:mm:ss.SSS` with period-millis), so a custom parser is needed. Stack traces arrive in Datadog as single records.
 
 `*-stderr.log` lines are tailed individually. Multi-line stderr (rare in normal operation) fragments. To handle it, add a `multiline.parser` line to the stderr `[INPUT]`.
 
@@ -183,6 +183,17 @@ Fluent Bit is parsing logs correctly but the Datadog output is failing silently.
 
 The `datadog-api-key` secret doesn't exist in the namespace. Create it (see [Quick Start step 1](#1-create-the-datadog-api-key-secret)) and the pod will start.
 
+### `invalid time format` warnings on audit/policy-violation parsers
+
+You may occasionally see warnings like:
+
+```
+[error] [parser] cannot parse '2026-06-09T16:43:04Z'
+[ warn] [parser:nexus_iq_audit] invalid time format %Y-%m-%dT%H:%M:%S.%LZ for '2026-06-09T16:43:04Z'
+```
+
+IQ Server's audit and policy-violation logs use ISO-8601 timestamps with millisecond precision, but its JSON serializer (Jackson) trims trailing zeros — so a timestamp landing on an integer second is emitted without a fractional component (`...04Z` instead of `...04.000Z`), which doesn't match the parser's `%Y-%m-%dT%H:%M:%S.%LZ` `Time_Format`. The record is **not dropped**: Fluent Bit falls back to ingestion time for `@timestamp`, and every other field including the original `timestamp`/`eventTimestamp` value is preserved in the record body and forwarded to Datadog. The warning is benign log noise; expect a small number of them in audit logs.
+
 ## Cleanup
 
 ```bash
@@ -190,6 +201,12 @@ kubectl delete -f fluent-bit-deployment.yaml
 kubectl delete -f fluent-bit-configmap.yaml
 kubectl delete secret datadog-api-key -n iq-ha
 ```
+
+## Aggregator state and the cleanup CronJob
+
+The `.fluent-bit-datadog-*.db` tail-offset files and the `*.aggregated.log` files both live in `/sonatype-work/clm-cluster/log/`, which is the directory the chart's `aggregateLogFileRetention` CronJob deletes from (`find /log/ -type f -mtime +N -delete`).
+
+Under normal operation this is fine — both file kinds are continuously updated while the aggregator runs, so their mtime stays recent and `-mtime +N` never matches. The risk window opens only if the aggregator is **stopped for longer than the retention window**: the offset DBs age out and get deleted, and on next start Fluent Bit re-reads each still-present log file from head, producing duplicate records (sent to both Datadog and the aggregated PVC files) until it catches up. If you plan extended downtime, either pause the cleanup CronJob or expect that one-time re-read on restart.
 
 ## See Also
 

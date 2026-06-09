@@ -143,8 +143,13 @@ inputs set `Buffer_Max_Size` to 1MB so realistic IQ records aren't dropped by
 ### Multi-line records
 
 Stack traces in `*-clm-server.log` are joined back to their parent log
-entry by Fluent Bit's built-in `java` multiline parser, configured on the
-server-log `[INPUT]` (`multiline.parser  java`). A typical entry like:
+entry by the custom `iq_java_logback` multiline parser, configured on the
+server-log `[INPUT]` (`multiline.parser  iq_java_logback`) and defined in
+the `[MULTILINE_PARSER]` block at the end of the configmap. The built-in
+`java` parser doesn't match IQ Server's timestamp format
+(`HH:mm:ss,SSS` with comma-millis, where the built-in expects
+`HH:mm:ss.SSS` with period-millis), so a custom parser is needed.
+A typical entry like:
 
 ```
 2026-06-08 14:22:40,001+0000 ERROR [http-1] *SYSTEM com.example.Foo - Failed
@@ -269,6 +274,17 @@ kubectl describe pod -n <namespace> -l app.kubernetes.io/name=fluent-bit | grep 
 1. Ensure PVC has `ReadWriteMany` access mode
 2. Verify Fluent Bit pod is running: `kubectl get pods -n <namespace>`
 3. Check Fluent Bit logs for errors
+
+### `invalid time format` warnings on audit/policy-violation parsers
+
+You may occasionally see warnings like:
+
+```
+[error] [parser] cannot parse '2026-06-09T16:43:04Z'
+[ warn] [parser:nexus_iq_audit] invalid time format %Y-%m-%dT%H:%M:%S.%LZ for '2026-06-09T16:43:04Z'
+```
+
+IQ Server's audit and policy-violation logs use ISO-8601 timestamps with millisecond precision, but its JSON serializer (Jackson) trims trailing zeros — so a timestamp landing on an integer second is emitted without a fractional component (`...04Z` instead of `...04.000Z`), which doesn't match the parser's `%Y-%m-%dT%H:%M:%S.%LZ` `Time_Format`. The record is **not dropped**: Fluent Bit falls back to ingestion time for `@timestamp`, and every other field including the original `timestamp`/`eventTimestamp` value is preserved in the record body. The warning is benign log noise; expect a small number of them in audit logs.
 
 ## Cleanup
 
