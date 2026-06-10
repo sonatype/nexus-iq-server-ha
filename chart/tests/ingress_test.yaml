@@ -50,23 +50,20 @@ tests:
           path: metadata.name
           value: RELEASE-NAME-ingress
         documentIndex: 1
-      - equal:
+      - notExists:
           path: metadata.annotations
-          value: null
         documentIndex: 1
       - equal:
           path: spec.ingressClassName
           value: nginx
         documentIndex: 1
       # tls
-      - equal:
+      - notExists:
           path: spec.tls
-          value: null
         documentIndex: 1
       # host 1
-      - equal:
+      - notExists:
           path: spec.rules[0].host
-          value: null
         documentIndex: 1
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.name
@@ -85,9 +82,8 @@ tests:
           value: Prefix
         documentIndex: 1
       # host 2
-      - equal:
+      - notExists:
           path: spec.rules[1].host
-          value: null
         documentIndex: 1
       - equal:
           path: spec.rules[1].http.paths[0].backend.service.name
@@ -192,9 +188,8 @@ tests:
           value: ingress-tls-secret
         documentIndex: 2
       # host 1
-      - equal:
+      - notExists:
           path: spec.rules[0].host
-          value: null
         documentIndex: 2
       - equal:
           path: spec.rules[0].http.paths[0].backend.service.name
@@ -213,9 +208,8 @@ tests:
           value: Prefix
         documentIndex: 2
       # host 2
-      - equal:
+      - notExists:
           path: spec.rules[1].host
-          value: null
         documentIndex: 2
       - equal:
           path: spec.rules[1].http.paths[0].backend.service.name

@@ -55,9 +55,8 @@ tests:
       - equal:
           path: spec.metrics[0].resource.target.averageUtilization
           value: 50          
-      - equal:
+      - notExists:
           path: spec.metrics[1]
-          value: null
   - it: renders with defaults when hpa and hpa memory resource is enabled
     set:
       hpa: 
