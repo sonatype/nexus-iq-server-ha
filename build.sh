@@ -12,8 +12,15 @@
 # Eclipse Foundation. All other trademarks are the property of their respective owners.
 #
 
-# --verify=false: plugin does not yet ship .prov files (https://github.com/helm-unittest/helm-unittest/issues/777)
-helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
+# plugin does not yet ship .prov files (https://github.com/helm-unittest/helm-unittest/issues/777)
+# --verify=false is only supported in Helm 3.13+, so check version first
+HELM_MAJOR=$(helm version --template '{{ .Version }}' | sed 's/v//' | cut -d. -f1)
+HELM_MINOR=$(helm version --template '{{ .Version }}' | cut -d. -f2)
+if [ "$HELM_MAJOR" -ge 4 ] || { [ "$HELM_MAJOR" -eq 3 ] && [ "$HELM_MINOR" -ge 13 ]; }; then
+  helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
+else
+  helm plugin install https://github.com/helm-unittest/helm-unittest.git
+fi
 
 set -e
 
