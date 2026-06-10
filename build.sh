@@ -14,12 +14,19 @@
 
 # plugin does not yet ship .prov files (https://github.com/helm-unittest/helm-unittest/issues/777)
 # --verify=false is only supported in Helm 3.13+, so check version first
+# Remove any existing incompatible plugin version before installing
+helm plugin uninstall unittest 2>/dev/null || true
+
+# Install helm-unittest plugin
+# Note: The plugin's platformHooks field requires Helm 3.13+, so use an older
+# plugin version for older Helm versions.
 HELM_MAJOR=$(helm version --template '{{ .Version }}' | sed 's/v//' | cut -d. -f1)
 HELM_MINOR=$(helm version --template '{{ .Version }}' | cut -d. -f2)
 if [ "$HELM_MAJOR" -ge 4 ] || { [ "$HELM_MAJOR" -eq 3 ] && [ "$HELM_MINOR" -ge 13 ]; }; then
   helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
 else
-  helm plugin install https://github.com/helm-unittest/helm-unittest.git
+  # v0.7.2 is the last version without platformHooks (which requires Helm 3.13+)
+  helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v0.7.2
 fi
 
 set -e
