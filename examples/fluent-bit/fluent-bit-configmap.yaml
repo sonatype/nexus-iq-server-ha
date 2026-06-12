@@ -51,6 +51,7 @@ data:
       Path              /logs/log/*-request.log
       Parser            nexus_iq_request
       Tag               iq_server.request
+      Path_Key          log_file
       DB                /logs/log/.fluent-bit-request.db
       Mem_Buf_Limit     50MB
       Skip_Long_Lines   On
@@ -65,6 +66,7 @@ data:
       Path               /logs/log/*-audit.log
       Parser             nexus_iq_audit
       Tag                iq_server.audit
+      Path_Key           log_file
       DB                 /logs/log/.fluent-bit-audit.db
       Buffer_Chunk_Size  256k
       Buffer_Max_Size    1M
@@ -80,6 +82,7 @@ data:
       Path               /logs/log/*-policy-violation.log
       Parser             nexus_iq_policy_violation
       Tag                iq_server.policy-violation
+      Path_Key           log_file
       DB                 /logs/log/.fluent-bit-policy-violation.db
       Buffer_Chunk_Size  256k
       Buffer_Max_Size    1M
@@ -94,6 +97,7 @@ data:
       Name              tail
       Path              /logs/log/*-stderr.log
       Tag               iq_server.stderr
+      Path_Key          log_file
       DB                /logs/log/.fluent-bit-stderr.db
       Mem_Buf_Limit     50MB
       Skip_Long_Lines   On
