@@ -36,6 +36,7 @@ data:
       Path               /logs/log/*-clm-server.log
       multiline.parser   iq_java_logback
       Tag                iq_server.clm-server
+      Path_Key           log_file
       DB                 /logs/log/.fluent-bit-clm-server.db
       Buffer_Chunk_Size  256k
       Buffer_Max_Size    1M
