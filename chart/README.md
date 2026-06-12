@@ -269,11 +269,7 @@ variable that resolves to the pod name. This means log files from all HA nodes a
 the IQ Server support zip can collect logs from every node in the cluster.
 
 Log aggregation is **not bundled** with this chart. If you require centralized log forwarding, you are responsible for
-integrating your preferred log aggregation solution. Common options include:
-* [Fluent Bit](https://fluentbit.io/) or [Fluentd](https://www.fluentd.org/) as a DaemonSet or sidecar
-* [Datadog Agent](https://docs.datadoghq.com/containers/kubernetes/)
-* [AWS CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-logs.html) with the CloudWatch agent
-* [Grafana Loki](https://grafana.com/oss/loki/) with Promtail
+integrating your preferred log aggregation solution. A validated Fluent Bit example is provided in the `examples/` directory.
 
 Most log collectors work out of the box by collecting container stdout output without any chart configuration changes.
 To also capture JVM stderr and log files from terminated pods, configure your collector to read from the shared PV's
@@ -661,6 +657,165 @@ longer recognized.
 **Action required:** If you have customized `iq_server.config` log file paths, update them to write under the
 cluster directory `log/` subdirectory (e.g., `/sonatype-work/clm-cluster/log/<name>-${HOSTNAME}.log`) to ensure
 the support zip can collect logs from all nodes and the cleanup CronJob handles retention.
+
+## Log Aggregation
+
+As of version 202.0.0, the Helm chart no longer includes a bundled log aggregator. Customers are responsible for
+deploying their own log aggregation solution. This section provides guidance on integrating external log aggregators.
+
+### Log File Locations
+
+IQ Server pods write logs to the shared cluster directory, which is accessible via the PVC:
+
+| Log Type | File Pattern | Path |
+|----------|-------------|------|
+| Server | `<pod-name>-clm-server.log` | `/sonatype-work/clm-cluster/log/` |
+| Request | `<pod-name>-request.log` | `/sonatype-work/clm-cluster/log/` |
+| Audit | `<pod-name>-audit.log` | `/sonatype-work/clm-cluster/log/` |
+| Policy Violation | `<pod-name>-policy-violation.log` | `/sonatype-work/clm-cluster/log/` |
+| Stderr | `<pod-name>-stderr.log` | `/sonatype-work/clm-cluster/log/` |
+
+### Log Format
+
+Each log type uses a different default format — text for the server and request
+logs, JSON Lines for the audit and policy-violation logs, and raw passthrough
+for stderr. The samples below show what an aggregator tailing each file will
+see under the chart's default configuration.
+
+**Server log** (`*-clm-server.log`) — Logback text format, configured by the
+server appender's `logFormat` in `iq_server.iqLogConfig.appenders`:
+
+```
+%d{'yyyy-MM-dd HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n
+```
+
+Sample line:
+
+```
+2026-06-08 00:14:26,433+0000 DEBUG [QuartzScheduler_ClusterManager]  com.sonatype.insight.brain.scheduler.QuartzJobStoreTX - ClusterManager: Check-in complete.
+```
+
+> Internal threads (scheduler, cluster manager) leave `%X{username}` empty,
+> producing two consecutive spaces between `[thread]` and the logger name.
+> Custom regex parsers must treat the user field as optional.
+
+**Request log** (`*-request.log`) — Jetty access log format, configured by the
+request appender's `logFormat`:
+
+```
+%clientHost %l %user [%date] "%requestURL" %statusCode %bytesSent %elapsedTime "%header{User-Agent}"
+```
+
+Sample line:
+
+```
+[0:0:0:0:0:0:0:1] - - [08/Jun/2026:00:14:39 +0000] "HEAD /healthcheck/threadDeadlock HTTP/1.1" 204 0 0 "curl/7.76.1"
+```
+
+**Audit log** (`*-audit.log`) — one JSON record per line. The schema is fixed
+by the `com.sonatype.insight.audit` appender and is not configurable via
+`logFormat`. The `timestamp` field is the time key.
+
+Sample line:
+
+```json
+{"timestamp":"2026-06-08T14:02:32.659Z","requestMethod":"GET","requestUri":"/rest/user/session","remoteIpAddress":"127.0.0.1","username":"*UNKNOWN","domain":"authentication","type":"failure","error":"bad-session"}
+```
+
+**Policy-violation log** (`*-policy-violation.log`) — one JSON record per
+violation. The schema is fixed by the `com.sonatype.insight.policy.violation`
+appender; see
+[help.sonatype.com/en/policy-violation-log.html](https://help.sonatype.com/en/policy-violation-log.html)
+for the full field reference. The `eventTimestamp` field is the time key
+(not `timestamp`).
+
+> The policy-violation log is event-driven: a record is only written when a
+> policy evaluation finds a violation. On a fresh deployment the file may
+> not exist until the first evaluation runs — this is expected.
+
+Sample line:
+
+```json
+{"eventType":"create","eventTimestamp":"2026-06-08T14:22:40.022Z","policyName":"Security-Critical","policyThreatLevel":10,"policyConditionTriggers":[{"reason":"Found security vulnerability CVE-2023-20873 with severity >= 9 (severity = 9.8)"}],"applicationPublicId":"sandbox-application","componentIdentifier":{"format":"maven","coordinates":{"artifactId":"spring-boot-actuator-autoconfigure","groupId":"org.springframework.boot","version":"2.4.3"}}}
+```
+
+**Stderr** (`*-stderr.log`) — raw JVM stderr passthrough. No fixed schema;
+content is whatever the JVM writes to standard error (deprecation warnings,
+JVM startup messages, uncaught exception stack traces).
+
+Sample lines:
+
+```
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.thoughtworks.xstream.converters.reflection.SunUnsafeReflectionProvider (file:/opt/sonatype/nexus-iq-server/jars/insight-brain-service-1.204.0-01-server.jar)
+```
+
+### Integrating External Log Aggregators
+
+The Helm chart supports a "bring your own aggregator" model. To integrate your log aggregator:
+
+1. **Deploy your log aggregator** as a separate Kubernetes resource
+2. **Mount the existing PVC** (`iq-server-pvc` by default) to access log files
+3. **Configure your log aggregator** to tail the log files from `/sonatype-work/clm-cluster/log/`
+4. **Forward logs** to your desired destination
+
+### Example: Fluent Bit Integration
+
+A working Fluent Bit example is provided in the `examples/fluent-bit/` directory of this repository. It runs as a single-replica `Deployment` (not a DaemonSet) — the IQ Server logs live on a shared RWX PVC, so one reader is what's needed; running per-node would duplicate every record N times.
+
+**Prerequisites:**
+- The example assumes your namespace is `iq-ha` (the YAML default). If using a different namespace, see the customization steps below.
+- The example assumes your PVC is named `iq-server-pvc` (the chart default).
+
+**Quick Deploy:**
+
+```bash
+# Deploy Fluent Bit with file output (local aggregation)
+# These files create resources in the 'iq-ha' namespace by default
+kubectl apply -f examples/fluent-bit/fluent-bit-configmap.yaml
+kubectl apply -f examples/fluent-bit/fluent-bit-deployment.yaml
+```
+
+**To use a different namespace:**
+
+```bash
+# Download and modify
+mkdir -p my-fluent-bit
+cp examples/fluent-bit/*.yaml my-fluent-bit/
+sed -i 's/namespace: iq-ha/namespace: your-namespace/g' my-fluent-bit/*.yaml
+kubectl apply -f my-fluent-bit/
+
+# Edit files with any custom changes before applying
+sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-configmap.yaml | kubectl apply -f -
+sed 's/namespace: iq-ha/namespace: your-namespace/g' examples/fluent-bit/fluent-bit-deployment.yaml | kubectl apply -f -
+
+
+```
+
+**To use a different PVC name** (if you customized `iq_server.persistence.persistentVolumeClaimName`):
+
+```bash
+# Update the claimName in the Deployment
+sed -i 's/claimName: iq-server-pvc/claimName: your-pvc-name/g' my-fluent-bit/fluent-bit-deployment.yaml
+kubectl apply -f my-fluent-bit/
+```
+
+See the [examples/fluent-bit/README.md](../examples/fluent-bit/README.md) for complete documentation including verification steps and customization options. The example ConfigMap uses file output to write aggregated logs back to the shared PVC. To forward logs to external systems, modify the `[OUTPUT]` sections in the ConfigMap.
+
+### Example: Datadog Integration
+
+A second example in `examples/datadog/` shows the same Fluent Bit pattern with an additional Datadog HTTP-intake output (one `dd_source` per log type). It writes the same `*.aggregated.log` files to the PVC and ships records to Datadog over HTTPS. See [examples/datadog/README.md](../examples/datadog/README.md) for setup (API key secret, region selection) and verification steps.
+
+### PVC Requirements for Log Aggregation
+
+- **Access Mode**: `ReadWriteMany` (RWX) is required for multiple pods to share the volume
+- **PVC Name**: `iq-server-pvc` (default, configurable via `iq_server.persistence.persistentVolumeClaimName`)
+- **Mount Path in Aggregator**: Mount to any path and configure your aggregator to read from `<mount>/log/`
+
+### Support Zip Integration
+
+Logs written to the cluster directory are automatically included in support zips under the `cluster_log` directory.
+This ensures that support can access aggregated logs from all HA nodes.
 
 ## Chart Configuration Options
 | Parameter                                                          | Description                                                                                          | Default                    |

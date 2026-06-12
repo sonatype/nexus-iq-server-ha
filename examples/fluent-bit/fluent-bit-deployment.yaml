@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluent-bit
+  namespace: iq-ha
+  labels:
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/component: log-aggregator
+    app.kubernetes.io/part-of: nexus-iq-server
+spec:
+  # Single replica is intentional. The IQ Server log files live on a shared
+  # RWX PVC, not on per-node storage, so only one pod should tail them.
+  # Running more than one replica means every record is read N times: each
+  # pod ships duplicates to downstream outputs, the SQLite tail offset DBs
+  # race for locks on the shared PVC, and the *.aggregated.log files get
+  # interleaved appends. Recreate ensures the old pod releases the tail
+  # offset DBs before the new one starts.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fluent-bit
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fluent-bit
+        app.kubernetes.io/component: log-aggregator
+    spec:
+      serviceAccountName: fluent-bit
+      containers:
+        - name: fluent-bit
+          image: fluent/fluent-bit:3.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 2020
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            # Mount the IQ Server PVC. The chart mounts this same PVC at
+            # /sonatype-work/clm-cluster, so log files live at <pvc-root>/log/*.
+            # Mounting at /logs here makes those files visible at /logs/log/*,
+            # which matches the tail paths in the ConfigMap.
+            - name: iq-server-logs
+              mountPath: /logs
+              readOnly: false
+            # Mount the Fluent Bit configuration
+            - name: fluent-bit-config
+              mountPath: /fluent-bit/etc/
+      volumes:
+        # Reference the existing PVC created by the IQ Server Helm chart.
+        # This PVC must have ReadWriteMany access mode for the chart's
+        # multi-node access; this aggregator only needs one mount.
+        - name: iq-server-logs
+          persistentVolumeClaim:
+            claimName: iq-server-pvc
+        # ConfigMap containing Fluent Bit configuration
+        - name: fluent-bit-config
+          configMap:
+            name: fluent-bit-config
+            items:
+              - key: fluent-bit.conf
+                path: fluent-bit.conf
+              - key: parsers.conf
+                path: parsers.conf
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: iq-ha
+  labels:
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/component: log-aggregator
