@@ -195,7 +195,7 @@ data:
     [PARSER]
       Name        nexus_iq_request
       Format      regex
-      Regex       ^(?<client_host>\S+) (?<ident>\S+) (?<user>\S+) \[(?<time>[^\]]+)\] "(?<request_url>[^"]*)" (?<status_code>\d+) (?<bytes_sent>\d+) (?<elapsed_ms>\d+) "(?<user_agent>[^"]*)"$
+      Regex       ^(?<client_host>\S+) (?<ident>\S+) (?<user>\S+) \[(?<time>[^\]]+)\] "(?<request_url>[^"]*)" (?<status_code>\d+) (?<bytes_sent>\d+) (?<elapsed_ms>-?\d+) "(?<user_agent>[^"]*)"$
       Time_Key    time
       Time_Format %d/%b/%Y:%H:%M:%S %z
       Time_Keep   On
