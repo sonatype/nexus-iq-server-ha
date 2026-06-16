@@ -1,0 +1,226 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: iq-ha
+  labels:
+    app.kubernetes.io/name: fluent-bit
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+      Flush         5
+      Log_Level     info
+      Daemon        off
+      Parsers_File  parsers.conf
+      # Enable the HTTP monitoring server so the pod's liveness and
+      # readiness probes (/api/v1/health on port 2020) succeed.
+      HTTP_Server   On
+      HTTP_Listen   0.0.0.0
+      HTTP_Port     2020
+
+    # IQ Server emits five distinct log files, each with its own format. We
+    # tail each pattern through a parser that matches that format so the
+    # aggregated output is structured (one JSON record per event) instead of
+    # a flat string. DB persists tail offsets across refreshes so log
+    # entries are not re-emitted every Refresh_Interval.
+
+    # Server application log: Logback appender, plain-text format.
+    # The `iq_java_logback` multiline parser joins stack traces into one record.
+    # Buffer_Max_Size is bumped because joined stack traces (especially with
+    # chained `Caused by:` clauses) routinely exceed the 32KB default. With
+    # Skip_Long_Lines On, anything over the buffer would be silently dropped.
+    # The tail-stage `Parser` is bypassed when `multiline.parser` is set, so
+    # the regex parser runs in the [FILTER] block below.
+    [INPUT]
+      Name               tail
+      Path               /logs/log/*-clm-server.log
+      multiline.parser   iq_java_logback
+      Tag                iq_server.clm-server
+      Path_Key           log_file
+      DB                 /logs/log/.fluent-bit-clm-server.db
+      Buffer_Chunk_Size  256k
+      Buffer_Max_Size    1M
+      Mem_Buf_Limit      50MB
+      Skip_Long_Lines    On
+      Read_From_Head     true
+      Refresh_Interval   10
+
+    # Request log: Jetty access log, plain-text format.
+    [INPUT]
+      Name              tail
+      Path              /logs/log/*-request.log
+      Parser            nexus_iq_request
+      Tag               iq_server.request
+      Path_Key          log_file
+      DB                /logs/log/.fluent-bit-request.db
+      Mem_Buf_Limit     50MB
+      Skip_Long_Lines   On
+      Read_From_Head    true
+      Refresh_Interval  10
+
+    # Audit log: native JSON from com.sonatype.insight.audit appender.
+    # Buffer_Max_Size is bumped to 1MB because individual audit records can
+    # exceed the default 32KB (e.g., scan results with many components).
+    [INPUT]
+      Name               tail
+      Path               /logs/log/*-audit.log
+      Parser             nexus_iq_audit
+      Tag                iq_server.audit
+      Path_Key           log_file
+      DB                 /logs/log/.fluent-bit-audit.db
+      Buffer_Chunk_Size  256k
+      Buffer_Max_Size    1M
+      Mem_Buf_Limit      50MB
+      Skip_Long_Lines    On
+      Read_From_Head     true
+      Refresh_Interval   10
+
+    # Policy-violation log: native JSON from com.sonatype.insight.policy.violation appender.
+    # Same buffer treatment as audit since violation records embed component data.
+    [INPUT]
+      Name               tail
+      Path               /logs/log/*-policy-violation.log
+      Parser             nexus_iq_policy_violation
+      Tag                iq_server.policy-violation
+      Path_Key           log_file
+      DB                 /logs/log/.fluent-bit-policy-violation.db
+      Buffer_Chunk_Size  256k
+      Buffer_Max_Size    1M
+      Mem_Buf_Limit      50MB
+      Skip_Long_Lines    On
+      Read_From_Head     true
+      Refresh_Interval   10
+
+    # Stderr: raw JVM stderr. No parser - lines are forwarded as-is. Multi-line
+    # content (rare; JVM crash output is the typical case) fragments line-by-line.
+    [INPUT]
+      Name              tail
+      Path              /logs/log/*-stderr.log
+      Tag               iq_server.stderr
+      Path_Key          log_file
+      DB                /logs/log/.fluent-bit-stderr.db
+      Mem_Buf_Limit     50MB
+      Skip_Long_Lines   On
+      Read_From_Head    true
+      Refresh_Interval  10
+
+    # Re-parse the multiline-joined `log` field into structured fields
+    # (time, level, thread, user, logger, message). Fluent Bit's tail
+    # `Parser` directive is bypassed when `multiline.parser` is set, so we
+    # re-run the regex parser here instead. Only applies to the server log.
+    [FILTER]
+      Name          parser
+      Match         iq_server.clm-server
+      Key_Name      log
+      Parser        nexus_iq_server
+      Reserve_Data  On
+      Preserve_Key  Off
+
+    # Output aggregated logs back to the shared volume.
+    [OUTPUT]
+      Name              file
+      Match             iq_server.clm-server
+      Path              /logs/log
+      File              clm-server.aggregated.log
+      Format            plain
+
+    [OUTPUT]
+      Name              file
+      Match             iq_server.request
+      Path              /logs/log
+      File              request.aggregated.log
+      Format            plain
+
+    [OUTPUT]
+      Name              file
+      Match             iq_server.audit
+      Path              /logs/log
+      File              audit.aggregated.log
+      Format            plain
+
+    [OUTPUT]
+      Name              file
+      Match             iq_server.policy-violation
+      Path              /logs/log
+      File              policy-violation.aggregated.log
+      Format            plain
+
+    [OUTPUT]
+      Name              file
+      Match             iq_server.stderr
+      Path              /logs/log
+      File              stderr.aggregated.log
+      Format            plain
+
+  parsers.conf: |
+    # Custom multiline parser for IQ Server clm-server.log.
+    # The built-in `java` parser expects a period-millis timestamp
+    # (`HH:mm:ss.SSS`), but the chart's default Logback layout emits
+    # comma-millis (`HH:mm:ss,SSSZ`). Without a matching start_state regex,
+    # every line of a stack trace would be shipped as its own record.
+    # This parser handles the comma-millis format and recognizes the bare
+    # exception line that IQ Server logs on the line after the leading
+    # log message.
+    [MULTILINE_PARSER]
+      Name           iq_java_logback
+      Type           regex
+      Flush_Timeout  1000
+      Rule           "start_state"  "/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}[+-]\d{4}\s/"  "cont"
+      Rule           "cont"         "/^\s+(?:at\s|\.\.\.\s+\d+\s+more)/"  "cont"
+      Rule           "cont"         "/^(?:Caused\s+by|Suppressed):\s/"  "cont"
+      Rule           "cont"         "/^[a-zA-Z][\w$]*(?:\.[\w$]+)+:?\s/"  "cont"
+      Rule           "cont"         "/^\s*$/"  "cont"
+
+    # IQ Server application log (clm-server.log).
+    # Matches the chart's default logFormat:
+    #   %d{'yyyy-MM-dd HH:mm:ss,SSSZ'} %level [%thread] %X{username} %logger - %msg%n
+    # Samples:
+    #   With user:    2026-06-05 17:20:34,286+0000 INFO [main] *SYSTEM com.sonatype.insight.brain.service - Initializing...
+    #   Empty user:   2026-06-05 17:49:04,664+0000 DEBUG [Quartz...]  com.sonatype.insight.brain.scheduler - ClusterManager: Check-in complete.
+    # The user field is optional because Logback emits an empty string for
+    # %X{username} when the MDC has no username set (scheduler/internal threads),
+    # which leaves two consecutive spaces between the thread bracket and the logger.
+    # `(?<message>[\s\S]*)` (instead of `.*$`) lets the message capture
+    # span newlines so multiline-joined stack traces flow into the message
+    # field intact when this parser is used by the [FILTER] stage.
+    [PARSER]
+      Name        nexus_iq_server
+      Format      regex
+      Regex       ^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}[+-]\d{4}) (?<level>\w+) \[(?<thread>[^\]]+)\] (?:(?<user>\S+) )?\s*(?<logger>\S+) - (?<message>[\s\S]*)
+      Time_Key    time
+      Time_Format %Y-%m-%d %H:%M:%S,%L%z
+      Time_Keep   On
+
+    # IQ Server access log (request.log).
+    # Matches the chart's default request appender logFormat:
+    #   %clientHost %l %user [%date] "%requestURL" %statusCode %bytesSent %elapsedTime "%header{User-Agent}"
+    # Sample line:
+    #   [0:0:0:0:0:0:0:1] - - [05/Jun/2026:17:21:11 +0000] "HEAD /ping HTTP/1.1" 200 5 33 "curl/7.76.1"
+    [PARSER]
+      Name        nexus_iq_request
+      Format      regex
+      Regex       ^(?<client_host>\S+) (?<ident>\S+) (?<user>\S+) \[(?<time>[^\]]+)\] "(?<request_url>[^"]*)" (?<status_code>\d+) (?<bytes_sent>\d+) (?<elapsed_ms>-?\d+) "(?<user_agent>[^"]*)"$
+      Time_Key    time
+      Time_Format %d/%b/%Y:%H:%M:%S %z
+      Time_Keep   On
+
+    # IQ Server audit log (audit.log) - native JSON, one object per line.
+    # Sample line:
+    #   {"timestamp":"2026-06-05T17:20:36.714Z","username":"*SYSTEM","domain":"server","type":"start", ... }
+    [PARSER]
+      Name        nexus_iq_audit
+      Format      json
+      Time_Key    timestamp
+      Time_Format %Y-%m-%dT%H:%M:%S.%LZ
+      Time_Keep   On
+
+    # IQ Server policy-violation log (policy-violation.log) - native JSON, one object per line.
+    # Time field is eventTimestamp (not timestamp).
+    # Sample line:
+    #   {"eventType":"create","eventTimestamp":"2026-06-08T14:22:40.022Z","policyName":"Security-Critical","policyThreatLevel":10,"componentIdentifier":{"format":"maven","coordinates":{"artifactId":"spring-boot-actuator-autoconfigure","groupId":"org.springframework.boot","version":"2.4.3"}}, ... }
+    [PARSER]
+      Name        nexus_iq_policy_violation
+      Format      json
+      Time_Key    eventTimestamp
+      Time_Format %Y-%m-%dT%H:%M:%S.%LZ
+      Time_Keep   On

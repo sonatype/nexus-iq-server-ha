@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluent-bit-datadog
+  namespace: iq-ha
+  labels:
+    app.kubernetes.io/name: fluent-bit-datadog
+    app.kubernetes.io/component: log-aggregator
+    app.kubernetes.io/part-of: nexus-iq-server
+spec:
+  # Single replica is intentional. The IQ Server log files live on a shared
+  # RWX PVC, not on per-node storage, so only one pod should tail them.
+  # Running more than one replica means every record ships to Datadog N
+  # times, the SQLite tail offset DBs race for locks on the shared PVC,
+  # and the *.aggregated.log files get interleaved appends. Recreate
+  # ensures the old pod releases the tail offset DBs before the new one
+  # starts.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fluent-bit-datadog
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fluent-bit-datadog
+        app.kubernetes.io/component: log-aggregator
+    spec:
+      serviceAccountName: fluent-bit-datadog
+      containers:
+        - name: fluent-bit
+          image: fluent/fluent-bit:3.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            # The configmap references ${DD_API_KEY} on the `apikey` line of
+            # every datadog output. The k8s secret named `datadog-api-key`
+            # must exist in this namespace before the pod starts — see
+            # datadog-secret-template.yaml and the README.
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-api-key
+                  key: api-key
+          ports:
+            - containerPort: 2020
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            # Mount the IQ Server PVC. Files at <pvc-root>/log/* are visible
+            # at /logs/log/*, matching the tail paths in the configmap.
+            - name: iq-server-logs
+              mountPath: /logs
+              readOnly: false
+            - name: fluent-bit-config
+              mountPath: /fluent-bit/etc/
+      volumes:
+        - name: iq-server-logs
+          persistentVolumeClaim:
+            claimName: iq-server-pvc
+        - name: fluent-bit-config
+          configMap:
+            name: fluent-bit-datadog-config
+            items:
+              - key: fluent-bit.conf
+                path: fluent-bit.conf
+              - key: parsers.conf
+                path: parsers.conf
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit-datadog
+  namespace: iq-ha
+  labels:
+    app.kubernetes.io/name: fluent-bit-datadog
+    app.kubernetes.io/component: log-aggregator
