@@ -294,15 +294,11 @@ iq_server:
 iq_server_jobs:
   migrationJobAnnotations:
     # Annotations to apply to the DB migration job
-  # Top-level fields spliced into the DB migration Job spec. Set a key to null to
-  # omit it from the rendered spec.
-  # For ArgoCD/GitOps, the migrate-db job otherwise loops: ttlSecondsAfterFinished
-  # deletes the completed job, ArgoCD sees it missing and re-creates it. Keep the
-  # completed job (so it stays in sync) and allow it to be replaced on upgrade:
-  #   jobSpec:
-  #     ttlSecondsAfterFinished: null
-  #   migrationJobAnnotations:
-  #     argocd.argoproj.io/sync-options: Replace=true
+  # Top-level fields spliced into the DB migration Job spec; set a key to null to
+  # omit it. Under GitOps, consider setting ttlSecondsAfterFinished to null so the
+  # completed job is kept: with a ttl set the job is removed after it finishes, and
+  # a reconciling controller may then re-create it, looping.
+  # Jobs are immutable, so re-running on upgrade may need your GitOps tool's replace option.
   jobSpec:
     ttlSecondsAfterFinished: 0
   # We usually recommend not to specify default resources and to leave this as a conscious choice for the user.
