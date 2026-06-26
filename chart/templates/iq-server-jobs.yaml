@@ -9,7 +9,11 @@ metadata:
 spec:
   completions: 1
   parallelism: 1
-  ttlSecondsAfterFinished: 0
+  {{- range $k, $v := .Values.iq_server_jobs.jobSpec }}
+  {{- if not (kindIs "invalid" $v) }}
+  {{ $k }}: {{ $v }}
+  {{- end }}
+  {{- end }}
   template:
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
