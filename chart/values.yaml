@@ -292,12 +292,14 @@ iq_server:
   affinity: {}
 
 iq_server_jobs:
+  # For GitOps, run the migrate-db job once per upgrade: keep the completed job so it
+  # isn't recreated in a loop (ttlSecondsAfterFinished: null), and let your tool
+  # replace it on upgrade since Jobs are immutable.
   migrationJobAnnotations:
     # Annotations for the DB migration job.
-    # Example (ArgoCD): argocd.argoproj.io/sync-options: Replace=true (recreate the immutable Job to re-run on upgrade)
+    # Example (ArgoCD): argocd.argoproj.io/sync-options: Replace=true
   # Extra fields merged into the migration job spec; set a key to null to omit it.
-  # For GitOps, set ttlSecondsAfterFinished to null so the completed job is kept;
-  # otherwise it self-deletes and the controller may re-create it, looping.
+  # Example: ttlSecondsAfterFinished: null
   jobSpec:
     ttlSecondsAfterFinished: 0
   # We usually recommend not to specify default resources and to leave this as a conscious choice for the user.
