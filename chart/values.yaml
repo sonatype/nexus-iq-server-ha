@@ -299,6 +299,11 @@ iq_server_jobs:
   # completed job is kept: with a ttl set the job is removed after it finishes, and
   # a reconciling controller may then re-create it, looping.
   # Jobs are immutable, so re-running on upgrade may need your GitOps tool's replace option.
+  # Example (ArgoCD):
+  #   migrationJobAnnotations:
+  #     argocd.argoproj.io/sync-options: Replace=true
+  #   jobSpec:
+  #     ttlSecondsAfterFinished: null
   jobSpec:
     ttlSecondsAfterFinished: 0
   # We usually recommend not to specify default resources and to leave this as a conscious choice for the user.
