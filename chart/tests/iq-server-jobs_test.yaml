@@ -541,3 +541,24 @@ tests:
           path: spec.backoffLimit
           value: 3
         documentIndex: 0
+  - it: renders structured jobSpec fields onto the migrate-db job
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        jobSpec:
+          podFailurePolicy:
+            rules:
+              - action: FailJob
+                onExitCodes:
+                  operator: In
+                  values: [1]
+    asserts:
+      - equal:
+          path: spec.podFailurePolicy.rules[0].action
+          value: FailJob
+        documentIndex: 0
+      - equal:
+          path: spec.podFailurePolicy.rules[0].onExitCodes.values[0]
+          value: 1
+        documentIndex: 0

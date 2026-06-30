@@ -9,10 +9,14 @@ metadata:
 spec:
   completions: 1
   parallelism: 1
+  {{- $clean := dict }}
   {{- range $k, $v := .Values.iq_server_jobs.jobSpec }}
   {{- if not (kindIs "invalid" $v) }}
-  {{ $k }}: {{ $v }}
+  {{- $_ := set $clean $k $v }}
   {{- end }}
+  {{- end }}
+  {{- if $clean }}
+  {{- toYaml $clean | nindent 2 }}
   {{- end }}
   template:
     spec:
