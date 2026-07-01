@@ -592,3 +592,17 @@ tests:
           path: spec.backoffLimit
           value: 3
         documentIndex: 1
+  - it: renders gitSshJobAnnotations onto the git-ssh job
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        gitSshJobAnnotations:
+          argocd.argoproj.io/sync-options: Replace=true
+    asserts:
+      - equal:
+          path: metadata.annotations
+          value:
+            argocd.argoproj.io/sync-options: Replace=true
+        documentIndex: 1

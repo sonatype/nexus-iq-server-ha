@@ -298,6 +298,10 @@ iq_server_jobs:
   migrationJobAnnotations:
     # Annotations for the DB migration job.
     # Example (ArgoCD): argocd.argoproj.io/sync-options: Replace=true
+  gitSshJobAnnotations:
+    # Annotations for the git-ssh job (only rendered when iq_server.useGitSsh is true).
+    # The git-ssh command is idempotent, so re-running it on upgrade is safe.
+    # Example (ArgoCD): argocd.argoproj.io/sync-options: Replace=true
   # Extra fields merged into the migrate-db and git-ssh job specs; set a key to null to omit it.
   # Example: ttlSecondsAfterFinished: null
   jobSpec:

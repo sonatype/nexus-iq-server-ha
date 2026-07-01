@@ -128,6 +128,10 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ .Release.Name }}-git-ssh
+  {{- with .Values.iq_server_jobs.gitSshJobAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   completions: 1
   parallelism: 1
