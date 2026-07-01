@@ -9,14 +9,14 @@ metadata:
 spec:
   completions: 1
   parallelism: 1
-  {{- $clean := dict }}
-  {{- range $k, $v := .Values.iq_server_jobs.jobSpec }}
+  {{- $migrationSpec := dict }}
+  {{- range $k, $v := .Values.iq_server_jobs.migrationJobSpec }}
   {{- if not (kindIs "invalid" $v) }}
-  {{- $_ := set $clean $k $v }}
+  {{- $_ := set $migrationSpec $k $v }}
   {{- end }}
   {{- end }}
-  {{- if $clean }}
-  {{- toYaml $clean | nindent 2 }}
+  {{- if $migrationSpec }}
+  {{- toYaml $migrationSpec | nindent 2 }}
   {{- end }}
   template:
     spec:
@@ -136,7 +136,7 @@ spec:
   completions: 1
   parallelism: 1
   {{- $gitSshSpec := dict }}
-  {{- range $k, $v := .Values.iq_server_jobs.jobSpec }}
+  {{- range $k, $v := .Values.iq_server_jobs.gitSshJobSpec }}
   {{- if not (kindIs "invalid" $v) }}
   {{- $_ := set $gitSshSpec $k $v }}
   {{- end }}

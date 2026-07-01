@@ -513,23 +513,23 @@ tests:
                         values:
                           - iq-pool
         documentIndex: 0
-  - it: omits ttlSecondsAfterFinished when jobSpec value is null
+  - it: omits ttlSecondsAfterFinished when migrationJobSpec value is null
     set:
       iq_server:
         tag: "1.148.0"
       iq_server_jobs:
-        jobSpec:
+        migrationJobSpec:
           ttlSecondsAfterFinished: null
     asserts:
       - isNull:
           path: spec.ttlSecondsAfterFinished
         documentIndex: 0
-  - it: renders extra jobSpec fields onto the migrate-db job
+  - it: renders extra migrationJobSpec fields onto the migrate-db job
     set:
       iq_server:
         tag: "1.148.0"
       iq_server_jobs:
-        jobSpec:
+        migrationJobSpec:
           ttlSecondsAfterFinished: 120
           backoffLimit: 3
     asserts:
@@ -541,12 +541,12 @@ tests:
           path: spec.backoffLimit
           value: 3
         documentIndex: 0
-  - it: renders structured jobSpec fields onto the migrate-db job
+  - it: renders structured migrationJobSpec fields onto the migrate-db job
     set:
       iq_server:
         tag: "1.148.0"
       iq_server_jobs:
-        jobSpec:
+        migrationJobSpec:
           podFailurePolicy:
             rules:
               - action: FailJob
@@ -562,25 +562,38 @@ tests:
           path: spec.podFailurePolicy.rules[0].onExitCodes.values[0]
           value: 1
         documentIndex: 0
-  - it: omits ttlSecondsAfterFinished on the git-ssh job when jobSpec value is null
+  - it: does not apply migrationJobSpec to the git-ssh job
     set:
       iq_server:
         tag: "1.148.0"
         useGitSsh: true
       iq_server_jobs:
-        jobSpec:
+        migrationJobSpec:
+          ttlSecondsAfterFinished: null
+    asserts:
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 0
+        documentIndex: 1
+  - it: omits ttlSecondsAfterFinished on the git-ssh job when gitSshJobSpec value is null
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        gitSshJobSpec:
           ttlSecondsAfterFinished: null
     asserts:
       - isNull:
           path: spec.ttlSecondsAfterFinished
         documentIndex: 1
-  - it: renders extra jobSpec fields onto the git-ssh job
+  - it: renders extra gitSshJobSpec fields onto the git-ssh job
     set:
       iq_server:
         tag: "1.148.0"
         useGitSsh: true
       iq_server_jobs:
-        jobSpec:
+        gitSshJobSpec:
           ttlSecondsAfterFinished: 120
           backoffLimit: 3
     asserts:
@@ -592,6 +605,18 @@ tests:
           path: spec.backoffLimit
           value: 3
         documentIndex: 1
+  - it: does not apply gitSshJobSpec to the migrate-db job
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        gitSshJobSpec:
+          ttlSecondsAfterFinished: null
+    asserts:
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 0
+        documentIndex: 0
   - it: renders gitSshJobAnnotations onto the git-ssh job
     set:
       iq_server:

@@ -901,8 +901,9 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server.tolerations`                                            | Tolerations for pod assignment                                                                       | `[]`                       |
 | `iq_server.affinity`                                               | Affinity rules for pod assignment                                                                    | `{}`                       |
 | `iq_server_jobs.migrationJobAnnotations`                           | Sonatype IQ DB Migration job Annotations                                                             | `nil`                      |
+| `iq_server_jobs.migrationJobSpec`                                 | Top-level spec fields merged into the migrate-db job; set a key to `null` to omit it                 | `{ttlSecondsAfterFinished: 0}` |
 | `iq_server_jobs.gitSshJobAnnotations`                             | git-ssh job Annotations (rendered only when `iq_server.useGitSsh` is true)                           | `nil`                      |
-| `iq_server_jobs.jobSpec`                                           | Top-level spec fields merged into the migrate-db and git-ssh jobs; set a key to `null` to omit it    | `{ttlSecondsAfterFinished: 0}` |
+| `iq_server_jobs.gitSshJobSpec`                                    | Top-level spec fields merged into the git-ssh job; set a key to `null` to omit it                    | `{ttlSecondsAfterFinished: 0}` |
 | `iq_server_jobs.env`                                               | Sonatype IQ DB Migration job environment variables                                                   | `nil`                      |
 | `iq_server_jobs.resources.requests.cpu`                            | Sonatype IQ DB Migration job request for CPU resources in CPU units                                  | `nil`                      |
 | `iq_server_jobs.resources.requests.memory`                         | Sonatype IQ DB Migration job request for memory resources in bytes                                   | `nil`                      |

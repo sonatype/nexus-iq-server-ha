@@ -298,13 +298,17 @@ iq_server_jobs:
   migrationJobAnnotations:
     # Annotations for the DB migration job.
     # Example (ArgoCD): argocd.argoproj.io/sync-options: Replace=true
+  # Top-level fields merged into the migrate-db job spec; set a key to null to omit it.
+  # Example: ttlSecondsAfterFinished: null
+  migrationJobSpec:
+    ttlSecondsAfterFinished: 0
   gitSshJobAnnotations:
     # Annotations for the git-ssh job (only rendered when iq_server.useGitSsh is true).
     # The git-ssh command is idempotent, so re-running it on upgrade is safe.
     # Example (ArgoCD): argocd.argoproj.io/sync-options: Replace=true
-  # Extra fields merged into the migrate-db and git-ssh job specs; set a key to null to omit it.
+  # Top-level fields merged into the git-ssh job spec; set a key to null to omit it.
   # Example: ttlSecondsAfterFinished: null
-  jobSpec:
+  gitSshJobSpec:
     ttlSecondsAfterFinished: 0
   # We usually recommend not to specify default resources and to leave this as a conscious choice for the user.
   # This also increases the chance that the chart runs on environments with little resources.
