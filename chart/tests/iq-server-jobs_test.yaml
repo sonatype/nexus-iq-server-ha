@@ -562,3 +562,33 @@ tests:
           path: spec.podFailurePolicy.rules[0].onExitCodes.values[0]
           value: 1
         documentIndex: 0
+  - it: omits ttlSecondsAfterFinished on the git-ssh job when jobSpec value is null
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        jobSpec:
+          ttlSecondsAfterFinished: null
+    asserts:
+      - isNull:
+          path: spec.ttlSecondsAfterFinished
+        documentIndex: 1
+  - it: renders extra jobSpec fields onto the git-ssh job
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        jobSpec:
+          ttlSecondsAfterFinished: 120
+          backoffLimit: 3
+    asserts:
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 120
+        documentIndex: 1
+      - equal:
+          path: spec.backoffLimit
+          value: 3
+        documentIndex: 1

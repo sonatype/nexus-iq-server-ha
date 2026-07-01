@@ -131,7 +131,15 @@ metadata:
 spec:
   completions: 1
   parallelism: 1
-  ttlSecondsAfterFinished: 0
+  {{- $gitSshSpec := dict }}
+  {{- range $k, $v := .Values.iq_server_jobs.jobSpec }}
+  {{- if not (kindIs "invalid" $v) }}
+  {{- $_ := set $gitSshSpec $k $v }}
+  {{- end }}
+  {{- end }}
+  {{- if $gitSshSpec }}
+  {{- toYaml $gitSshSpec | nindent 2 }}
+  {{- end }}
   template:
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
