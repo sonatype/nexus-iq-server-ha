@@ -9,7 +9,15 @@ metadata:
 spec:
   completions: 1
   parallelism: 1
-  ttlSecondsAfterFinished: 0
+  {{- $migrationSpec := dict }}
+  {{- range $k, $v := .Values.iq_server_jobs.migrationJobSpec }}
+  {{- if not (kindIs "invalid" $v) }}
+  {{- $_ := set $migrationSpec $k $v }}
+  {{- end }}
+  {{- end }}
+  {{- if $migrationSpec }}
+  {{- toYaml $migrationSpec | nindent 2 }}
+  {{- end }}
   template:
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
@@ -120,10 +128,22 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ .Release.Name }}-git-ssh
+  {{- with .Values.iq_server_jobs.gitSshJobAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   completions: 1
   parallelism: 1
-  ttlSecondsAfterFinished: 0
+  {{- $gitSshSpec := dict }}
+  {{- range $k, $v := .Values.iq_server_jobs.gitSshJobSpec }}
+  {{- if not (kindIs "invalid" $v) }}
+  {{- $_ := set $gitSshSpec $k $v }}
+  {{- end }}
+  {{- end }}
+  {{- if $gitSshSpec }}
+  {{- toYaml $gitSshSpec | nindent 2 }}
+  {{- end }}
   template:
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
