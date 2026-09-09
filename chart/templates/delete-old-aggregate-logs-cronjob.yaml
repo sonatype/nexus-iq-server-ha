@@ -12,6 +12,11 @@ spec:
       template:
         spec:
           restartPolicy: OnFailure
+          serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
+          {{- if .Values.iq_server.imagePullSecret }}
+          imagePullSecrets:
+            - name: {{ .Values.iq_server.imagePullSecret }}
+          {{- end }}
           volumes:
             - name: {{ .Release.Name }}-iq-server-pod-volume
               persistentVolumeClaim:
