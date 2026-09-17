@@ -943,6 +943,10 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `existingApplicationLoadBalancer.adminTargetGroupARN`              | Target group ARN for target synchronization with admin endpoints                                     | `nil`                      |
 | `aggregateLogFileRetention.deleteCron`                             | Cron schedule expression for when to delete old aggregate log files if needed                        | `0 1 * * *`                |
 | `aggregateLogFileRetention.maxLastModifiedDays`                    | Maximum last modified time of an aggregate log file in days (0 disables deletion)                    | `50`                       |
+| `aggregateLogFileRetention.resources.requests.cpu`                 | delete-old-aggregate-logs cronjob request for CPU resources in CPU units                             | `nil`                      |
+| `aggregateLogFileRetention.resources.requests.memory`              | delete-old-aggregate-logs cronjob request for memory resources in bytes                              | `nil`                      |
+| `aggregateLogFileRetention.resources.limits.cpu`                   | delete-old-aggregate-logs cronjob limit for CPU resources in CPU units                               | `nil`                      |
+| `aggregateLogFileRetention.resources.limits.memory`                | delete-old-aggregate-logs cronjob limit for memory resources in bytes                                | `nil`                      |
 | `aggregateLogFileRetention.nodeSelector`                           | Node labels for cronjob pod assignment                                                               | `{}`                       |
 | `aggregateLogFileRetention.tolerations`                            | Tolerations for cronjob pod assignment                                                               | `[]`                       |
 | `aggregateLogFileRetention.affinity`                               | Affinity rules for cronjob pod assignment                                                            | `{}`                       |
