@@ -12,10 +12,11 @@ spec:
       template:
         spec:
           restartPolicy: OnFailure
+          # only used to pull the busybox image; this container makes no Kubernetes API calls
           serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
+          automountServiceAccountToken: false
           {{- if .Values.iq_server.imagePullSecret }}
-          imagePullSecrets:
-            - name: {{ .Values.iq_server.imagePullSecret }}
+          {{- include "nexus-iq-server-ha.imagePullSecrets" . | nindent 10 }}
           {{- end }}
           volumes:
             - name: {{ .Release.Name }}-iq-server-pod-volume
