@@ -9,6 +9,7 @@ iq_server:
   image: "sonatype/nexus-iq-server"
   tag: "1.207.0"
   imagePullPolicy: "IfNotPresent"
+  # Also used to pull the busybox image for the aggregate-log-cleanup CronJob and the migrate-db/git-ssh Jobs
   imagePullSecret: ""
   command: []
   args: []
