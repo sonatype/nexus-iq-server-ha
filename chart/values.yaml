@@ -453,6 +453,16 @@ aggregateLogFileRetention:
   # Maximum last modified time of an aggregate log file in days (0 disables deletion)
   maxLastModifiedDays: 50
 
+  # Resource requests and limits for the delete-old-aggregate-logs cronjob container.
+  # Fields left commented are omitted from the rendered pod spec.
+  resources:
+    requests:
+      cpu: #100m
+      memory: #64Mi
+    limits:
+      cpu: #100m
+      memory: #64Mi
+
   # Node selector for cronjob pod assignment
   nodeSelector: {}
 

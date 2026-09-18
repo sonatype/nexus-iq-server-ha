@@ -24,6 +24,21 @@ spec:
             - /bin/sh
             - -c
             - find /log/ -type f -mtime +{{ sub .Values.aggregateLogFileRetention.maxLastModifiedDays 1 }} -delete
+            resources:
+              requests:
+                {{- if .Values.aggregateLogFileRetention.resources.requests.cpu }}
+                cpu: {{ .Values.aggregateLogFileRetention.resources.requests.cpu }}
+                {{- end }}
+                {{- if .Values.aggregateLogFileRetention.resources.requests.memory }}
+                memory: {{ .Values.aggregateLogFileRetention.resources.requests.memory }}
+                {{- end }}
+              limits:
+                {{- if .Values.aggregateLogFileRetention.resources.limits.cpu }}
+                cpu: {{ .Values.aggregateLogFileRetention.resources.limits.cpu }}
+                {{- end }}
+                {{- if .Values.aggregateLogFileRetention.resources.limits.memory }}
+                memory: {{ .Values.aggregateLogFileRetention.resources.limits.memory }}
+                {{- end }}
             volumeMounts:
               - mountPath: /log
                 name: {{ .Release.Name }}-iq-server-pod-volume

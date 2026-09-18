@@ -104,6 +104,63 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: omits resource sub-fields when they are unset (default)
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources
+          value:
+            requests: null
+            limits: null
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.requests.cpu
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.requests.memory
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.limits.cpu
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.limits.memory
+
+  - it: renders all resource requests and limits when set
+    set:
+      aggregateLogFileRetention:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources
+          value:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+  - it: renders only the resource fields that are set
+    set:
+      aggregateLogFileRetention:
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            memory: 128Mi
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.requests.memory
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.limits.cpu
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.limits.memory
+          value: 128Mi
+
   - it: can set nodeSelector, tolerations, and affinity for cronjob
     set:
       aggregateLogFileRetention:
