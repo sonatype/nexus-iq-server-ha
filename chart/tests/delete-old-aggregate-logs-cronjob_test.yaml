@@ -26,6 +26,12 @@ tests:
       - equal:
           path: spec.jobTemplate.spec.template.spec.restartPolicy
           value: OnFailure
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.serviceAccountName
+          value: default
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.automountServiceAccountToken
+          value: false
       - notExists:
           path: spec.jobTemplate.spec.template.spec.imagePullSecrets
       - equal:
