@@ -892,10 +892,10 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server.sshKnownHosts`                                          | SSH known hosts file to store on the nodes for ssh git operations                                    | `nil`                      |
 | `iq_server.sshKnownHostsSecret`                                    | SSH known hosts stored in k8s secret to be used for ssh git operations                               | `nil`                      |
 | `iq_server.pvOwnershipOverride`                                    | Specify a custom 'chown' command to modify ownership of directories                                  | See `values.yaml`          |
-| `iq_server.pvOwnershipOverrideResources.resources.requests.cpu`    | Persistence ownership initContainer request for CPU resources in CPU units                           | `nil`                      |
-| `iq_server.pvOwnershipOverrideResources.resources.requests.memory` | Persistence ownership initContainer request for memory resources in bytes                            | `nil`                      |
-| `iq_server.pvOwnershipOverrideResources.resources.limits.cpu`      | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
-| `iq_server.pvOwnershipOverrideResources.resources.limits.memory`   | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
+| `iq_server.pvOwnershipOverrideResources.requests.cpu`              | Persistence ownership initContainer request for CPU resources in CPU units                           | `nil`                      |
+| `iq_server.pvOwnershipOverrideResources.requests.memory`           | Persistence ownership initContainer request for memory resources in bytes                            | `nil`                      |
+| `iq_server.pvOwnershipOverrideResources.limits.cpu`                | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
+| `iq_server.pvOwnershipOverrideResources.limits.memory`             | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
 | `iq_server.securityContext`                                        | Security-related settings for the pod                                                                | `nil`                      |
 | `iq_server.nodeSelector`                                           | Node labels for pod assignment                                                                       | `{}`                       |
 | `iq_server.tolerations`                                            | Tolerations for pod assignment                                                                       | `[]`                       |
@@ -913,7 +913,7 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server_jobs.tolerations`                                       | Tolerations for job pod assignment                                                                   | `[]`                       |
 | `iq_server_jobs.affinity`                                          | Affinity rules for job pod assignment                                                                | `{}`                       |
 | `ingress.enabled`                                                  | Enable ingress                                                                                       | `false`                    |
-| `ingress.className`                                                | Ingress class name                                                                                   | `nginx`                    |
+| `ingress.ingressClassName`                                         | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                                 | Ingress path type                                                                                    | `Prefix`                   |
 | `ingress.annotations`                                              | Ingress annotations                                                                                  | `nil`                      |
 | `ingress.hostApplication`                                          | Ingress host for application                                                                         | `nil`                      |
@@ -921,14 +921,14 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `ingress.hostAdmin`                                                | Ingress host for admin application                                                                   | `nil`                      |
 | `ingress.hostAdminPath`                                            | Ingress path for admin application                                                                   | `nil`                      |
 | `ingress.tls`                                                      | Ingress TLS configuration                                                                            | `nil`                      |
-| `ingress-nginx.enable`                                             | Enable ingress-nginx                                                                                 | `false`                    |
+| `ingress-nginx.enabled`                                            | Enable ingress-nginx                                                                                 | `false`                    |
 | `ingress-nginx.controller`                                         | Ingress controller configuration for Nginx                                                           | See `values.yaml`          |
 | `externalDns.enabled`                                              | Enable external-dns                                                                                  | `false`                    |
 | `externalDns.args`                                                 | Array of arguments to pass to the external-dns container                                             | See `values.yaml`          |
 | `serviceAccount.create`                                            | Create service account                                                                               | `false`                    |
 | `serviceAccount.labels`                                            | Service account labels                                                                               | `nil`                      |
 | `serviceAccount.annotations`                                       | Service account annotations                                                                          | `nil`                      |
-| `serviceAccount.autoMountServiceAccountToken`                      | Auto mount service account token                                                                     | `false`                    |
+| `serviceAccount.automountServiceAccountToken`                      | Auto mount service account token                                                                     | `false`                    |
 | `secret.arn`                                                       | AWS secret arn containing initial admin password in a initial_admin_password key                     | `nil`                      |
 | `secret.license.arn`                                               | AWS secret arn containing the binary content of your Sonatype IQ Server license                      | `nil`                      |
 | `secret.rds.arn`                                                   | AWS secret arn containing database connection properties                                             | `nil`                      |
@@ -953,10 +953,10 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `hpa.enabled`                                                      | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
 | `hpa.minReplicas`                                                  | Minimum number of replicas                                                                           | `2`                        |
 | `hpa.maxReplicas`                                                  | Maximum number of replicas                                                                           | `4`                        |
-| `hpa.resource.cpu.enabled`                                         | Enable CPU-based autoscaling                                                                         | `true`                     |
-| `hpa.resource.cpu.average.threshold`                               | Average CPU threshold for autoscaling                                                                | `50`                       |
-| `hpa.resource.memory.enabled`                                      | Enable memory-based autoscaling                                                                      | `false`                    |
-| `hpa.resource.memory.average.threshold`                            | Average memory threshold for autoscaling                                                             | `50`                       |
+| `hpa.resources.cpu.enabled`                                        | Enable CPU-based autoscaling                                                                         | `true`                     |
+| `hpa.resources.cpu.average.threshold`                              | Average CPU threshold for autoscaling                                                                | `50`                       |
+| `hpa.resources.memory.enabled`                                     | Enable memory-based autoscaling                                                                      | `false`                    |
+| `hpa.resources.memory.average.threshold`                           | Average memory threshold for autoscaling                                                             | `60`                       |
 | `global.busybox.imageRegistry`                                     | Container image registry, if not specified the Docker public registry will be used                   | `nil`                      |
 | `global.busybox.image`                                             | BusyBox docker image                                                                                 | `busybox`                  |
 | `global.busybox.tag`                                               | BusyBox image tag                                                                                    | See `values.yaml`          |
