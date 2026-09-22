@@ -21,6 +21,9 @@ spec:
   template:
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
+      {{- if .Values.iq_server.imagePullSecret }}
+      {{- include "nexus-iq-server-ha.imagePullSecrets" . | nindent 6 }}
+      {{- end }}
       volumes:
         - name: {{ .Release.Name }}-iq-server-pod-config-volume
           configMap:
@@ -147,6 +150,9 @@ spec:
   template:
     spec:
       serviceAccountName: {{ .Values.iq_server.serviceAccountName }}
+      {{- if .Values.iq_server.imagePullSecret }}
+      {{- include "nexus-iq-server-ha.imagePullSecrets" . | nindent 6 }}
+      {{- end }}
       volumes:
         - name: {{ .Release.Name }}-iq-server-pod-volume
           persistentVolumeClaim:
