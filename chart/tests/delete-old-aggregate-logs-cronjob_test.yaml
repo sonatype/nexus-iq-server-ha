@@ -26,12 +26,8 @@ tests:
       - equal:
           path: spec.jobTemplate.spec.template.spec.restartPolicy
           value: OnFailure
-      - equal:
+      - notExists:
           path: spec.jobTemplate.spec.template.spec.serviceAccountName
-          value: default
-      - equal:
-          path: spec.jobTemplate.spec.template.spec.automountServiceAccountToken
-          value: false
       - notExists:
           path: spec.jobTemplate.spec.template.spec.imagePullSecrets
       - equal:
@@ -84,15 +80,14 @@ tests:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].image
           value: registry.example.com/busybox2:1.29
-  - it: uses iq_server.serviceAccountName and imagePullSecret for the cronjob pod
+  - it: uses iq_server.imagePullSecret for the cronjob pod
     set:
       iq_server:
         serviceAccountName: custom-iq-server-sa
         imagePullSecret: custom-registry-secret
     asserts:
-      - equal:
+      - notExists:
           path: spec.jobTemplate.spec.template.spec.serviceAccountName
-          value: custom-iq-server-sa
       - equal:
           path: spec.jobTemplate.spec.template.spec.imagePullSecrets
           value:
