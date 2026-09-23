@@ -1,5 +1,10 @@
 # Quick Start: OpenShift Deployment with Aurora PostgreSQL
 
+> **Status: draft, not yet validated on a cluster.** The chart changes this guide
+> relies on are covered by unit tests, but this procedure has not been run end to end
+> against OpenShift or Aurora. Treat the TLS steps in particular as a starting point to
+> verify, not a known-good recipe.
+
 ## Overview
 
 This guide shows how to deploy nexus-iq-server-ha on OpenShift with:
@@ -46,8 +51,12 @@ oc describe project iq-server | grep sa.scc.uid-range
 ## Step 3: Create ConfigMap with Truststore
 
 ```bash
+# Include the PEM as well as the JKS: sslrootcert (used by the JDBC driver) reads a
+# PEM, while the JVM truststore reads the JKS. Mounting only one of the two is a
+# common cause of verify-full failures.
 kubectl create configmap rds-ca-truststore \
   --from-file=rds-truststore.jks \
+  --from-file=rds-ca.pem \
   --namespace iq-server
 
 # Verify
@@ -111,7 +120,10 @@ iq_server_jobs:
       mountPath: /etc/ssl/certs
       readOnly: true
 
-  # Java truststore configuration
+  # Optional, and likely unnecessary. For PostgreSQL JDBC, the sslrootcert parameter
+  # above is normally sufficient on its own. Add this only if verify-full still fails
+  # without it, and remove it once you have confirmed which mechanism your endpoint
+  # actually requires.
   env:
     - name: JAVA_OPTS
       value: "-Djavax.net.ssl.trustStore=/etc/ssl/certs/rds-truststore.jks -Djavax.net.ssl.trustStorePassword=changeit"
@@ -139,25 +151,21 @@ helm install nexus-iq-server-ha ./chart \
 # Check job status
 kubectl get jobs -n iq-server
 
-# Expected output:
-# NAME                              COMPLETIONS   DURATION   AGE
-# nexus-iq-server-ha-migrate-db     1/1           45s        2m
-# nexus-iq-server-ha-git-ssh        1/1           10s        2m
+# Both Jobs should reach COMPLETIONS 1/1. If a Job shows 0/1 with no pod, describe it
+# to see whether admission rejected the pod:
+#   kubectl describe job/<release>-migrate-db -n iq-server
 
 # Check job logs
 kubectl logs job/nexus-iq-server-ha-migrate-db -n iq-server
 
-# Look for:
-# - Successfully connected to database
-# - Schema migration completed
-# - No TLS errors
+# Confirm the migration reached completion and that no TLS/certificate error appears.
+# A PKIX or "unable to find valid certification path" error means the CA the driver
+# read does not chain to the server certificate.
 
 # Check pods
 kubectl get pods -n iq-server
 
-# Expected output:
-# NAME                                          READY   STATUS    RESTARTS   AGE
-# nexus-iq-server-ha-iq-server-deployment-xxx   1/1     Running   0          3m
+# The server pod should reach Running and pass its readiness probe.
 ```
 
 ## Step 8: Access IQ Server

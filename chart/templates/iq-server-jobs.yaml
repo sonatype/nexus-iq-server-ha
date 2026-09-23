@@ -44,7 +44,7 @@ spec:
             claimName: {{ .existingClaim }}
           {{- else if .hostPath }}
           hostPath:
-            {{ toYaml .hostPath | nindent 12 }}
+            {{- toYaml .hostPath | nindent 12 }}
           {{- else if .configMap }}
           configMap:
             {{- toYaml .configMap | nindent 12 }}
@@ -202,7 +202,7 @@ spec:
           secret:
             secretName: {{ .Values.iq_server.sshKnownHostsSecret }}
       {{- end }}
-      {{- range .Values.iq_server_jobs.extraVolumes }}
+        {{- range .Values.iq_server_jobs.extraVolumes }}
         - name: {{ .name }}
           {{- if .existingClaim }}
           persistentVolumeClaim:
@@ -222,7 +222,7 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
-      {{- end }}
+        {{- end }}
       containers:
         - name: {{ .Release.Name }}-git-ssh-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
