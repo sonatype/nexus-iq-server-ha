@@ -631,3 +631,102 @@ tests:
           value:
             argocd.argoproj.io/sync-options: Replace=true
         documentIndex: 1
+
+  - it: allows overriding container securityContext in jobs
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        securityContext:
+          runAsUser: 1000710000
+          runAsGroup: 1000710000
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsUser: 1000710000
+            runAsGroup: 1000710000
+        documentIndex: 0
+
+  - it: supports extraVolumes in migrate-db job
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        extraVolumes:
+          - name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+        documentIndex: 0
+
+  - it: supports extraVolumeMounts in migrate-db job
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        extraVolumeMounts:
+          - name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+        documentIndex: 0
+
+  - it: supports OpenShift restricted SCC configuration
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        securityContext:
+          runAsUser: 1000710000
+          runAsGroup: 1000710000
+        extraVolumes:
+          - name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+        extraVolumeMounts:
+          - name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+        env:
+          - name: JAVA_OPTS
+            value: "-Djavax.net.ssl.trustStore=/etc/ssl/certs/rds-truststore.jks"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsUser: 1000710000
+            runAsGroup: 1000710000
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JAVA_OPTS
+            value: "-Djavax.net.ssl.trustStore=/etc/ssl/certs/rds-truststore.jks"
+        documentIndex: 0

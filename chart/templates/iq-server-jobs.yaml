@@ -37,6 +37,27 @@ spec:
               secretProviderClass: {{ .Release.Name }}-aws-secret-provider
               fsType: ext4
         {{- end }}
+        {{- range .Values.iq_server_jobs.extraVolumes }}
+        - name: {{ .name }}
+          {{- if .existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .existingClaim }}
+          {{- else if .hostPath }}
+          hostPath:
+            {{ toYaml .hostPath | nindent 12 }}
+          {{- else if .configMap }}
+          configMap:
+            {{- toYaml .configMap | nindent 12 }}
+          {{- else if .secret }}
+          secret:
+            secretName: {{ .secret }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- toYaml .emptyDir | nindent 12 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
       containers:
         - name: {{ .Release.Name }}-iq-server-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
@@ -62,6 +83,16 @@ spec:
             {{- if .Values.secret.rds.arn }}
             - mountPath: "/iq-secrets"
               name: {{ .Release.Name }}-iq-server-secrets-volume
+            {{- end }}
+            {{- range .Values.iq_server_jobs.extraVolumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if hasKey . "readOnly" }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
             {{- end }}
           env:
             {{- range .Values.iq_server_jobs.env }}
@@ -106,9 +137,10 @@ spec:
             - /bin/sh
             - -c
             - "/opt/sonatype/nexus-iq-server/bin/nexus-iq-server migrate-db /etc/nexus-iq-server/config.yml"
+          {{- with .Values.iq_server_jobs.securityContext }}
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
       {{- with .Values.iq_server_jobs.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -170,6 +202,27 @@ spec:
           secret:
             secretName: {{ .Values.iq_server.sshKnownHostsSecret }}
       {{- end }}
+      {{- range .Values.iq_server_jobs.extraVolumes }}
+        - name: {{ .name }}
+          {{- if .existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .existingClaim }}
+          {{- else if .hostPath }}
+          hostPath:
+            {{- toYaml .hostPath | nindent 12 }}
+          {{- else if .configMap }}
+          configMap:
+            {{- toYaml .configMap | nindent 12 }}
+          {{- else if .secret }}
+          secret:
+            secretName: {{ .secret }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- toYaml .emptyDir | nindent 12 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-git-ssh-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
@@ -190,6 +243,16 @@ spec:
             - mountPath: "/opt/sonatype/nexus-iq-server/.ssh/known-hosts-volume"
               name: {{ .Release.Name }}-iq-server-pod-known-hosts-volume
               readOnly: true
+            {{- end }}
+            {{- range .Values.iq_server_jobs.extraVolumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if hasKey . "readOnly" }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
             {{- end }}
           command:
             - /bin/sh
@@ -218,9 +281,10 @@ spec:
               (yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
               {{- end }}
               chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+          {{- with .Values.iq_server_jobs.securityContext }}
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
       {{- with .Values.iq_server_jobs.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
