@@ -339,6 +339,25 @@ iq_server_jobs:
   # Affinity for job pod assignment
   affinity: {}
 
+  # Container-level security context for Job containers
+  # Allows override for OpenShift restricted SCC compatibility
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+
+  # Additional volumes to add to Job pods
+  # Use for mounting CA truststores, custom certificates, etc.
+  extraVolumes: []
+  # - name: rds-truststore
+  #   configMap:
+  #     name: rds-ca-truststore
+
+  # Additional volume mounts for Job containers
+  extraVolumeMounts: []
+  # - name: rds-truststore
+  #   mountPath: /etc/ssl/certs
+  #   readOnly: true
+
 global:
   busybox: # Container image registry, if not specified the Docker public registry will be used
     imageRegistry:

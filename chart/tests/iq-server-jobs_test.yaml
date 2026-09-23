@@ -631,3 +631,215 @@ tests:
           value:
             argocd.argoproj.io/sync-options: Replace=true
         documentIndex: 1
+
+  - it: allows overriding container securityContext in jobs
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        securityContext:
+          runAsUser: 1000710000
+          runAsGroup: 1000710000
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsUser: 1000710000
+            runAsGroup: 1000710000
+        documentIndex: 0
+
+  - it: supports extraVolumes in migrate-db job
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        extraVolumes:
+          - name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+        documentIndex: 0
+
+  - it: supports extraVolumeMounts in migrate-db job
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        extraVolumeMounts:
+          - name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+        documentIndex: 0
+
+  - it: supports OpenShift restricted SCC configuration
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        securityContext:
+          runAsUser: 1000710000
+          runAsGroup: 1000710000
+        extraVolumes:
+          - name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+        extraVolumeMounts:
+          - name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+        env:
+          - name: JAVA_OPTS
+            value: "-Djavax.net.ssl.trustStore=/etc/ssl/certs/rds-truststore.jks"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsUser: 1000710000
+            runAsGroup: 1000710000
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JAVA_OPTS
+            value: "-Djavax.net.ssl.trustStore=/etc/ssl/certs/rds-truststore.jks"
+        documentIndex: 0
+
+  - it: applies securityContext and extra volumes to the git-ssh job
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        securityContext:
+          runAsUser: 1000710000
+          runAsGroup: 1000710000
+        extraVolumes:
+          - name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+        extraVolumeMounts:
+          - name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-git-ssh
+        documentIndex: 1
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsUser: 1000710000
+            runAsGroup: 1000710000
+        documentIndex: 1
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: rds-truststore
+            configMap:
+              name: rds-ca-truststore
+        documentIndex: 1
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: rds-truststore
+            mountPath: /etc/ssl/certs
+            readOnly: true
+        documentIndex: 1
+
+  - it: renders secret, emptyDir and hostPath extra volume types
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        extraVolumes:
+          - name: from-secret
+            secret: my-tls-secret
+          - name: scratch
+            emptyDir:
+              sizeLimit: 128Mi
+          - name: from-host
+            hostPath:
+              path: /var/local/certs
+              type: Directory
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: from-secret
+            secret:
+              secretName: my-tls-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch
+            emptyDir:
+              sizeLimit: 128Mi
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: from-host
+            hostPath:
+              path: /var/local/certs
+              type: Directory
+        documentIndex: 0
+
+  - it: omits securityContext entirely when set to null
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        securityContext: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+        documentIndex: 0
+
+  - it: mounts an extra volume with a subPath
+    set:
+      iq_server:
+        tag: "1.148.0"
+      iq_server_jobs:
+        extraVolumeMounts:
+          - name: rds-truststore
+            mountPath: /etc/ssl/certs/ca.jks
+            subPath: rds-truststore.jks
+            readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: rds-truststore
+            mountPath: /etc/ssl/certs/ca.jks
+            subPath: rds-truststore.jks
+            readOnly: true
+        documentIndex: 0
