@@ -12,6 +12,9 @@ spec:
       template:
         spec:
           restartPolicy: OnFailure
+          {{- if .Values.iq_server.imagePullSecret }}
+          {{- include "nexus-iq-server-ha.imagePullSecrets" . | nindent 10 }}
+          {{- end }}
           volumes:
             - name: {{ .Release.Name }}-iq-server-pod-volume
               persistentVolumeClaim:

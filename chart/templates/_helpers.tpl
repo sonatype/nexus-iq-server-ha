@@ -10,6 +10,11 @@
 {{- if ((.Values.global).busybox).imageRegistry }}{{ ((.Values.global).busybox).imageRegistry }}/{{ ((.Values.global).busybox).image }}:{{ ((.Values.global).busybox).tag }}{{- else }}{{ ((.Values.global).busybox).image }}:{{ ((.Values.global).busybox).tag }}{{- end }}
 {{- end -}}
 
+{{- define "nexus-iq-server-ha.imagePullSecrets" -}}
+imagePullSecrets:
+  - name: {{ .Values.iq_server.imagePullSecret }}
+{{- end -}}
+
 {{- define "nexus-iq-server-ha.storageClassName" -}}
 {{- if .Values.iq_server.persistence.storageClassName -}}
 {{ .Values.iq_server.persistence.storageClassName }}

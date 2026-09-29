@@ -631,3 +631,70 @@ tests:
           value:
             argocd.argoproj.io/sync-options: Replace=true
         documentIndex: 1
+
+  - it: does not set imagePullSecrets on migrate-db job by default
+    set:
+      iq_server:
+        tag: "1.148.0"
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: default
+        documentIndex: 0
+      - notExists:
+          path: spec.template.spec.imagePullSecrets
+        documentIndex: 0
+  - it: sets imagePullSecrets on migrate-db job when iq_server.imagePullSecret is set
+    set:
+      iq_server:
+        tag: "1.148.0"
+        serviceAccountName: "my-service-account"
+        imagePullSecret: "my-pull-secret"
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-service-account
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: my-pull-secret
+        documentIndex: 0
+  - it: does not set imagePullSecrets on git-ssh job by default
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-git-ssh
+        documentIndex: 1
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: default
+        documentIndex: 1
+      - notExists:
+          path: spec.template.spec.imagePullSecrets
+        documentIndex: 1
+  - it: sets imagePullSecrets on git-ssh job when iq_server.imagePullSecret is set
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+        serviceAccountName: "my-service-account"
+        imagePullSecret: "my-pull-secret"
+    asserts:
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-git-ssh
+        documentIndex: 1
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-service-account
+        documentIndex: 1
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: my-pull-secret
+        documentIndex: 1
