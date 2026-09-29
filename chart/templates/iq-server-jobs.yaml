@@ -222,7 +222,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              if ! id -un >/dev/null 2>&1; then echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd 2>/dev/null || true; fi
+              if ! id -un >/dev/null 2>&1; then { echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd; } 2>/dev/null || true; fi
               test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts ||
               {{- if .Values.secret.sshKnownHosts.arn }}
               (cp /iq-secrets/known_hosts {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
