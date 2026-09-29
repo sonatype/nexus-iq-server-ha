@@ -221,3 +221,27 @@ tests:
                         operator: In
                         values:
                           - iq-pool
+  - it: omits security contexts by default
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.securityContext
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext
+  - it: sets the pod and container security contexts
+    set:
+      aggregateLogFileRetention:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.securityContext
+          value:
+            runAsNonRoot: true
+            runAsUser: 1000
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext
+          value:
+            allowPrivilegeEscalation: false

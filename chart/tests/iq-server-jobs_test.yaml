@@ -68,9 +68,6 @@ tests:
                     resources:
                       limits:
                       requests:
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                     volumeMounts:
                       - mountPath: /etc/nexus-iq-server
                         name: RELEASE-NAME-iq-server-pod-config-volume
@@ -187,9 +184,6 @@ tests:
                       requests:
                         cpu: 2
                         memory: 500M
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                     volumeMounts:
                     - mountPath: /etc/nexus-iq-server
                       name: RELEASE-NAME-iq-server-pod-config-volume
@@ -314,6 +308,7 @@ tests:
                       - /bin/sh
                       - -c
                       - |
+                        if ! id -un >/dev/null 2>&1; then echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd || true; fi
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
@@ -325,9 +320,6 @@ tests:
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                 restartPolicy: OnFailure
                 serviceAccountName: default
                 volumes:
@@ -372,6 +364,7 @@ tests:
                       - /bin/sh
                       - -c
                       - |
+                        if ! id -un >/dev/null 2>&1; then echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd || true; fi
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (echo "              /known_hosts" >/sonatype-work/clm-cluster/.ssh/known_hosts &&
                         sed -i'' -e 's/^[ \t]*//g' /sonatype-work/clm-cluster/.ssh/known_hosts) &&
@@ -385,9 +378,6 @@ tests:
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                 restartPolicy: OnFailure
                 serviceAccountName: default
                 volumes:
@@ -435,6 +425,7 @@ tests:
                       - /bin/sh
                       - -c
                       - |
+                        if ! id -un >/dev/null 2>&1; then echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd || true; fi
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (cp /iq-secrets/known_hosts /sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
@@ -443,9 +434,6 @@ tests:
                     image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                     volumeMounts:
                     - mountPath: /sonatype-work/clm-cluster
                       name: RELEASE-NAME-iq-server-pod-volume
@@ -698,7 +686,7 @@ tests:
           value:
             - name: my-pull-secret
         documentIndex: 1
-  - it: replaces the default job container security context instead of merging into it
+  - it: sets the job container security context
     set:
       iq_server:
         tag: "1.148.0"
@@ -739,7 +727,7 @@ tests:
           value:
             fsGroup: 1000
         documentIndex: 1
-  - it: omits the job pod security context by default
+  - it: omits the job security contexts by default
     set:
       iq_server:
         tag: "1.148.0"
@@ -749,7 +737,13 @@ tests:
           path: spec.template.spec.securityContext
         documentIndex: 0
       - notExists:
+          path: spec.template.spec.containers[0].securityContext
+        documentIndex: 0
+      - notExists:
           path: spec.template.spec.securityContext
+        documentIndex: 1
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
         documentIndex: 1
   - it: adds extra volumes and volume mounts to both jobs
     set:

@@ -321,7 +321,7 @@ OpenShift restricted SCC, Kyverno, Gatekeeper) may require:
 When doing so, note the following:
 * The init container runs `pvOwnershipOverride` (a `chown` by default), which fails when it does not run as root.
 Set `iq_server.pvOwnershipOverride="true"` to skip it and rely on `fsGroup` instead.
-* The image user is not numeric, so `runAsNonRoot: true` needs `runAsUser` as well, unless the cluster assigns one
+* The default image user is not numeric, so `runAsNonRoot: true` needs `runAsUser` as well, unless the cluster assigns one
 (as OpenShift does).
 * With `readOnlyRootFilesystem: true`, mount writable volumes (e.g. `emptyDir`) at `/tmp` and at the
 `iq_server.config.sonatypeWork` path using `iq_server.extraVolumes` and `iq_server.extraVolumeMounts`.
