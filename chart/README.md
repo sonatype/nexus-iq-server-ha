@@ -309,8 +309,8 @@ The image registry, image, tag, and imagePullPolicy can be overridden using
 
 ### Restricted Security Policies (optional)
 
-Security contexts can be set for every pod and container, which clusters enforcing restricted policies (e.g.
-OpenShift restricted SCC, Kyverno, Gatekeeper) may require:
+Security contexts can be set for every IQ Server pod and container, which clusters enforcing restricted policies (e.g.
+OpenShift restricted SCC, Kyverno, Gatekeeper) may require. The optional external-dns deployment does not support them.
 
 | Workload                    | Pod                                         | Container                                                                      |
 |-----------------------------|---------------------------------------------|--------------------------------------------------------------------------------|
@@ -319,16 +319,56 @@ OpenShift restricted SCC, Kyverno, Gatekeeper) may require:
 | Aggregate log cleanup       | `aggregateLogFileRetention.securityContext` | `aggregateLogFileRetention.containerSecurityContext`                           |
 
 When doing so, note the following:
-* The init container runs `pvOwnershipOverride` (a `chown` by default), which fails when it does not run as root.
-Set `iq_server.pvOwnershipOverride="true"` to skip it and rely on `fsGroup` instead.
-* The default image user is not numeric, so `runAsNonRoot: true` needs `runAsUser` as well, unless the cluster assigns one
-(as OpenShift does).
-* With `readOnlyRootFilesystem: true`, mount writable volumes (e.g. `emptyDir`) at `/tmp` and at the
-`iq_server.config.sonatypeWork` path using `iq_server.extraVolumes` and `iq_server.extraVolumeMounts`.
-* When the cluster assigns an arbitrary user ID, the git-ssh job adds it to `/etc/passwd` so it can generate an SSH
-key, which needs a writable root file system. Otherwise, provide the key using `iq_server.sshPrivateKeySecret`.
+* The shared file system must be writable by the pod user and group. The init container's `pvOwnershipOverride` (a
+`chown` by default) only works as root with the `CHOWN` capability. Otherwise, set `iq_server.pvOwnershipOverride="true"`
+to skip it and grant access through the storage instead, e.g. an EFS access point owned by the pod user (see
+[EFS Storage Class](#efs-storage-class)) or NFS export ownership. `fsGroup` does not apply to NFS or `ReadWriteMany` EFS
+volumes.
+* The IQ Server image user is not numeric and the busybox image, used by the init container and the log cleanup
+cronjob, runs as root, so `runAsNonRoot: true` needs `runAsUser` as well, unless the cluster assigns one (as OpenShift
+does).
+* With `readOnlyRootFilesystem: true`, mount writable volumes (e.g. `emptyDir`) at `/tmp` and `/sonatype-work`, using
+`iq_server.extraVolumes` and `iq_server.extraVolumeMounts` for the server and `iq_server_jobs.extraVolumes` and
+`iq_server_jobs.extraVolumeMounts` for the jobs.
+* When the cluster assigns a user ID the image does not know, the server and the git-ssh job add it to `/etc/passwd`,
+which SSH needs. The image only lets group `0` write to `/etc/passwd`, so this needs a writable root file system and
+group `0` (as OpenShift assigns). Otherwise, git over SSH does not work, and the git-ssh job needs the key from
+`iq_server.sshPrivateKeySecret`, `iq_server.sshPrivateKey` or `secret.sshPrivateKey.arn`.
 * Files needed by both the server and the migrate-db job, such as a database CA certificate for
 `sslmode: verify-full`, need to be mounted in both, using `iq_server.extraVolumes` and `iq_server_jobs.extraVolumes`.
+
+For example, to run as a non-root user without privilege escalation:
+   ```
+   iq_server:
+     pvOwnershipOverride: "true"
+     securityContext:
+       runAsNonRoot: true
+       runAsUser: 1000
+       runAsGroup: 1000
+       seccompProfile:
+         type: RuntimeDefault
+     containerSecurityContext: &container
+       allowPrivilegeEscalation: false
+       capabilities:
+         drop: ["ALL"]
+     initContainerSecurityContext: *container
+   iq_server_jobs:
+     securityContext:
+       runAsNonRoot: true
+       runAsUser: 1000
+       runAsGroup: 1000
+       seccompProfile:
+         type: RuntimeDefault
+     containerSecurityContext: *container
+   aggregateLogFileRetention:
+     securityContext:
+       runAsNonRoot: true
+       runAsUser: 1000
+       runAsGroup: 1000
+       seccompProfile:
+         type: RuntimeDefault
+     containerSecurityContext: *container
+   ```
 
 ## Amazon Web Services (AWS)
 
@@ -658,6 +698,13 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 2. **Backup the database.** See the [IQ server backup guidelines](https://links.sonatype.com/products/nxiq/doc/backup) for more details.
 3. **Update the helm chart.** Typically, this will also update the Sonatype IQ Server version.
 4. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
+
+### To 208.0.0
+The migrate-db and git-ssh jobs no longer set `runAsUser: 1000` and `runAsGroup: 1000`, so they run as the image user,
+which is `1000` for the default image.
+
+**Action required:** If you use an image whose user is not `1000`, set
+`iq_server_jobs.containerSecurityContext.runAsUser` and `runAsGroup` to `1000` to keep the previous behavior.
 
 ### To 202.0.0
 In this version, the bundled Fluentd subchart has been removed. Log aggregation is now the responsibility of the

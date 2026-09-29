@@ -290,7 +290,7 @@ iq_server:
   #    drop: ["ALL"]
 
   # Optional security context for the init container that prepares the shared file system.
-  # When it does not run as root, set pvOwnershipOverride to "true" so it skips the chown.
+  # Without root and the CHOWN capability, set pvOwnershipOverride to "true" so it skips the chown.
   initContainerSecurityContext: {}
   #  allowPrivilegeEscalation: false
 
@@ -353,8 +353,9 @@ iq_server_jobs:
 
   # Optional security context for the job pods.
   securityContext: {}
-  #  fsGroup: 1000
-  #  fsGroupChangePolicy: OnRootMismatch
+  #  runAsNonRoot: true
+  #  runAsUser: 1000
+  #  runAsGroup: 1000
 
   # Optional security context for the job containers.
   containerSecurityContext: {}
@@ -504,6 +505,10 @@ aggregateLogFileRetention:
 
   # Optional security context for the cronjob pod.
   securityContext: {}
+  #  runAsNonRoot: true
+  #  runAsUser: 1000
+  #  runAsGroup: 1000
 
   # Optional security context for the cronjob container.
   containerSecurityContext: {}
+  #  allowPrivilegeEscalation: false
