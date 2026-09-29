@@ -773,6 +773,9 @@ tests:
         tag: "1.148.0"
         useGitSsh: true
         sshPrivateKeySecret: ssh-key
+      secret:
+        rds:
+          arn: arn:aws:secretsmanager:us-east-1:123456789012:secret:rds
       iq_server_jobs:
         extraVolumes:
           - name: db-ca
@@ -795,6 +798,17 @@ tests:
           content:
             name: scratch
             emptyDir: {}
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: RELEASE-NAME-iq-server-secrets-volume
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                secretProviderClass: RELEASE-NAME-aws-secret-provider
+                fsType: ext4
         documentIndex: 0
       - contains:
           path: spec.template.spec.containers[0].volumeMounts

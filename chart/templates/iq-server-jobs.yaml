@@ -191,9 +191,9 @@ spec:
           secret:
             secretName: {{ .Values.iq_server.sshKnownHostsSecret }}
       {{- end }}
-        {{- with .Values.iq_server_jobs.extraVolumes }}
-        {{- include "nexus-iq-server-ha.extraVolumes" . | trim | nindent 8 }}
-        {{- end }}
+      {{- with .Values.iq_server_jobs.extraVolumes }}
+      {{- include "nexus-iq-server-ha.extraVolumes" . | trim | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-git-ssh-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
