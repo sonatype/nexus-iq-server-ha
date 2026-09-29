@@ -378,6 +378,9 @@ For example, to run as the image user without privilege escalation on a read-onl
      securityContext: *pod
      containerSecurityContext: *container
    ```
+`fsGroup` is there for policies that require it and does not make `ReadWriteMany` volumes writable, so a new volume
+needs to be writable by `1000` through the storage (see the first note). A volume the default chown has already set up
+is.
 
 For another user, add a passwd file under both `iq_server` and `iq_server_jobs`:
    ```
