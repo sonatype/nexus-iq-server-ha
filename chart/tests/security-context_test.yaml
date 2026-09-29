@@ -42,3 +42,17 @@ tests:
           path: spec.template.spec.initContainers[0].securityContext
           value:
             allowPrivilegeEscalation: false
+  - it: does not apply the job security contexts to the server
+    set:
+      iq_server_jobs:
+        securityContext:
+          fsGroup: 1000
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+      - notExists:
+          path: spec.template.spec.initContainers[0].securityContext

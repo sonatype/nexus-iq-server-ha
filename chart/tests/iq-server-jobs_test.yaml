@@ -745,6 +745,28 @@ tests:
       - notExists:
           path: spec.template.spec.containers[0].securityContext
         documentIndex: 1
+  - it: does not apply the server security contexts to the jobs
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+        securityContext:
+          fsGroup: 1000
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+        documentIndex: 0
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+        documentIndex: 0
+      - notExists:
+          path: spec.template.spec.securityContext
+        documentIndex: 1
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+        documentIndex: 1
   - it: adds extra volumes and volume mounts to both jobs
     set:
       iq_server:

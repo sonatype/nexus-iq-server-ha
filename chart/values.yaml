@@ -367,7 +367,7 @@ iq_server_jobs:
   #   secret: db-ca-secret
   extraVolumeMounts: []
   # - name: db-ca
-  #   mountPath: /etc/iq-server/db-ca
+  #   mountPath: /etc/db-ca
   #   readOnly: true
 
 global:

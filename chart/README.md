@@ -310,7 +310,8 @@ The image registry, image, tag, and imagePullPolicy can be overridden using
 ### Restricted Security Policies (optional)
 
 Security contexts can be set for every IQ Server pod and container, which clusters enforcing restricted policies (e.g.
-OpenShift restricted SCC, Kyverno, Gatekeeper) may require. The optional external-dns deployment does not support them.
+OpenShift restricted SCC, Kyverno, Gatekeeper) may require. The optional external-dns deployment does not support them,
+so leave `externalDns.enabled` off, or exempt that pod, on clusters that enforce them.
 The optional ingress-nginx subchart takes its own, e.g. `ingress-nginx.controller.podSecurityContext`,
 `ingress-nginx.controller.containerSecurityContext` and `ingress-nginx.controller.admissionWebhooks.patch.securityContext`
 (see the [ingress-nginx values](https://github.com/kubernetes/ingress-nginx/blob/helm-chart-4.4.2/charts/ingress-nginx/values.yaml)).
@@ -332,12 +333,13 @@ cronjob, runs as root, so `runAsNonRoot: true` needs `runAsUser` as well, unless
 does).
 * With `readOnlyRootFilesystem: true`, mount writable volumes (e.g. `emptyDir`) at `/tmp` and `/sonatype-work`, using
 `iq_server.extraVolumes` and `iq_server.extraVolumeMounts` for the server and `iq_server_jobs.extraVolumes` and
-`iq_server_jobs.extraVolumeMounts` for the jobs.
-* When the cluster assigns a user ID the image does not know, the server and the git-ssh job add it to `/etc/passwd`,
-which SSH needs. The image only lets group `0` write to `/etc/passwd`, so this needs a writable root file system and
-group `0`, either as the primary group (as OpenShift assigns) or through `supplementalGroups: [0]` in the pod
-`securityContext`. Otherwise, mount a passwd file that contains the user (see the example below), or git over SSH does
-not work and the git-ssh job needs the key from `iq_server.sshPrivateKeySecret`, `iq_server.sshPrivateKey` or
+`iq_server_jobs.extraVolumeMounts` for the jobs. The log cleanup cronjob only writes to the shared volume, so it needs
+none.
+* SSH needs the pod user in `/etc/passwd`. For a user ID the image does not know, mount a passwd file that contains it
+(see the example below). Otherwise, the server and the git-ssh job add the user themselves, which needs a writable root
+file system and group `0`, either as the primary group (as OpenShift assigns) or through `supplementalGroups: [0]` in
+the pod `securityContext`; in the default image, group `0` only adds write access to `/etc/passwd`. Without either, git
+over SSH does not work and the git-ssh job needs the key from `iq_server.sshPrivateKeySecret` or
 `secret.sshPrivateKey.arn`.
 * Files needed by both the server and the migrate-db job, such as a database CA certificate, need to be mounted in
 both, using `iq_server.extraVolumes` and `iq_server_jobs.extraVolumes` (see the example below).
@@ -385,11 +387,19 @@ For example, to run as a non-root user without privilege escalation on a read-on
      securityContext: *pod
      containerSecurityContext: *container
    ```
-where the `iq-server-passwd` ConfigMap holds the image's `/etc/passwd` plus a line for the pod user, e.g.
-`iqserver:x:1001:1001:IQ Server:/opt/sonatype/nexus-iq-server:/bin/false`.
+where the `iq-server-passwd` ConfigMap holds, under the key `passwd`, the image's `/etc/passwd` plus a line for the pod
+user, e.g. `iqserver:x:1001:1001:IQ Server:/opt/sonatype/nexus-iq-server:/bin/false`:
+   ```
+   docker run --rm --entrypoint cat sonatype/nexus-iq-server /etc/passwd > passwd
+   echo 'iqserver:x:1001:1001:IQ Server:/opt/sonatype/nexus-iq-server:/bin/false' >> passwd
+   kubectl create configmap iq-server-passwd --from-file=passwd
+   ```
+`fsGroup` does not make the default `ReadWriteMany` volume writable by `1001`, so grant that through the storage as
+described above.
 
-On OpenShift, which assigns the user and groups from the namespace range, omit `runAsUser`, `runAsGroup` and `fsGroup`,
-and the passwd volume, since the assigned group `0` lets the pods add the user themselves.
+On OpenShift, which assigns the user and groups from the namespace range, omit `runAsUser`, `runAsGroup` and `fsGroup`.
+With a read-only root file system, keep the passwd volume, with the line for the user OpenShift assigns (the start of
+the namespace's `openshift.io/sa.scc.uid-range` annotation, e.g. `1000710000`) and group `0`.
 
 To verify the database server certificate with `sslmode: verify-full`, point the driver at a PEM CA file mounted in both
 the server and the jobs, since they share `config.yml`:
@@ -411,8 +421,9 @@ the server and the jobs, since they share `config.yml`:
      extraVolumes: *caVolumes
      extraVolumeMounts: *caMounts
    ```
-For a JKS truststore passed with `javax.net.ssl.trustStore` instead, also set
-`sslfactory: org.postgresql.ssl.DefaultJavaSSLFactory`.
+For a JKS truststore instead, set `sslfactory: org.postgresql.ssl.DefaultJavaSSLFactory` and pass
+`-Djavax.net.ssl.trustStore=<path>` to both, in `iq_server.javaOpts` for the server and a `JAVA_OPTS` entry in
+`iq_server_jobs.env` for the jobs.
 
 ## Amazon Web Services (AWS)
 
@@ -748,7 +759,8 @@ The migrate-db and git-ssh jobs no longer set `runAsUser: 1000` and `runAsGroup:
 which is `1000` for the default image.
 
 **Action required:** If you use an image whose user is not `1000`, set
-`iq_server_jobs.containerSecurityContext.runAsUser` and `runAsGroup` to `1000` to keep the previous behavior.
+`iq_server_jobs.containerSecurityContext.runAsUser` and `runAsGroup` to `1000` to keep the previous behavior. An image
+that sets no user would otherwise run the jobs as root.
 If an admission policy requires an explicit `runAsUser` or `runAsGroup`, set them in `iq_server_jobs.securityContext`
 or `iq_server_jobs.containerSecurityContext`.
 
