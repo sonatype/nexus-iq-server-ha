@@ -311,6 +311,9 @@ The image registry, image, tag, and imagePullPolicy can be overridden using
 
 Security contexts can be set for every IQ Server pod and container, which clusters enforcing restricted policies (e.g.
 OpenShift restricted SCC, Kyverno, Gatekeeper) may require. The optional external-dns deployment does not support them.
+The optional ingress-nginx subchart takes its own, e.g. `ingress-nginx.controller.podSecurityContext`,
+`ingress-nginx.controller.containerSecurityContext` and `ingress-nginx.controller.admissionWebhooks.patch.securityContext`
+(see the [ingress-nginx values](https://github.com/kubernetes/ingress-nginx/blob/helm-chart-4.4.2/charts/ingress-nginx/values.yaml)).
 
 | Workload                    | Pod                                         | Container                                                                      |
 |-----------------------------|---------------------------------------------|--------------------------------------------------------------------------------|
@@ -332,43 +335,84 @@ does).
 `iq_server_jobs.extraVolumeMounts` for the jobs.
 * When the cluster assigns a user ID the image does not know, the server and the git-ssh job add it to `/etc/passwd`,
 which SSH needs. The image only lets group `0` write to `/etc/passwd`, so this needs a writable root file system and
-group `0` (as OpenShift assigns). Otherwise, git over SSH does not work, and the git-ssh job needs the key from
-`iq_server.sshPrivateKeySecret`, `iq_server.sshPrivateKey` or `secret.sshPrivateKey.arn`.
-* Files needed by both the server and the migrate-db job, such as a database CA certificate for
-`sslmode: verify-full`, need to be mounted in both, using `iq_server.extraVolumes` and `iq_server_jobs.extraVolumes`.
+group `0`, either as the primary group (as OpenShift assigns) or through `supplementalGroups: [0]` in the pod
+`securityContext`. Otherwise, mount a passwd file that contains the user (see the example below), or git over SSH does
+not work and the git-ssh job needs the key from `iq_server.sshPrivateKeySecret`, `iq_server.sshPrivateKey` or
+`secret.sshPrivateKey.arn`.
+* Files needed by both the server and the migrate-db job, such as a database CA certificate, need to be mounted in
+both, using `iq_server.extraVolumes` and `iq_server_jobs.extraVolumes` (see the example below).
 
-For example, to run as a non-root user without privilege escalation:
+For example, to run as a non-root user without privilege escalation on a read-only root file system:
    ```
    iq_server:
      pvOwnershipOverride: "true"
-     securityContext:
+     securityContext: &pod
        runAsNonRoot: true
-       runAsUser: 1000
-       runAsGroup: 1000
+       runAsUser: 1001
+       runAsGroup: 1001
+       fsGroup: 1001
        seccompProfile:
          type: RuntimeDefault
      containerSecurityContext: &container
        allowPrivilegeEscalation: false
+       readOnlyRootFilesystem: true
        capabilities:
          drop: ["ALL"]
      initContainerSecurityContext: *container
+     extraVolumes: &volumes
+       - name: tmp
+         emptyDir: {}
+       - name: work
+         emptyDir: {}
+       - name: passwd
+         configMap:
+           name: iq-server-passwd
+     extraVolumeMounts: &mounts
+       - name: tmp
+         mountPath: /tmp
+       - name: work
+         mountPath: /sonatype-work
+       - name: passwd
+         mountPath: /etc/passwd
+         subPath: passwd
+         readOnly: true
    iq_server_jobs:
-     securityContext:
-       runAsNonRoot: true
-       runAsUser: 1000
-       runAsGroup: 1000
-       seccompProfile:
-         type: RuntimeDefault
+     securityContext: *pod
      containerSecurityContext: *container
+     extraVolumes: *volumes
+     extraVolumeMounts: *mounts
    aggregateLogFileRetention:
-     securityContext:
-       runAsNonRoot: true
-       runAsUser: 1000
-       runAsGroup: 1000
-       seccompProfile:
-         type: RuntimeDefault
+     securityContext: *pod
      containerSecurityContext: *container
    ```
+where the `iq-server-passwd` ConfigMap holds the image's `/etc/passwd` plus a line for the pod user, e.g.
+`iqserver:x:1001:1001:IQ Server:/opt/sonatype/nexus-iq-server:/bin/false`.
+
+On OpenShift, which assigns the user and groups from the namespace range, omit `runAsUser`, `runAsGroup` and `fsGroup`,
+and the passwd volume, since the assigned group `0` lets the pods add the user themselves.
+
+To verify the database server certificate with `sslmode: verify-full`, point the driver at a PEM CA file mounted in both
+the server and the jobs, since they share `config.yml`:
+   ```
+   iq_server:
+     config:
+       database:
+         parameters:
+           sslmode: verify-full
+           sslrootcert: /etc/db-ca/ca.crt
+     extraVolumes: &caVolumes
+       - name: db-ca
+         secret: db-ca-secret
+     extraVolumeMounts: &caMounts
+       - name: db-ca
+         mountPath: /etc/db-ca
+         readOnly: true
+   iq_server_jobs:
+     extraVolumes: *caVolumes
+     extraVolumeMounts: *caMounts
+   ```
+For a JKS truststore passed with `javax.net.ssl.trustStore` instead, also set
+`sslfactory: org.postgresql.ssl.DefaultJavaSSLFactory`.
 
 ## Amazon Web Services (AWS)
 
@@ -705,6 +749,8 @@ which is `1000` for the default image.
 
 **Action required:** If you use an image whose user is not `1000`, set
 `iq_server_jobs.containerSecurityContext.runAsUser` and `runAsGroup` to `1000` to keep the previous behavior.
+If an admission policy requires an explicit `runAsUser` or `runAsGroup`, set them in `iq_server_jobs.securityContext`
+or `iq_server_jobs.containerSecurityContext`.
 
 ### To 202.0.0
 In this version, the bundled Fluentd subchart has been removed. Log aggregation is now the responsibility of the
