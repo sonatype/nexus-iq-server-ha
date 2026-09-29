@@ -119,8 +119,10 @@ spec:
             - /bin/sh
             - -c
             - "/opt/sonatype/nexus-iq-server/bin/nexus-iq-server migrate-db /etc/nexus-iq-server/config.yml"
+          {{- with .Values.iq_server_jobs.containerSecurityContext }}
           securityContext:
-            {{- include "nexus-iq-server-ha.jobContainerSecurityContext" . | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
       {{- with .Values.iq_server_jobs.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -220,6 +222,7 @@ spec:
             - /bin/sh
             - -c
             - |
+              if ! id -un >/dev/null 2>&1; then echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd || true; fi
               test -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts ||
               {{- if .Values.secret.sshKnownHosts.arn }}
               (cp /iq-secrets/known_hosts {{ .Values.iq_server.config.clusterDirectory }}/.ssh/known_hosts) &&
@@ -243,8 +246,10 @@ spec:
               (yes n | ssh-keygen -q -t rsa -N '' -f {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa &&
               {{- end }}
               chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
+          {{- with .Values.iq_server_jobs.containerSecurityContext }}
           securityContext:
-            {{- include "nexus-iq-server-ha.jobContainerSecurityContext" . | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
       {{- with .Values.iq_server_jobs.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

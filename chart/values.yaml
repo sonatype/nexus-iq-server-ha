@@ -290,6 +290,7 @@ iq_server:
   #    drop: ["ALL"]
 
   # Optional security context for the init container that prepares the shared file system.
+  # When it does not run as root, set pvOwnershipOverride to "true" so it skips the chown.
   initContainerSecurityContext: {}
   #  allowPrivilegeEscalation: false
 
@@ -353,11 +354,10 @@ iq_server_jobs:
   # Optional security context for the job pods.
   securityContext: {}
   #  fsGroup: 1000
+  #  fsGroupChangePolicy: OnRootMismatch
 
-  # Security context for the job containers; replaces the runAsUser/runAsGroup 1000 default when set.
-  # On OpenShift, leave out runAsUser/runAsGroup so the SCC assigns them from the namespace range.
+  # Optional security context for the job containers.
   containerSecurityContext: {}
-  #  runAsNonRoot: true
   #  allowPrivilegeEscalation: false
 
   # Additional volumes and volume mounts for both jobs, in the same format as iq_server.extraVolumes
@@ -501,3 +501,9 @@ aggregateLogFileRetention:
 
   # Affinity for cronjob pod assignment
   affinity: {}
+
+  # Optional security context for the cronjob pod.
+  securityContext: {}
+
+  # Optional security context for the cronjob container.
+  containerSecurityContext: {}

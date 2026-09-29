@@ -307,6 +307,29 @@ The image registry, image, tag, and imagePullPolicy can be overridden using
    --set iq_server.imagePullPolicy=<imagePullPolicy, default "IfNotPresent">
    ```
 
+### Restricted Security Policies (optional)
+
+Security contexts can be set for every pod and container, which clusters enforcing restricted policies (e.g.
+OpenShift restricted SCC, Kyverno, Gatekeeper) may require:
+
+| Workload                    | Pod                                         | Container                                                                      |
+|-----------------------------|---------------------------------------------|--------------------------------------------------------------------------------|
+| IQ Server Deployment        | `iq_server.securityContext`                 | `iq_server.containerSecurityContext`, `iq_server.initContainerSecurityContext` |
+| migrate-db and git-ssh jobs | `iq_server_jobs.securityContext`            | `iq_server_jobs.containerSecurityContext`                                      |
+| Aggregate log cleanup       | `aggregateLogFileRetention.securityContext` | `aggregateLogFileRetention.containerSecurityContext`                           |
+
+When doing so, note the following:
+* The init container runs `pvOwnershipOverride` (a `chown` by default), which fails when it does not run as root.
+Set `iq_server.pvOwnershipOverride="true"` to skip it and rely on `fsGroup` instead.
+* The image user is not numeric, so `runAsNonRoot: true` needs `runAsUser` as well, unless the cluster assigns one
+(as OpenShift does).
+* With `readOnlyRootFilesystem: true`, mount writable volumes (e.g. `emptyDir`) at `/tmp` and at the
+`iq_server.config.sonatypeWork` path using `iq_server.extraVolumes` and `iq_server.extraVolumeMounts`.
+* When the cluster assigns an arbitrary user ID, the git-ssh job adds it to `/etc/passwd` so it can generate an SSH
+key, which needs a writable root file system. Otherwise, provide the key using `iq_server.sshPrivateKeySecret`.
+* Files needed by both the server and the migrate-db job, such as a database CA certificate for
+`sslmode: verify-full`, need to be mounted in both, using `iq_server.extraVolumes` and `iq_server_jobs.extraVolumes`.
+
 ## Amazon Web Services (AWS)
 
 ### Satisfying General Requirements
@@ -896,9 +919,11 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server.pvOwnershipOverrideResources.requests.memory`           | Persistence ownership initContainer request for memory resources in bytes                            | `nil`                      |
 | `iq_server.pvOwnershipOverrideResources.limits.cpu`                | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
 | `iq_server.pvOwnershipOverrideResources.limits.memory`             | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
-| `iq_server.securityContext`                                        | Security-related settings for the pod                                                                | `nil`                      |
+| `iq_server.securityContext`                                        | Security-related settings for the pod                                                                | `{}`                       |
 | `iq_server.containerSecurityContext`                               | Security-related settings for the main container                                                     | `{}`                       |
 | `iq_server.initContainerSecurityContext`                           | Security-related settings for the init container                                                     | `{}`                       |
+| `iq_server.extraVolumes`                                           | Additional volumes for the pod, see `values.yaml` for the supported types                            | `[]`                       |
+| `iq_server.extraVolumeMounts`                                      | Additional volume mounts for the main container                                                      | `[]`                       |
 | `iq_server.nodeSelector`                                           | Node labels for pod assignment                                                                       | `{}`                       |
 | `iq_server.tolerations`                                            | Tolerations for pod assignment                                                                       | `[]`                       |
 | `iq_server.affinity`                                               | Affinity rules for pod assignment                                                                    | `{}`                       |
@@ -915,9 +940,9 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server_jobs.tolerations`                                       | Tolerations for job pod assignment                                                                   | `[]`                       |
 | `iq_server_jobs.affinity`                                          | Affinity rules for job pod assignment                                                                | `{}`                       |
 | `iq_server_jobs.securityContext`                                   | Security-related settings for the job pods                                                           | `{}`                       |
-| `iq_server_jobs.containerSecurityContext`                          | Security-related settings for the job containers; runs as UID/GID 1000 when empty                    | `{}`                       |
+| `iq_server_jobs.containerSecurityContext`                          | Security-related settings for the job containers                                                     | `{}`                       |
 | `iq_server_jobs.extraVolumes`                                      | Additional volumes for the job pods, same format as `iq_server.extraVolumes`                         | `[]`                       |
-| `iq_server_jobs.extraVolumeMounts`                                 | Additional volume mounts for the job containers                                                      | `[]`                       |
+| `iq_server_jobs.extraVolumeMounts`                                 | Additional volume mounts for the job containers, same format as `iq_server.extraVolumeMounts`        | `[]`                       |
 | `ingress.enabled`                                                  | Enable ingress                                                                                       | `false`                    |
 | `ingress.ingressClassName`                                         | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                                 | Ingress path type                                                                                    | `Prefix`                   |
@@ -956,6 +981,8 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `aggregateLogFileRetention.nodeSelector`                           | Node labels for cronjob pod assignment                                                               | `{}`                       |
 | `aggregateLogFileRetention.tolerations`                            | Tolerations for cronjob pod assignment                                                               | `[]`                       |
 | `aggregateLogFileRetention.affinity`                               | Affinity rules for cronjob pod assignment                                                            | `{}`                       |
+| `aggregateLogFileRetention.securityContext`                        | Security-related settings for the cronjob pod                                                        | `{}`                       |
+| `aggregateLogFileRetention.containerSecurityContext`               | Security-related settings for the cronjob container                                                  | `{}`                       |
 | `hpa.enabled`                                                      | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
 | `hpa.minReplicas`                                                  | Minimum number of replicas                                                                           | `2`                        |
 | `hpa.maxReplicas`                                                  | Maximum number of replicas                                                                           | `4`                        |

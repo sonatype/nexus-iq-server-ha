@@ -59,7 +59,3 @@ imagePullSecrets:
   {{- end }}
 {{- end }}
 {{- end -}}
-
-{{- define "nexus-iq-server-ha.jobContainerSecurityContext" -}}
-{{- toYaml (.Values.iq_server_jobs.containerSecurityContext | default (dict "runAsUser" 1000 "runAsGroup" 1000)) }}
-{{- end -}}
