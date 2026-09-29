@@ -698,3 +698,113 @@ tests:
           value:
             - name: my-pull-secret
         documentIndex: 1
+  - it: replaces the default job container security context instead of merging into it
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        containerSecurityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+        documentIndex: 1
+  - it: sets the job pod security context
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        securityContext:
+          fsGroup: 1000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 1000
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 1000
+        documentIndex: 1
+  - it: omits the job pod security context by default
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+        documentIndex: 0
+      - notExists:
+          path: spec.template.spec.securityContext
+        documentIndex: 1
+  - it: adds extra volumes and volume mounts to both jobs
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+        sshPrivateKeySecret: ssh-key
+      iq_server_jobs:
+        extraVolumes:
+          - name: db-ca
+            secret: db-ca-secret
+          - name: scratch
+        extraVolumeMounts:
+          - name: db-ca
+            mountPath: /etc/iq-server/db-ca
+            readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: db-ca
+            secret:
+              secretName: db-ca-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch
+            emptyDir: {}
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: db-ca
+            mountPath: /etc/iq-server/db-ca
+            readOnly: true
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: db-ca
+            secret:
+              secretName: db-ca-secret
+        documentIndex: 1
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: RELEASE-NAME-iq-server-pod-private-key-volume
+            secret:
+              secretName: ssh-key
+        documentIndex: 1
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: db-ca
+            mountPath: /etc/iq-server/db-ca
+            readOnly: true
+        documentIndex: 1

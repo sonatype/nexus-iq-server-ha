@@ -18,3 +18,27 @@ tests:
           value:
             runAsUser: 1000
             runAsGroup: 1000
+  - it: omits container security contexts by default
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+      - notExists:
+          path: spec.template.spec.initContainers[0].securityContext
+  - it: sets the main and init container security contexts
+    set:
+      iq_server:
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        initContainerSecurityContext:
+          allowPrivilegeEscalation: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext
+          value:
+            allowPrivilegeEscalation: false
