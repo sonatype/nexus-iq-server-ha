@@ -283,6 +283,16 @@ iq_server:
   #  runAsUser: 1000
   #  runAsGroup: 1000
 
+  # Optional security context for the main IQ server container.
+  containerSecurityContext: {}
+  #  allowPrivilegeEscalation: false
+  #  capabilities:
+  #    drop: ["ALL"]
+
+  # Optional security context for the init container that prepares the shared file system.
+  initContainerSecurityContext: {}
+  #  allowPrivilegeEscalation: false
+
   # Node selector for pod assignment
   nodeSelector: {}
 
@@ -339,6 +349,25 @@ iq_server_jobs:
 
   # Affinity for job pod assignment
   affinity: {}
+
+  # Optional security context for the job pods.
+  securityContext: {}
+  #  fsGroup: 1000
+
+  # Security context for the job containers; replaces the runAsUser/runAsGroup 1000 default when set.
+  # On OpenShift, leave out runAsUser/runAsGroup so the SCC assigns them from the namespace range.
+  containerSecurityContext: {}
+  #  runAsNonRoot: true
+  #  allowPrivilegeEscalation: false
+
+  # Additional volumes and volume mounts for both jobs, in the same format as iq_server.extraVolumes
+  extraVolumes: []
+  # - name: db-ca
+  #   secret: db-ca-secret
+  extraVolumeMounts: []
+  # - name: db-ca
+  #   mountPath: /etc/iq-server/db-ca
+  #   readOnly: true
 
 global:
   busybox: # Container image registry, if not specified the Docker public registry will be used

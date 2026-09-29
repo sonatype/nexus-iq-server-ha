@@ -897,6 +897,8 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server.pvOwnershipOverrideResources.limits.cpu`                | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
 | `iq_server.pvOwnershipOverrideResources.limits.memory`             | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
 | `iq_server.securityContext`                                        | Security-related settings for the pod                                                                | `nil`                      |
+| `iq_server.containerSecurityContext`                               | Security-related settings for the main container                                                     | `{}`                       |
+| `iq_server.initContainerSecurityContext`                           | Security-related settings for the init container                                                     | `{}`                       |
 | `iq_server.nodeSelector`                                           | Node labels for pod assignment                                                                       | `{}`                       |
 | `iq_server.tolerations`                                            | Tolerations for pod assignment                                                                       | `[]`                       |
 | `iq_server.affinity`                                               | Affinity rules for pod assignment                                                                    | `{}`                       |
@@ -912,6 +914,10 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server_jobs.nodeSelector`                                      | Node labels for job pod assignment                                                                   | `{}`                       |
 | `iq_server_jobs.tolerations`                                       | Tolerations for job pod assignment                                                                   | `[]`                       |
 | `iq_server_jobs.affinity`                                          | Affinity rules for job pod assignment                                                                | `{}`                       |
+| `iq_server_jobs.securityContext`                                   | Security-related settings for the job pods                                                           | `{}`                       |
+| `iq_server_jobs.containerSecurityContext`                          | Security-related settings for the job containers; runs as UID/GID 1000 when empty                    | `{}`                       |
+| `iq_server_jobs.extraVolumes`                                      | Additional volumes for the job pods, same format as `iq_server.extraVolumes`                         | `[]`                       |
+| `iq_server_jobs.extraVolumeMounts`                                 | Additional volume mounts for the job containers                                                      | `[]`                       |
 | `ingress.enabled`                                                  | Enable ingress                                                                                       | `false`                    |
 | `ingress.ingressClassName`                                         | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                                 | Ingress path type                                                                                    | `Prefix`                   |

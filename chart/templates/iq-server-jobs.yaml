@@ -24,6 +24,10 @@ spec:
       {{- if .Values.iq_server.imagePullSecret }}
       {{- include "nexus-iq-server-ha.imagePullSecrets" . | nindent 6 }}
       {{- end }}
+      {{- with .Values.iq_server_jobs.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       volumes:
         - name: {{ .Release.Name }}-iq-server-pod-config-volume
           configMap:
@@ -39,6 +43,9 @@ spec:
             volumeAttributes:
               secretProviderClass: {{ .Release.Name }}-aws-secret-provider
               fsType: ext4
+        {{- end }}
+        {{- with .Values.iq_server_jobs.extraVolumes }}
+        {{- include "nexus-iq-server-ha.extraVolumes" . | trim | nindent 8 }}
         {{- end }}
       containers:
         - name: {{ .Release.Name }}-iq-server-container
@@ -65,6 +72,9 @@ spec:
             {{- if .Values.secret.rds.arn }}
             - mountPath: "/iq-secrets"
               name: {{ .Release.Name }}-iq-server-secrets-volume
+            {{- end }}
+            {{- with .Values.iq_server_jobs.extraVolumeMounts }}
+            {{- include "nexus-iq-server-ha.extraVolumeMounts" . | trim | nindent 12 }}
             {{- end }}
           env:
             {{- range .Values.iq_server_jobs.env }}
@@ -110,8 +120,7 @@ spec:
             - -c
             - "/opt/sonatype/nexus-iq-server/bin/nexus-iq-server migrate-db /etc/nexus-iq-server/config.yml"
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            {{- include "nexus-iq-server-ha.jobContainerSecurityContext" . | nindent 12 }}
       {{- with .Values.iq_server_jobs.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -153,6 +162,10 @@ spec:
       {{- if .Values.iq_server.imagePullSecret }}
       {{- include "nexus-iq-server-ha.imagePullSecrets" . | nindent 6 }}
       {{- end }}
+      {{- with .Values.iq_server_jobs.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       volumes:
         - name: {{ .Release.Name }}-iq-server-pod-volume
           persistentVolumeClaim:
@@ -176,6 +189,9 @@ spec:
           secret:
             secretName: {{ .Values.iq_server.sshKnownHostsSecret }}
       {{- end }}
+        {{- with .Values.iq_server_jobs.extraVolumes }}
+        {{- include "nexus-iq-server-ha.extraVolumes" . | trim | nindent 8 }}
+        {{- end }}
       containers:
         - name: {{ .Release.Name }}-git-ssh-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
@@ -196,6 +212,9 @@ spec:
             - mountPath: "/opt/sonatype/nexus-iq-server/.ssh/known-hosts-volume"
               name: {{ .Release.Name }}-iq-server-pod-known-hosts-volume
               readOnly: true
+            {{- end }}
+            {{- with .Values.iq_server_jobs.extraVolumeMounts }}
+            {{- include "nexus-iq-server-ha.extraVolumeMounts" . | trim | nindent 12 }}
             {{- end }}
           command:
             - /bin/sh
@@ -225,8 +244,7 @@ spec:
               {{- end }}
               chmod 600 {{ .Values.iq_server.config.clusterDirectory }}/.ssh/id_rsa)
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            {{- include "nexus-iq-server-ha.jobContainerSecurityContext" . | nindent 12 }}
       {{- with .Values.iq_server_jobs.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

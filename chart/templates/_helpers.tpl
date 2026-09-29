@@ -22,3 +22,44 @@ imagePullSecrets:
 {{ .Values.iq_server.persistence.storageClass.name | default (printf "%s-storageclass" .Release.Name) }}
 {{- end -}}
 {{- end -}}
+
+{{- define "nexus-iq-server-ha.extraVolumes" -}}
+{{- range . }}
+- name: {{ .name }}
+  {{- if .existingClaim }}
+  persistentVolumeClaim:
+    claimName: {{ .existingClaim }}
+  {{- else if .hostPath }}
+  hostPath:
+    {{- toYaml .hostPath | nindent 4 }}
+  {{- else if .configMap }}
+  configMap:
+    {{- toYaml .configMap | nindent 4 }}
+  {{- else if .secret }}
+  secret:
+    secretName: {{ .secret }}
+  {{- else if .emptyDir }}
+  emptyDir:
+    {{- toYaml .emptyDir | nindent 4 }}
+  {{- else }}
+  emptyDir: {}
+  {{- end }}
+{{- end }}
+{{- end -}}
+
+{{- define "nexus-iq-server-ha.extraVolumeMounts" -}}
+{{- range . }}
+- name: {{ .name }}
+  mountPath: {{ .mountPath }}
+  {{- if .subPath }}
+  subPath: {{ .subPath }}
+  {{- end }}
+  {{- if hasKey . "readOnly" }}
+  readOnly: {{ .readOnly }}
+  {{- end }}
+{{- end }}
+{{- end -}}
+
+{{- define "nexus-iq-server-ha.jobContainerSecurityContext" -}}
+{{- toYaml (.Values.iq_server_jobs.containerSecurityContext | default (dict "runAsUser" 1000 "runAsGroup" 1000)) }}
+{{- end -}}

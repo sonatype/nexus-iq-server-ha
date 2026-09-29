@@ -52,31 +52,17 @@ spec:
             items:
               - key: config
                 path: config.yml
-      {{- range .Values.iq_server.extraVolumes }}
-        - name: {{ .name }}
-          {{- if .existingClaim }}
-          persistentVolumeClaim:
-            claimName: {{ .existingClaim }}
-          {{- else if .hostPath }}
-          hostPath:
-            {{ toYaml .hostPath | nindent 12 }}
-          {{- else if .configMap }}
-          configMap:
-            {{- toYaml .configMap | nindent 12 }}
-          {{- else if .secret }}
-          secret:
-            secretName: {{ .secret }}
-          {{- else if .emptyDir }}
-          emptyDir:
-            {{- toYaml .emptyDir | nindent 12 }}
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
-        {{- end }}
+      {{- with .Values.iq_server.extraVolumes }}
+        {{- include "nexus-iq-server-ha.extraVolumes" . | trim | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-iq-server-container
           image: {{ include "nexus-iq-server-ha.iqServerImage" . }}
           imagePullPolicy: {{ .Values.iq_server.imagePullPolicy }}
+          {{- with .Values.iq_server.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if .Values.iq_server.command }}
           command:
           {{- .Values.iq_server.command | toYaml | nindent 12}}
@@ -127,15 +113,8 @@ spec:
               name: {{ .Release.Name }}-iq-server-pod-license-volume
               readOnly: true
             {{- end }}
-            {{- range .Values.iq_server.extraVolumeMounts }}
-            - name: {{ .name }}
-              mountPath: {{ .mountPath }}
-              {{- if .subPath }}
-              subPath: {{ .subPath }}
-              {{- end }}
-              {{- if hasKey . "readOnly" }}
-              readOnly: {{ .readOnly }}
-              {{- end }}
+            {{- with .Values.iq_server.extraVolumeMounts }}
+            {{- include "nexus-iq-server-ha.extraVolumeMounts" . | trim | nindent 12 }}
             {{- end }}
             - mountPath: "/var/log/nexus-iq-server/stderr.log"
               name: {{ .Release.Name }}-iq-server-pod-volume
@@ -277,6 +256,10 @@ spec:
       initContainers:
         - name: {{ .Release.Name }}-set-iq-persistence-ownership
           image: {{ include "nexus-iq-server-ha.busyboxImage" . }}
+          {{- with .Values.iq_server.initContainerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command:
             - /bin/sh
             - -c
