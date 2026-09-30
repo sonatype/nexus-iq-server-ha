@@ -41,6 +41,9 @@ imagePullSecrets:
   {{- else if .emptyDir }}
   emptyDir:
     {{- toYaml .emptyDir | nindent 4 }}
+  {{- else if .csi }}
+  csi:
+    {{- toYaml .csi | nindent 4 }}
   {{- else }}
   emptyDir: {}
   {{- end }}

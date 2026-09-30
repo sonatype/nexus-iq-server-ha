@@ -77,6 +77,12 @@ iq_server:
   #   emptyDir: 
   #    sizeLimit: 500Mi
   # - name: extra-volume-5
+  #   csi:
+  #     driver: secrets-store.csi.k8s.io
+  #     readOnly: true
+  #     volumeAttributes:
+  #       secretProviderClass: my-secret-provider
+  # - name: extra-volume-6
   extraVolumeMounts: []
   # - name: extra-volume-0
   #   mountPath: /mnt/volume0
