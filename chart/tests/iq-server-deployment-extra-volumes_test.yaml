@@ -113,3 +113,19 @@ tests:
               readOnly: true
               volumeAttributes:
                 secretProviderClass: my-secret-provider
+  - it: passes through other volume types
+    set:
+      iq_server:
+        extraVolumes:
+          - name: extra-volume-0
+            nfs:
+              server: nfs.example.com
+              path: /exports/iq
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: extra-volume-0
+            nfs:
+              server: nfs.example.com
+              path: /exports/iq
