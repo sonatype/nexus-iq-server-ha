@@ -15,6 +15,10 @@ imagePullSecrets:
   - name: {{ .Values.iq_server.imagePullSecret }}
 {{- end -}}
 
+{{- define "nexus-iq-server-ha.awsSecretProviderEnabled" -}}
+{{- if or .Values.secret.arn .Values.secret.license.arn .Values.secret.rds.arn .Values.secret.sshPrivateKey.arn .Values.secret.sshKnownHosts.arn }}true{{- end }}
+{{- end -}}
+
 {{- define "nexus-iq-server-ha.storageClassName" -}}
 {{- if .Values.iq_server.persistence.storageClassName -}}
 {{ .Values.iq_server.persistence.storageClassName }}
@@ -41,11 +45,12 @@ imagePullSecrets:
   {{- else if .emptyDir }}
   emptyDir:
     {{- toYaml .emptyDir | nindent 4 }}
-  {{- else if .csi }}
-  csi:
-    {{- toYaml .csi | nindent 4 }}
+  {{- else }}
+  {{- with omit . "name" }}
+  {{- toYaml . | nindent 2 }}
   {{- else }}
   emptyDir: {}
+  {{- end }}
   {{- end }}
 {{- end }}
 {{- end -}}
