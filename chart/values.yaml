@@ -283,6 +283,17 @@ iq_server:
   #  runAsUser: 1000
   #  runAsGroup: 1000
 
+  # Optional security context for the main IQ server container.
+  containerSecurityContext: {}
+  #  allowPrivilegeEscalation: false
+  #  capabilities:
+  #    drop: ["ALL"]
+
+  # Optional security context for the init container that prepares the shared file system.
+  # Without root and the CHOWN capability, set pvOwnershipOverride to "true" so it skips the chown.
+  initContainerSecurityContext: {}
+  #  allowPrivilegeEscalation: false
+
   # Node selector for pod assignment
   nodeSelector: {}
 
@@ -339,6 +350,25 @@ iq_server_jobs:
 
   # Affinity for job pod assignment
   affinity: {}
+
+  # Optional security context for the job pods.
+  securityContext: {}
+  #  runAsNonRoot: true
+  #  runAsUser: 1000
+  #  runAsGroup: 1000
+
+  # Optional security context for the job containers.
+  containerSecurityContext: {}
+  #  allowPrivilegeEscalation: false
+
+  # Additional volumes and volume mounts for both jobs, in the same format as iq_server.extraVolumes
+  extraVolumes: []
+  # - name: db-ca
+  #   secret: db-ca-secret
+  extraVolumeMounts: []
+  # - name: db-ca
+  #   mountPath: /etc/db-ca
+  #   readOnly: true
 
 global:
   busybox: # Container image registry, if not specified the Docker public registry will be used
@@ -472,3 +502,13 @@ aggregateLogFileRetention:
 
   # Affinity for cronjob pod assignment
   affinity: {}
+
+  # Optional security context for the cronjob pod.
+  securityContext: {}
+  #  runAsNonRoot: true
+  #  runAsUser: 1000
+  #  runAsGroup: 1000
+
+  # Optional security context for the cronjob container.
+  containerSecurityContext: {}
+  #  allowPrivilegeEscalation: false

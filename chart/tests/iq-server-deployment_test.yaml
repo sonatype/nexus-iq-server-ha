@@ -132,7 +132,7 @@ tests:
                   - command:
                       - /bin/sh
                       - -c
-                      - mkdir -p /sonatype-work/clm-cluster/log && touch /sonatype-work/clm-cluster/log/$(HOSTNAME)-stderr.log
+                      - mkdir -p /sonatype-work/clm-cluster/log /sonatype-work/clm-cluster/.ssh && touch /sonatype-work/clm-cluster/log/$(HOSTNAME)-stderr.log
                         && chown -R 1000:1000 /sonatype-work/clm-cluster
                     env:
                       - name: HOSTNAME
@@ -401,7 +401,7 @@ tests:
                   - command:
                       - /bin/sh
                       - -c
-                      - mkdir -p /iq/clm-cluster/log && touch /iq/clm-cluster/log/$(HOSTNAME)-stderr.log
+                      - mkdir -p /iq/clm-cluster/log /iq/clm-cluster/.ssh && touch /iq/clm-cluster/log/$(HOSTNAME)-stderr.log
                         && chown -R 2000:2000 /different/path
                     env:
                       - name: HOSTNAME

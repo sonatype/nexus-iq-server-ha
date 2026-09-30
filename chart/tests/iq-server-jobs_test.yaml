@@ -68,9 +68,6 @@ tests:
                     resources:
                       limits:
                       requests:
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                     volumeMounts:
                       - mountPath: /etc/nexus-iq-server
                         name: RELEASE-NAME-iq-server-pod-config-volume
@@ -187,9 +184,6 @@ tests:
                       requests:
                         cpu: 2
                         memory: 500M
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                     volumeMounts:
                     - mountPath: /etc/nexus-iq-server
                       name: RELEASE-NAME-iq-server-pod-config-volume
@@ -314,6 +308,7 @@ tests:
                       - /bin/sh
                       - -c
                       - |
+                        if ! id -un >/dev/null 2>&1; then { echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd; } 2>/dev/null || true; fi
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
@@ -325,9 +320,6 @@ tests:
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                 restartPolicy: OnFailure
                 serviceAccountName: default
                 volumes:
@@ -372,6 +364,7 @@ tests:
                       - /bin/sh
                       - -c
                       - |
+                        if ! id -un >/dev/null 2>&1; then { echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd; } 2>/dev/null || true; fi
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (echo "              /known_hosts" >/sonatype-work/clm-cluster/.ssh/known_hosts &&
                         sed -i'' -e 's/^[ \t]*//g' /sonatype-work/clm-cluster/.ssh/known_hosts) &&
@@ -385,9 +378,6 @@ tests:
                     volumeMounts:
                       - mountPath: /sonatype-work/clm-cluster
                         name: RELEASE-NAME-iq-server-pod-volume
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                 restartPolicy: OnFailure
                 serviceAccountName: default
                 volumes:
@@ -435,6 +425,7 @@ tests:
                       - /bin/sh
                       - -c
                       - |
+                        if ! id -un >/dev/null 2>&1; then { echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd; } 2>/dev/null || true; fi
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (cp /iq-secrets/known_hosts /sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
@@ -443,9 +434,6 @@ tests:
                     image: sonatype.repo.sonatype.app/docker-all/iq/snapshot:1.142.0-SNAPSHOT
                     imagePullPolicy: IfNotPresent
                     name: RELEASE-NAME-git-ssh-container
-                    securityContext:
-                      runAsGroup: 1000
-                      runAsUser: 1000
                     volumeMounts:
                     - mountPath: /sonatype-work/clm-cluster
                       name: RELEASE-NAME-iq-server-pod-volume
@@ -697,4 +685,156 @@ tests:
           path: spec.template.spec.imagePullSecrets
           value:
             - name: my-pull-secret
+        documentIndex: 1
+  - it: sets the job container security context
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        containerSecurityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+        documentIndex: 1
+  - it: sets the job pod security context
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+      iq_server_jobs:
+        securityContext:
+          fsGroup: 1000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 1000
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            fsGroup: 1000
+        documentIndex: 1
+  - it: omits the job security contexts by default
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+        documentIndex: 0
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+        documentIndex: 0
+      - notExists:
+          path: spec.template.spec.securityContext
+        documentIndex: 1
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+        documentIndex: 1
+  - it: does not apply the server security contexts to the jobs
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+        securityContext:
+          fsGroup: 1000
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+        documentIndex: 0
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+        documentIndex: 0
+      - notExists:
+          path: spec.template.spec.securityContext
+        documentIndex: 1
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+        documentIndex: 1
+  - it: adds extra volumes and volume mounts to both jobs
+    set:
+      iq_server:
+        tag: "1.148.0"
+        useGitSsh: true
+        sshPrivateKeySecret: ssh-key
+      secret:
+        rds:
+          arn: arn:aws:secretsmanager:us-east-1:123456789012:secret:rds
+      iq_server_jobs:
+        extraVolumes:
+          - name: db-ca
+            secret: db-ca-secret
+          - name: scratch
+        extraVolumeMounts:
+          - name: db-ca
+            mountPath: /etc/iq-server/db-ca
+            readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: db-ca
+            secret:
+              secretName: db-ca-secret
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch
+            emptyDir: {}
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: RELEASE-NAME-iq-server-secrets-volume
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                secretProviderClass: RELEASE-NAME-aws-secret-provider
+                fsType: ext4
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: db-ca
+            mountPath: /etc/iq-server/db-ca
+            readOnly: true
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: db-ca
+            secret:
+              secretName: db-ca-secret
+        documentIndex: 1
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: RELEASE-NAME-iq-server-pod-private-key-volume
+            secret:
+              secretName: ssh-key
+        documentIndex: 1
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: db-ca
+            mountPath: /etc/iq-server/db-ca
+            readOnly: true
         documentIndex: 1

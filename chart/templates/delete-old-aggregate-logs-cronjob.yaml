@@ -15,6 +15,10 @@ spec:
           {{- if .Values.iq_server.imagePullSecret }}
           {{- include "nexus-iq-server-ha.imagePullSecrets" . | nindent 10 }}
           {{- end }}
+          {{- with .Values.aggregateLogFileRetention.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumes:
             - name: {{ .Release.Name }}-iq-server-pod-volume
               persistentVolumeClaim:
@@ -23,6 +27,10 @@ spec:
           - name: "{{ .Release.Name }}-delete-old-aggregate-logs"
             image: {{ include "nexus-iq-server-ha.busyboxImage" . }}
             imagePullPolicy: IfNotPresent
+            {{- with .Values.aggregateLogFileRetention.containerSecurityContext }}
+            securityContext:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
             command:
             - /bin/sh
             - -c

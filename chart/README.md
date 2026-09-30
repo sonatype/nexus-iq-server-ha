@@ -307,6 +307,132 @@ The image registry, image, tag, and imagePullPolicy can be overridden using
    --set iq_server.imagePullPolicy=<imagePullPolicy, default "IfNotPresent">
    ```
 
+### Restricted Security Policies (optional)
+
+Security contexts can be set for every IQ Server pod and container, which clusters enforcing restricted policies (e.g.
+OpenShift restricted SCC, Kyverno, Gatekeeper) may require. The optional external-dns deployment does not support them,
+so leave `externalDns.enabled` off, or exempt that pod, on clusters that enforce them.
+The optional ingress-nginx subchart takes its own, e.g. `ingress-nginx.controller.podSecurityContext`,
+`ingress-nginx.controller.containerSecurityContext` and `ingress-nginx.controller.admissionWebhooks.patch.securityContext`
+(see the [ingress-nginx values](https://github.com/kubernetes/ingress-nginx/blob/helm-chart-4.4.2/charts/ingress-nginx/values.yaml)).
+
+| Workload                    | Pod                                         | Container                                                                      |
+|-----------------------------|---------------------------------------------|--------------------------------------------------------------------------------|
+| IQ Server Deployment        | `iq_server.securityContext`                 | `iq_server.containerSecurityContext`, `iq_server.initContainerSecurityContext` |
+| migrate-db and git-ssh jobs | `iq_server_jobs.securityContext`            | `iq_server_jobs.containerSecurityContext`                                      |
+| Aggregate log cleanup       | `aggregateLogFileRetention.securityContext` | `aggregateLogFileRetention.containerSecurityContext`                           |
+
+When doing so, note the following:
+* The shared file system must be writable by the pod user and group. The init container's `pvOwnershipOverride` (a
+`chown` to `1000:1000` by default) only works as root with the `CHOWN` capability. Otherwise, set
+`iq_server.pvOwnershipOverride="true"` to skip it and grant access through the storage instead, e.g. an EFS access
+point owned by the pod user (see [EFS Storage Class](#efs-storage-class)) or NFS export ownership. `fsGroup` does not
+apply to NFS or `ReadWriteMany` EFS volumes.
+* The default image user (`nexus`) is not numeric and the busybox image, used by the init container and the log cleanup
+cronjob, runs as root, so `runAsNonRoot: true` needs `runAsUser` as well, unless the cluster assigns one (as OpenShift
+does).
+* The server writes to `/sonatype-work`, which only the image user can write to in the image. As another user or with
+`readOnlyRootFilesystem: true`, mount a writable volume (e.g. `emptyDir`) there, plus one at `/tmp` with
+`readOnlyRootFilesystem: true`, using `iq_server.extraVolumes` and `iq_server.extraVolumeMounts` for the server and
+`iq_server_jobs.extraVolumes` and `iq_server_jobs.extraVolumeMounts` for the jobs. The log cleanup cronjob only writes
+to the shared volume, so it needs none.
+* SSH needs the pod user in `/etc/passwd`. For a user the image does not know, mount a passwd file that contains it
+(see below). With the default image, the server and the git-ssh job otherwise add the user themselves, which needs a
+writable root file system and group `0`, either as the primary group (as OpenShift assigns) or through
+`supplementalGroups: [0]` in the pod `securityContext`; group `0` only adds write access to `/etc/passwd` there. Without
+either, git over SSH does not work, so leave `iq_server.useGitSsh` off.
+
+For example, to run as the image user without privilege escalation on a read-only root file system:
+   ```
+   iq_server:
+     pvOwnershipOverride: "true"
+     securityContext: &pod
+       runAsNonRoot: true
+       runAsUser: 1000
+       runAsGroup: 1000
+       fsGroup: 1000
+       seccompProfile:
+         type: RuntimeDefault
+     containerSecurityContext: &container
+       allowPrivilegeEscalation: false
+       readOnlyRootFilesystem: true
+       capabilities:
+         drop: ["ALL"]
+     initContainerSecurityContext: *container
+     extraVolumes: &volumes
+       - name: tmp
+         emptyDir: {}
+       - name: work
+         emptyDir: {}
+     extraVolumeMounts: &mounts
+       - name: tmp
+         mountPath: /tmp
+       - name: work
+         mountPath: /sonatype-work
+   iq_server_jobs:
+     securityContext: *pod
+     containerSecurityContext: *container
+     extraVolumes: *volumes
+     extraVolumeMounts: *mounts
+   aggregateLogFileRetention:
+     securityContext: *pod
+     containerSecurityContext: *container
+   ```
+`fsGroup` is there for policies that require it and does not make `ReadWriteMany` volumes writable, so a new volume
+needs to be writable by `1000` through the storage (see the first note). Volumes set up by the default chown already
+are.
+
+For another user, add a passwd file under both `iq_server` and `iq_server_jobs`:
+   ```
+   extraVolumes:
+     - name: passwd
+       configMap:
+         name: iq-server-passwd
+   extraVolumeMounts:
+     - name: passwd
+       mountPath: /etc/passwd
+       subPath: passwd
+       readOnly: true
+   ```
+where the `iq-server-passwd` ConfigMap holds, under the key `passwd`, your image's `/etc/passwd` plus a line for the
+pod user:
+   ```
+   docker run --rm --entrypoint cat <image>:<tag> /etc/passwd > passwd
+   echo 'iqserver:x:<uid>:<gid>:IQ Server:/opt/sonatype/nexus-iq-server:/bin/false' >> passwd
+   kubectl create configmap iq-server-passwd --from-file=passwd
+   ```
+
+On OpenShift, which assigns the user and groups from the namespace range, omit `runAsUser`, `runAsGroup` and `fsGroup`,
+and keep the `/sonatype-work` volume. With a read-only root file system, also add the passwd file, with the user
+OpenShift assigns (the start of the namespace's `openshift.io/sa.scc.uid-range` annotation, e.g. `1000710000`) and group
+`0`.
+
+To verify the database server certificate with `sslmode: verify-full`, point the driver at a PEM CA file mounted in both
+the server and the jobs, since they share `config.yml`:
+   ```
+   iq_server:
+     config:
+       database:
+         parameters:
+           sslmode: verify-full
+           sslrootcert: /etc/db-ca/ca.crt
+     extraVolumes: &caVolumes
+       - name: db-ca
+         secret: db-ca-secret
+     extraVolumeMounts: &caMounts
+       - name: db-ca
+         mountPath: /etc/db-ca
+         readOnly: true
+   iq_server_jobs:
+     extraVolumes: *caVolumes
+     extraVolumeMounts: *caMounts
+   ```
+For a JKS truststore instead, set `sslfactory: org.postgresql.ssl.DefaultJavaSSLFactory` and pass
+`-Djavax.net.ssl.trustStore=<path>` to both, in `iq_server.javaOpts` for the server and a `JAVA_OPTS` entry in
+`iq_server_jobs.env` for the jobs. The truststore replaces the JVM's default one, so use a copy of the JDK `cacerts`
+with the database CA added. Setting `JAVA_OPTS` also replaces the image's value, so keep
+`-Djava.util.prefs.userRoot=/sonatype-work/javaprefs` in it.
+
 ## Amazon Web Services (AWS)
 
 ### Satisfying General Requirements
@@ -636,6 +762,16 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 3. **Update the helm chart.** Typically, this will also update the Sonatype IQ Server version.
 4. **Run your helm chart upgrade command.** The deleted pods will be re-created with the updates.
 
+### To 208.0.0
+The migrate-db and git-ssh jobs no longer set `runAsUser: 1000` and `runAsGroup: 1000`, so they run as the image user,
+which is `1000` for the default image.
+
+**Action required:** If you use an image whose user is not `1000`, such as the `-alpine` variant (`1001`), set
+`iq_server_jobs.containerSecurityContext.runAsUser` and `runAsGroup` to `1000` to keep the previous behavior. An image
+that sets no user would otherwise run the jobs as root.
+If an admission policy requires an explicit `runAsUser` or `runAsGroup`, set them in `iq_server_jobs.securityContext`
+or `iq_server_jobs.containerSecurityContext`.
+
 ### To 202.0.0
 In this version, the bundled Fluentd subchart has been removed. Log aggregation is now the responsibility of the
 customer. Key changes:
@@ -896,7 +1032,11 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server.pvOwnershipOverrideResources.requests.memory`           | Persistence ownership initContainer request for memory resources in bytes                            | `nil`                      |
 | `iq_server.pvOwnershipOverrideResources.limits.cpu`                | Persistence ownership initContainer limit for CPU resources in CPU units                             | `nil`                      |
 | `iq_server.pvOwnershipOverrideResources.limits.memory`             | Persistence ownership initContainer limit for memory resources in bytes                              | `nil`                      |
-| `iq_server.securityContext`                                        | Security-related settings for the pod                                                                | `nil`                      |
+| `iq_server.securityContext`                                        | Security-related settings for the pod                                                                | `{}`                       |
+| `iq_server.containerSecurityContext`                               | Security-related settings for the main container                                                     | `{}`                       |
+| `iq_server.initContainerSecurityContext`                           | Security-related settings for the init container                                                     | `{}`                       |
+| `iq_server.extraVolumes`                                           | Additional volumes for the pod, see `values.yaml` for the supported types                            | `[]`                       |
+| `iq_server.extraVolumeMounts`                                      | Additional volume mounts for the main container                                                      | `[]`                       |
 | `iq_server.nodeSelector`                                           | Node labels for pod assignment                                                                       | `{}`                       |
 | `iq_server.tolerations`                                            | Tolerations for pod assignment                                                                       | `[]`                       |
 | `iq_server.affinity`                                               | Affinity rules for pod assignment                                                                    | `{}`                       |
@@ -912,6 +1052,10 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server_jobs.nodeSelector`                                      | Node labels for job pod assignment                                                                   | `{}`                       |
 | `iq_server_jobs.tolerations`                                       | Tolerations for job pod assignment                                                                   | `[]`                       |
 | `iq_server_jobs.affinity`                                          | Affinity rules for job pod assignment                                                                | `{}`                       |
+| `iq_server_jobs.securityContext`                                   | Security-related settings for the job pods                                                           | `{}`                       |
+| `iq_server_jobs.containerSecurityContext`                          | Security-related settings for the job containers                                                     | `{}`                       |
+| `iq_server_jobs.extraVolumes`                                      | Additional volumes for the job pods, same format as `iq_server.extraVolumes`                         | `[]`                       |
+| `iq_server_jobs.extraVolumeMounts`                                 | Additional volume mounts for the job containers, same format as `iq_server.extraVolumeMounts`        | `[]`                       |
 | `ingress.enabled`                                                  | Enable ingress                                                                                       | `false`                    |
 | `ingress.ingressClassName`                                         | Ingress class name                                                                                   | `nginx`                    |
 | `ingress.pathType`                                                 | Ingress path type                                                                                    | `Prefix`                   |
@@ -950,6 +1094,8 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `aggregateLogFileRetention.nodeSelector`                           | Node labels for cronjob pod assignment                                                               | `{}`                       |
 | `aggregateLogFileRetention.tolerations`                            | Tolerations for cronjob pod assignment                                                               | `[]`                       |
 | `aggregateLogFileRetention.affinity`                               | Affinity rules for cronjob pod assignment                                                            | `{}`                       |
+| `aggregateLogFileRetention.securityContext`                        | Security-related settings for the cronjob pod                                                        | `{}`                       |
+| `aggregateLogFileRetention.containerSecurityContext`               | Security-related settings for the cronjob container                                                  | `{}`                       |
 | `hpa.enabled`                                                      | Enable Horizontal Pod Autoscaler                                                                     | `false`                    |
 | `hpa.minReplicas`                                                  | Minimum number of replicas                                                                           | `2`                        |
 | `hpa.maxReplicas`                                                  | Maximum number of replicas                                                                           | `4`                        |
