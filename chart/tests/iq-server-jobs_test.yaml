@@ -309,6 +309,7 @@ tests:
                       - -c
                       - |
                         if ! id -un >/dev/null 2>&1; then { echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd; } 2>/dev/null || true; fi
+                        mkdir -p /sonatype-work/clm-cluster/.ssh
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (ssh-keyscan github.com gitlab.com bitbucket.org ssh.dev.azure.com >/sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
@@ -365,6 +366,7 @@ tests:
                       - -c
                       - |
                         if ! id -un >/dev/null 2>&1; then { echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd; } 2>/dev/null || true; fi
+                        mkdir -p /sonatype-work/clm-cluster/.ssh
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (echo "              /known_hosts" >/sonatype-work/clm-cluster/.ssh/known_hosts &&
                         sed -i'' -e 's/^[ \t]*//g' /sonatype-work/clm-cluster/.ssh/known_hosts) &&
@@ -426,6 +428,7 @@ tests:
                       - -c
                       - |
                         if ! id -un >/dev/null 2>&1; then { echo "iqserver:x:$(id -u):$(id -g):IQ Server:/opt/sonatype/nexus-iq-server:/bin/false" >> /etc/passwd; } 2>/dev/null || true; fi
+                        mkdir -p /sonatype-work/clm-cluster/.ssh
                         test -f /sonatype-work/clm-cluster/.ssh/known_hosts ||
                         (cp /iq-secrets/known_hosts /sonatype-work/clm-cluster/.ssh/known_hosts) &&
                         test -f /sonatype-work/clm-cluster/.ssh/id_rsa ||
