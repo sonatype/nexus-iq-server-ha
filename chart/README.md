@@ -22,7 +22,7 @@ This repository is intended to store a helm chart to create a cluster of Sonatyp
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) (1.23+) to run commands against a Kubernetes cluster
 - [helm](https://helm.sh/docs/helm/) (3.9.3+ or 4.x) to install or upgrade the helm chart
 - A PostgreSQL (10.7 or newer) database or a PostgreSQL-compatible service
-- A Kubernetes cluster to run the helm chart on
+- A Kubernetes (1.23+) cluster to run the helm chart on
 - A shared file system to share files between all Sonatype IQ Server pods in the cluster
 - A load balancer to distribute requests between the Sonatype IQ Server pods
 
@@ -248,6 +248,19 @@ You can retrieve the public key from the pod at <clusterDirectory>/.ssh/id_rsa.p
 A `config.yml` file is required to run. This is generated using the `iq_server.config` value. Care should be taken if
 updating this as many values within it are fine-tuned to allow the helm chart to function.
 
+### Outbound HTTP Proxy (optional)
+
+The proxy for outbound connections is normally configured through the UI or the
+[HTTP Proxy Server Configuration REST API](https://help.sonatype.com/en/http-proxy-server-configuration-rest-api.html).
+On first start, though, Sonatype IQ Server fetches data from Sonatype before it accepts connections, so behind a proxy
+it needs the proxy before either is available. Set it for the first start with JVM system properties
+   ```
+   --set iq_server.javaOpts="-Djava.util.prefs.userRoot=/sonatype-work/javaprefs -Dhttps.proxyHost=<proxy host> -Dhttps.proxyPort=<proxy port> -Dhttp.proxyHost=<proxy host> -Dhttp.proxyPort=<proxy port>"
+   ```
+`iq_server.javaOpts` replaces the image's `JAVA_OPTS`, so keep `-Djava.util.prefs.userRoot=/sonatype-work/javaprefs` in
+it. Once the server is running, configure the proxy through the UI or REST API, which takes precedence over the system
+properties, and optionally remove them.
+
 ### Logging
 
 Each Sonatype IQ Server pod outputs application logs to stdout via console appenders and to log files on the shared
@@ -305,6 +318,73 @@ The image registry, image, tag, and imagePullPolicy can be overridden using
    --set iq_server.image=<image, default "sonatype/nexus-iq-server">
    --set iq_server.tag=<tag, default most recent version of Sonatype IQ Server>
    --set iq_server.imagePullPolicy=<imagePullPolicy, default "IfNotPresent">
+   ```
+
+### Other Secret Stores (optional)
+
+The license, database password, initial admin password and SSH files can be read from existing Kubernetes secrets
+(`iq_server.licenseSecret`, `iq_server.database.passwordSecret`, `iq_server.initialAdminPasswordSecret`,
+`iq_server.sshPrivateKeySecret` and `iq_server.sshKnownHostsSecret`). To keep them in an external secret store other
+than AWS Secrets Manager (see [AWS Secrets](#aws-secrets)), have a tool such as the
+[External Secrets Operator](https://external-secrets.io/) create those secrets, or sync them with the
+[Secrets Store CSI Driver](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret).
+
+For example, with Azure Key Vault and the Secrets Store CSI Driver, create a `SecretProviderClass` that syncs the
+secrets, authenticating as described in
+[Azure's documentation](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-identity-access)
+   ```
+   apiVersion: secrets-store.csi.x-k8s.io/v1
+   kind: SecretProviderClass
+   metadata:
+     name: iq-server-key-vault
+   spec:
+     provider: azure
+     secretObjects:
+       - secretName: iq-server-license
+         type: Opaque
+         data:
+           - key: license_lic
+             objectName: iq-license
+       - secretName: iq-server-database-password
+         type: Opaque
+         data:
+           - key: password
+             objectName: iq-database-password
+     parameters:
+       keyvaultName: <key vault name>
+       tenantId: <tenant ID>
+       clientID: <workload identity client ID>
+       objects: |
+         array:
+           - |
+             objectName: iq-license
+             objectType: secret
+             objectEncoding: base64
+           - |
+             objectName: iq-database-password
+             objectType: secret
+   ```
+where `iq-license` holds the base64 encoded license file. The driver only syncs the secrets while a pod mounts the
+volume, so mount it in the server and in the jobs, which also read the database password
+   ```
+   iq_server:
+     licenseSecret: iq-server-license
+     database:
+       passwordSecret: iq-server-database-password
+     extraVolumes: &keyVaultVolumes
+       - name: key-vault
+         csi:
+           driver: secrets-store.csi.k8s.io
+           readOnly: true
+           volumeAttributes:
+             secretProviderClass: iq-server-key-vault
+     extraVolumeMounts: &keyVaultMounts
+       - name: key-vault
+         mountPath: /mnt/key-vault
+         readOnly: true
+   iq_server_jobs:
+     extraVolumes: *keyVaultVolumes
+     extraVolumeMounts: *keyVaultMounts
    ```
 
 ### Restricted Security Policies (optional)
@@ -540,7 +620,7 @@ By default the chart expects the JSON keys inside that secret to be named `host`
 
 The initial admin password
    ```
-   --set secret.license.arn=<aws secret arn containing the initial admin password in an initial_admin_password key>
+   --set secret.arn=<aws secret arn containing the initial admin password in an initial_admin_password key>
    ```
 
 ### ALB
