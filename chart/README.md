@@ -94,7 +94,7 @@ However, there are various configuration options.
 
 #### Size
 
-The [capcity](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#capacity) or size can be set via
+The [capacity](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#capacity) or size can be set via
    ```
    --set iq_server.persistence.size=<storage size, default "1Gi">
    ```
@@ -253,13 +253,13 @@ updating this as many values within it are fine-tuned to allow the helm chart to
 The proxy for outbound connections is normally configured through the UI or the
 [HTTP Proxy Server Configuration REST API](https://help.sonatype.com/en/http-proxy-server-configuration-rest-api.html).
 On first start, though, Sonatype IQ Server fetches data from Sonatype before it accepts connections, so behind a proxy
-it needs the proxy before either is available. Set it for the first start with JVM system properties
+the pods don't become ready until the proxy is set, and neither is available yet. Set it for the first start with JVM
+system properties
    ```
-   --set iq_server.javaOpts="-Djava.util.prefs.userRoot=/sonatype-work/javaprefs -Dhttps.proxyHost=<proxy host> -Dhttps.proxyPort=<proxy port> -Dhttp.proxyHost=<proxy host> -Dhttp.proxyPort=<proxy port>"
+   --set iq_server.javaOpts="-Djava.util.prefs.userRoot=/sonatype-work/javaprefs -Dhttps.proxyHost=<proxy host> -Dhttps.proxyPort=<proxy port> -Dhttp.proxyHost=<proxy host> -Dhttp.proxyPort=<proxy port> -Dhttp.nonProxyHosts=<hosts to reach directly, separated by |>"
    ```
-`iq_server.javaOpts` replaces the image's `JAVA_OPTS`, so keep `-Djava.util.prefs.userRoot=/sonatype-work/javaprefs` in
-it. Once the server is running, configure the proxy through the UI or REST API, which takes precedence over the system
-properties, and optionally remove them.
+Once the server is running, configure the proxy through the UI or REST API, which takes precedence over the system
+properties, and remove them.
 
 ### Logging
 
@@ -320,16 +320,18 @@ The image registry, image, tag, and imagePullPolicy can be overridden using
    --set iq_server.imagePullPolicy=<imagePullPolicy, default "IfNotPresent">
    ```
 
-### Other Secret Stores (optional)
+### External Secret Stores (optional)
 
-The license, database password, initial admin password and SSH files can be read from existing Kubernetes secrets
-(`iq_server.licenseSecret`, `iq_server.database.passwordSecret`, `iq_server.initialAdminPasswordSecret`,
-`iq_server.sshPrivateKeySecret` and `iq_server.sshKnownHostsSecret`). To keep them in an external secret store other
+The license, database password, initial admin password and SSH files can be read from existing Kubernetes secrets:
+`iq_server.licenseSecret` with the key `license_lic`, `iq_server.database.passwordSecret` and
+`iq_server.initialAdminPasswordSecret` with the key `password`, `iq_server.sshPrivateKeySecret` with the key `id_rsa`
+and `iq_server.sshKnownHostsSecret` with the key `known_hosts`. To keep them in an external secret store other
 than AWS Secrets Manager (see [AWS Secrets](#aws-secrets)), have a tool such as the
 [External Secrets Operator](https://external-secrets.io/) create those secrets, or sync them with the
 [Secrets Store CSI Driver](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret).
 
-For example, with Azure Key Vault and the Secrets Store CSI Driver, create a `SecretProviderClass` that syncs the
+For example, with Azure Key Vault and the Secrets Store CSI Driver, installed with secret sync enabled (e.g.
+`syncSecret.enabled=true` for its helm chart), create a `SecretProviderClass` in the release namespace that syncs the
 secrets, authenticating as described in
 [Azure's documentation](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-identity-access)
    ```
@@ -337,6 +339,7 @@ secrets, authenticating as described in
    kind: SecretProviderClass
    metadata:
      name: iq-server-key-vault
+     namespace: <release namespace>
    spec:
      provider: azure
      secretObjects:
@@ -365,9 +368,12 @@ secrets, authenticating as described in
              objectType: secret
    ```
 where `iq-license` holds the base64 encoded license file. The driver only syncs the secrets while a pod mounts the
-volume, so mount it in the server and in the jobs, which also read the database password
+volume, so mount it in the server and in the jobs, which also read the database password. With workload identity, the
+pods also need to run as the service account federated with the identity, which `iq_server.serviceAccountName` sets for
+the server and the jobs
    ```
    iq_server:
+     serviceAccountName: <federated service account>
      licenseSecret: iq-server-license
      database:
        passwordSecret: iq-server-database-password
@@ -685,7 +691,7 @@ by default e.g.
    ```
    kind: StorageClass
    apiVersion: storage.k8s.io/v1
-     metadata:
+   metadata:
      name: efs-sc
    provisioner: efs.csi.aws.com
    parameters:
@@ -789,7 +795,7 @@ Some example commands are shown below.
 
 ### Satisfying General Requirements
 * Any PostgreSQL database, we recommend one [setup for HA](https://www.postgresql.org/docs/current/high-availability.html)
-* Any Kubernetes cluster, we recommend a multi-node cluster [setup for HA](https://kubernetes.io/docs/setup/production-environment/)
+* Any Kubernetes (1.23+) cluster, we recommend a multi-node cluster [setup for HA](https://kubernetes.io/docs/setup/production-environment/)
 * Any shared file system, we recommend a [Network File System (NFS)](https://en.wikipedia.org/wiki/Network_File_System)
 * Any [ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/) pre-installed
 and configured in the cluster, we recommend the [ingress-nginx controller](https://github.com/kubernetes/ingress-nginx)
@@ -858,6 +864,10 @@ the previous behavior, set `iq_server_jobs.containerSecurityContext.runAsUser` a
 `runAsGroup` as above.
 If an admission policy requires an explicit `runAsUser` or `runAsGroup`, set them in `iq_server_jobs.securityContext`
 or `iq_server_jobs.containerSecurityContext`.
+
+If you created the `<release>-aws-secret-provider` SecretProviderClass yourself because only
+`secret.sshPrivateKey.arn` or `secret.sshKnownHosts.arn` was set, delete it before upgrading, since the chart now
+creates it.
 
 ### To 202.0.0
 In this version, the bundled Fluentd subchart has been removed. Log aggregation is now the responsibility of the
@@ -1054,7 +1064,7 @@ This ensures that support can access aggregated logs from all HA nodes.
 | `iq_server.resources.requests.memory`                              | Sonatype IQ Server request for memory resources in bytes                                             | `nil`                      |
 | `iq_server.resources.limits.cpu`                                   | Sonatype IQ Server limit for CPU resources in CPU units                                              | `nil`                      |
 | `iq_server.resources.limits.memory`                                | Sonatype IQ Server limit for memory resources in bytes                                               | `nil`                      |
-| `iq_server.javaOpts`                                               | Value for the JAVA_OPTS environment variable to pass custom settings to the JVM                      | `nil`                      |
+| `iq_server.javaOpts`                                               | Value for the JAVA_OPTS environment variable to pass custom settings to the JVM, replacing the image's value, so keep `-Djava.util.prefs.userRoot=/sonatype-work/javaprefs` in it | `nil`                      |
 | `iq_server.license`                                                | Path to your Sonatype IQ Server product license file                                                 | `nil`                      |
 | `iq_server.licenseSecret`                                          | The name of the license secret                                                                       | `nil`                      |
 | `iq_server.serviceType`                                            | Sonatype IQ Server service type                                                                      | `ClusterIP`                |
