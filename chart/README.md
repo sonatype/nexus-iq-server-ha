@@ -340,7 +340,8 @@ to the shared volume, so it needs none.
 (see below). With the default image, the server and the git-ssh job otherwise add the user themselves, which needs a
 writable root file system and group `0`, either as the primary group (as OpenShift assigns) or through
 `supplementalGroups: [0]` in the pod `securityContext`; group `0` only adds write access to `/etc/passwd` there. Without
-either, git over SSH does not work, so leave `iq_server.useGitSsh` off.
+either, git over SSH does not work, so leave `iq_server.useGitSsh` off. The `-hardened` and `-alpine` images cannot add
+the user, so they always need the passwd file.
 
 For example, to run as the image user without privilege escalation on a read-only root file system:
    ```
@@ -380,7 +381,7 @@ For example, to run as the image user without privilege escalation on a read-onl
    ```
 `fsGroup` is there for policies that require it and does not make `ReadWriteMany` volumes writable, so a new volume
 needs to be writable by `1000` through the storage (see the first note). Volumes set up by the default chown already
-are.
+are. For policies that also check each container, add `runAsNonRoot`, `runAsUser` and `runAsGroup` to `&container`.
 
 For another user, add a passwd file under both `iq_server` and `iq_server_jobs`:
    ```
@@ -403,12 +404,12 @@ pod user:
    ```
 
 On OpenShift, which assigns the user and groups from the namespace range, omit `runAsUser`, `runAsGroup` and `fsGroup`,
-and keep the `/sonatype-work` volume. With a read-only root file system, also add the passwd file, with the user
-OpenShift assigns (the start of the namespace's `openshift.io/sa.scc.uid-range` annotation, e.g. `1000710000`) and group
-`0`.
+and keep the `/sonatype-work` volume. With a read-only root file system, or the `-hardened` or `-alpine` image, also add
+the passwd file, with the user OpenShift assigns (the start of the namespace's `openshift.io/sa.scc.uid-range`
+annotation, e.g. `1000710000`) and group `0`.
 
 To verify the database server certificate with `sslmode: verify-full`, point the driver at a PEM CA file mounted in both
-the server and the jobs, since they share `config.yml`:
+the server and the migrate-db job, since they share `config.yml`:
    ```
    iq_server:
      config:
@@ -427,11 +428,15 @@ the server and the jobs, since they share `config.yml`:
      extraVolumes: *caVolumes
      extraVolumeMounts: *caMounts
    ```
+where the `db-ca-secret` Secret holds the CA under the key `ca.crt`:
+   ```
+   kubectl create secret generic db-ca-secret --from-file=ca.crt=<ca.pem>
+   ```
 For a JKS truststore instead, set `sslfactory: org.postgresql.ssl.DefaultJavaSSLFactory` and pass
 `-Djavax.net.ssl.trustStore=<path>` to both, in `iq_server.javaOpts` for the server and a `JAVA_OPTS` entry in
-`iq_server_jobs.env` for the jobs. The truststore replaces the JVM's default one, so use a copy of the JDK `cacerts`
-with the database CA added. Setting `JAVA_OPTS` also replaces the image's value, so keep
-`-Djava.util.prefs.userRoot=/sonatype-work/javaprefs` in it.
+`iq_server_jobs.env` for the migrate-db job. The truststore replaces the JVM's default one, so use a copy of the JDK
+`cacerts` with the database CA added, and refresh it from the new image's `cacerts` when upgrading. Setting `JAVA_OPTS`
+also replaces the image's value, so keep `-Djava.util.prefs.userRoot=/sonatype-work/javaprefs` in it.
 
 ## Amazon Web Services (AWS)
 
@@ -766,9 +771,11 @@ To upgrade Sonatype IQ Server and ensure a successful data migration, the follow
 The migrate-db and git-ssh jobs no longer set `runAsUser: 1000` and `runAsGroup: 1000`, so they run as the image user,
 which is `1000` for the default image.
 
-**Action required:** If you use an image whose user is not `1000`, such as the `-alpine` variant (`1001`), set
-`iq_server_jobs.containerSecurityContext.runAsUser` and `runAsGroup` to `1000` to keep the previous behavior. An image
-that sets no user would otherwise run the jobs as root.
+With an image whose user is not `1000`, such as the `-alpine` variant (`1001`), the jobs now run as that user. To keep
+the previous behavior, set `iq_server_jobs.containerSecurityContext.runAsUser` and `runAsGroup` to `1000`.
+
+**Action required:** With an image that sets no user, the jobs would now run as root, so set `runAsUser` and
+`runAsGroup` as above.
 If an admission policy requires an explicit `runAsUser` or `runAsGroup`, set them in `iq_server_jobs.securityContext`
 or `iq_server_jobs.containerSecurityContext`.
 
