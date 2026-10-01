@@ -35,7 +35,8 @@ iq_server:
   #       name: my-secret
   #       key: secret-key
 
-  # Value for the JAVA_OPTS environment variable to pass custom settings to the JVM
+  # Value for the JAVA_OPTS environment variable to pass custom settings to the JVM. This replaces the image's value,
+  # so keep -Djava.util.prefs.userRoot=/sonatype-work/javaprefs in it
   javaOpts:
 
   # Product license
@@ -77,6 +78,16 @@ iq_server:
   #   emptyDir: 
   #    sizeLimit: 500Mi
   # - name: extra-volume-5
+  #   csi:
+  #     driver: secrets-store.csi.k8s.io
+  #     readOnly: true
+  #     volumeAttributes:
+  #       secretProviderClass: my-secret-provider
+  # - name: extra-volume-6
+  #   nfs:
+  #     server: nfs.example.com
+  #     path: /exports/iq
+  # - name: extra-volume-7
   extraVolumeMounts: []
   # - name: extra-volume-0
   #   mountPath: /mnt/volume0

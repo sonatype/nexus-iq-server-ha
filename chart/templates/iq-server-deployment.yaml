@@ -32,7 +32,7 @@ spec:
         - name: {{ .Release.Name }}-iq-server-pod-volume
           persistentVolumeClaim:
             claimName: {{- if .Values.iq_server.persistence.existingPersistentVolumeClaimName }} {{ .Values.iq_server.persistence.existingPersistentVolumeClaimName }}{{- else }} {{ .Values.iq_server.persistence.persistentVolumeClaimName }}{{- end }}
-        {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) (.Values.secret.sshPrivateKey.arn) (.Values.secret.sshKnownHosts.arn) }}
+        {{- if include "nexus-iq-server-ha.awsSecretProviderEnabled" . }}
         - name: {{ .Release.Name }}-iq-server-secrets-volume
           csi:
             driver: secrets-store.csi.k8s.io
@@ -103,7 +103,7 @@ spec:
               subPath: .ssh
             - mountPath: "/etc/nexus-iq-server"
               name: {{ .Release.Name }}-iq-server-pod-config-volume
-            {{- if or (.Values.secret.arn) (.Values.secret.license.arn) (.Values.secret.rds.arn) (.Values.secret.sshPrivateKey.arn) (.Values.secret.sshKnownHosts.arn) }}
+            {{- if include "nexus-iq-server-ha.awsSecretProviderEnabled" . }}
             - mountPath: "/iq-secrets"
               name: {{ .Release.Name }}-iq-server-secrets-volume
               readOnly: true
