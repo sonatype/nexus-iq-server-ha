@@ -251,10 +251,9 @@ updating this as many values within it are fine-tuned to allow the helm chart to
 ### Outbound HTTP Proxy (optional)
 
 The proxy for outbound connections is normally configured through the UI or the
-[HTTP Proxy Server Configuration REST API](https://help.sonatype.com/en/http-proxy-server-configuration-rest-api.html).
-On first start, though, Sonatype IQ Server fetches data from Sonatype before it accepts connections, so behind a proxy
-the pods don't become ready until the proxy is set, and neither is available yet. Set it for the first start with JVM
-system properties
+[HTTP Proxy Server Configuration REST API](https://help.sonatype.com/en/http-proxy-server-configuration-rest-api.html)
+once the server is running. To have outbound connections use the proxy from the first start, without a manual step,
+set it with JVM system properties
    ```
    --set iq_server.javaOpts="-Djava.util.prefs.userRoot=/sonatype-work/javaprefs -Dhttps.proxyHost=<proxy host> -Dhttps.proxyPort=<proxy port> -Dhttp.proxyHost=<proxy host> -Dhttp.proxyPort=<proxy port> -Dhttp.nonProxyHosts=<hosts to reach directly, separated by |>"
    ```
